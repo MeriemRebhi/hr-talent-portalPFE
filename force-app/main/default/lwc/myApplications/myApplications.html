@@ -1,0 +1,78 @@
+<template>
+    <div class="page">
+        <!-- Background glows -->
+        <div class="glow glowA"></div>
+        <div class="glow glowB"></div>
+
+        <!-- Header -->
+        <div class="page-header">
+            <div class="kicker">Espace Candidat</div>
+            <h1 class="page-title">Mes Candidatures<span class="dot">.</span></h1>
+            <p class="page-subtitle">Suivez l'avancement de vos candidatures en temps réel.</p>
+        </div>
+
+        <!-- Loading -->
+        <template if:true={isLoading}>
+            <div class="loading-box">
+                <div class="spinner"></div>
+                <span>Chargement de vos candidatures...</span>
+            </div>
+        </template>
+
+        <!-- Error -->
+        <template if:true={hasError}>
+            <div class="alert alert-error">{errorMessage}</div>
+        </template>
+
+        <!-- Empty -->
+        <template if:true={isEmpty}>
+            <div class="empty-box">
+                <div class="empty-icon">📋</div>
+                <h3>Aucune candidature trouvée</h3>
+                <p>Vous n'avez pas encore soumis de candidature via le portail.</p>
+            </div>
+        </template>
+
+        <!-- Cards -->
+        <template if:true={hasApplications}>
+            <div class="cards-grid">
+                <template for:each={applications} for:item="app">
+                    <div key={app.Id} class="app-card">
+                        <div class="card-top">
+                            <span class="card-icon">💼</span>
+                            <span class={app.stageBadgeClass}>{app.StageName}</span>
+                        </div>
+                        <h2 class="card-title">{app.fullName}</h2>
+                        <div class="card-meta">
+                            <span class="meta-item">📧 {app.Email}</span>
+                            <template if:true={app.Phone}>
+                                <span class="meta-item">📞 {app.Phone}</span>
+                            </template>
+                            <span class="meta-item">📅 {app.formattedDate}</span>
+                        </div>
+
+                        <!-- Score IA -->
+                        <template if:true={app.hasScore}>
+                            <div class="score-section">
+                                <div class={app.scoreClass}>
+                                    <span class="score-value">{app.Score_Matching__c}%</span>
+                                    <div>
+                                        <div class="score-label">{app.scoreLabel}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Recommandation IA -->
+                        <template if:true={app.AI_Recommendation__c}>
+                            <div class="recommendation-preview">
+                                <span class="rec-icon">🤖</span>
+                                <p>{app.AI_Recommendation__c}</p>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

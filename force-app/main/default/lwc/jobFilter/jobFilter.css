@@ -1,0 +1,144 @@
+:host {
+  display: block;
+  margin-bottom: 35px;
+}
+
+/* Card filtre */
+.filter-card {
+  background: #ffffff;
+  border: 1px solid #D5E8DC;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(47, 125, 89, 0.08);
+}
+
+/* Header */
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.filter-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a4d2e;
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid #2F7D59;
+  color: #2F7D59;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  background: #2F7D59;
+  color: #ffffff;
+}
+
+/* Body */
+.filter-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filter-group {
+  flex: 1 1 calc(50% - 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.full-width {
+  flex: 1 1 100%;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2F7D59;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Search box */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f9f7;
+  border: 1.5px solid #D5E8DC;
+  border-radius: 10px;
+  padding: 11px 14px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #2F7D59;
+  box-shadow: 0 0 0 3px rgba(47, 125, 89, 0.10);
+}
+
+.search-icon {
+  font-size: 16px;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #1a4d2e;
+  background: transparent;
+}
+
+.search-input::placeholder {
+  color: #aaa;
+}
+
+/* Select */
+.filter-select {
+  background: #f5f9f7;
+  border: 1.5px solid #D5E8DC;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: #1a4d2e;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  appearance: none;
+}
+
+.filter-select:focus {
+  border-color: #2F7D59;
+  box-shadow: 0 0 0 3px rgba(47, 125, 89, 0.10);
+}
+
+/* Footer */
+.filter-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #E8F5E9;
+}
+
+.results-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2F7D59;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .filter-group {
+    flex: 1 1 100%;
+  }
+}

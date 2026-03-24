@@ -1,0 +1,95 @@
+
+/* Professional Corporate Footer */
+.footer-container {
+    background: linear-gradient(90deg, #1a4d2e 0%, #27623A 100%);
+    color: #fff;
+    margin-top: 4rem;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.10);
+    border-top: 1px solid #DFE4EB;
+}
+.footer-content {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 3rem 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2.5rem;
+}
+.footer-section {
+    padding: 1rem 0;
+}
+.footer-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.footer-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+}
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.footer-link {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 0.95rem;
+    display: block;
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+}
+.footer-link:hover {
+    color: #fff;
+    padding-left: 0.5rem;
+}
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+.social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: #2F7D59;
+    border-radius: 6px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+.social-icon:hover {
+    background: #1a4d2e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.20);
+}
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.10);
+    padding: 2rem;
+    text-align: center;
+    background: rgba(0,0,0,0.1);
+}
+.copyright {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+@media (max-width: 900px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 2rem 1rem;
+    }
+}

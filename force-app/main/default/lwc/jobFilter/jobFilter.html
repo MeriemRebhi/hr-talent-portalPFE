@@ -1,0 +1,60 @@
+<template>
+  <div class="filter-card">
+
+    <div class="filter-header">
+      <span class="filter-title">🔎 Rechercher une offre</span>
+      <button class="reset-btn" onclick={handleReset}>Réinitialiser</button>
+    </div>
+
+    <div class="filter-body">
+
+      <!-- Recherche mot clé -->
+      <div class="filter-group full-width">
+        <label class="filter-label">Mot clé</label>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Poste, compétence, description..."
+            value={keyword}
+            onkeyup={handleKeyword}
+          />
+        </div>
+      </div>
+
+      <!-- Localisation -->
+      <div class="filter-group">
+        <label class="filter-label">📍 Localisation</label>
+        <select class="filter-select" onchange={handleLocalisation}>
+          <option value="">Toutes</option>
+          <option value="Tunis">Tunis</option>
+          <option value="Casablanca">Casablanca</option>
+          <option value="Rabat">Rabat</option>
+          <option value="Remote">Remote</option>
+          <option value="Paris">Paris</option>
+        </select>
+      </div>
+
+      <!-- Type de Contrat -->
+      <div class="filter-group">
+        <label class="filter-label">💼 Type de Contrat</label>
+        <select class="filter-select" onchange={handleContrat}>
+          <option value="">Tous</option>
+          <option value="CDI">CDI</option>
+          <option value="CDD">CDD</option>
+          <option value="Stage">Stage</option>
+          <option value="Freelance">Freelance</option>
+          <option value="Alternance">Alternance</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Résultats count -->
+    <div class="filter-footer">
+      <span class="results-count">{resultsLabel}</span>
+    </div>
+
+  </div>
+</template>

@@ -1,0 +1,25 @@
+<template>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Réinitialiser le mot de passe</h1>
+                <p>Entrez votre email pour recevoir un lien de réinitialisation.</p>
+            </div>
+            <form onsubmit={handleSubmit} class="form">
+                <lightning-input type="email" label="Email" value={email} onchange={handleEmailChange} required></lightning-input>
+                <div class="actions">
+                    <button class="submit" type="submit">Envoyer</button>
+                </div>
+                <template if:true={success}>
+                    <div class="success">Un email de réinitialisation a été envoyé !</div>
+                </template>
+                <template if:true={error}>
+                    <div class="error">{errorMessage}</div>
+                </template>
+            </form>
+            <div class="footer-link">
+              
+            </div>
+        </div>
+    </div>
+</template>

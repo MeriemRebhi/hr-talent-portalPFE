@@ -1,0 +1,121 @@
+<template>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-wrapper">
+            <div class="logo-section" onclick={handleLogoClick}>
+                <span class="logo-mark">T</span>
+                <div class="logo-info">
+                    <span class="brand-name">Talent Portal</span>
+                    <span class="brand-sub">by Talan Tunisie</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li><button class="nav-link" onclick={handleJobsClick}>🏢 Offres</button></li>
+                <li><button class="nav-link" onclick={handleApplicationsClick}>📋 Candidatures</button></li>
+                <li><button class="nav-link" onclick={handleContactClick}>✉️ Contact</button></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="btn-postuler" onclick={handleJobsClick}>
+                    Postuler maintenant →
+                </button>
+                <button class="profile-btn" onclick={handleProfileClick}>👤</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-wrapper">
+
+            <!-- Left Content -->
+            <div class="hero-content">
+                <div class="hero-label">
+                    <span class="label-dot"></span>
+                    Talan Tunisie — Recrutement IA
+                </div>
+
+                <h1 class="hero-heading">
+                    Trouvez votre<br/>
+                    <span>prochain défi</span><br/>
+                    professionnel.
+                </h1>
+
+                <p class="hero-desc">
+                    Rejoignez des équipes innovantes. Développez vos talents.
+                    Notre IA analyse votre profil et vous connecte aux meilleures opportunités.
+                </p>
+
+                <div class="hero-actions">
+                    <button class="btn btn-fill" onclick={handleJobsClick}>
+                        Explorer les offres
+                    </button>
+                    <button class="btn btn-outline" onclick={handleApplicationsClick}>
+                        Mes candidatures
+                    </button>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat">
+                        <strong>47+</strong>
+                        <span>Postes ouverts</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <strong>1500+</strong>
+                        <span>Candidats placés</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <strong>98%</strong>
+                        <span>Satisfaction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Visual -->
+            <div class="hero-visual">
+                <div class="img-wrapper">
+                    <img
+                        src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600&q=80"
+                        alt="Équipe RH Talan"
+                        class="hero-img"
+                    />
+                    <div class="img-overlay"></div>
+                </div>
+
+                <!-- Floating cards -->
+                <div class="float-card card-top">
+                    <span class="card-icon">🤖</span>
+                    <div>
+                        <div class="card-label">IA Matching</div>
+                        <div class="card-val">Score 94%</div>
+                    </div>
+                </div>
+
+                <div class="float-card card-bottom">
+                    <span class="card-icon">🚀</span>
+                    <div>
+                        <div class="card-label">Nouveau poste</div>
+                        <div class="card-val">Dev Salesforce</div>
+                    </div>
+                </div>
+
+                <div class="float-card card-left">
+                    <span class="card-icon">✅</span>
+                    <div>
+                        <div class="card-label">Candidature</div>
+                        <div class="card-val">Acceptée</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Background decoration -->
+        <div class="bg-circle circle-1"></div>
+        <div class="bg-circle circle-2"></div>
+
+    </header>
+</template>

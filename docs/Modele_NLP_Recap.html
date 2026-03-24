@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Récapitulatif – Modèle NLP Groq / LLaMA 3.3</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      color: #222;
+      padding: 40px;
+    }
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 56px 64px;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #1a3c6e;
+      border-bottom: 3px solid #1a3c6e;
+      padding-bottom: 12px;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: #5a7aad;
+      font-size: 1rem;
+      margin-bottom: 36px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      color: #1a3c6e;
+      margin: 36px 0 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2 .num {
+      background: #1a3c6e;
+      color: #fff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .card {
+      background: #f7f9fd;
+      border-left: 4px solid #1a3c6e;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin-bottom: 8px;
+    }
+    .card p { line-height: 1.7; font-size: 0.97rem; }
+    .card code {
+      background: #e3eaf5;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.9rem;
+      color: #1a3c6e;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      margin: 24px 0;
+      align-items: center;
+    }
+    .flow-step {
+      background: #1a3c6e;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      text-align: center;
+      min-width: 110px;
+    }
+    .flow-arrow {
+      font-size: 1.4rem;
+      color: #1a3c6e;
+      padding: 0 8px;
+    }
+    .badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1a3c6e;
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    .badge.green { background: #e6f9f0; color: #1a7a4a; }
+    .badge.orange { background: #fff4e5; color: #b05c00; }
+    .badge.red { background: #fdeaea; color: #b00020; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.93rem;
+    }
+    th {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #e3eaf5;
+    }
+    tr:nth-child(even) td { background: #f7f9fd; }
+    .prompt-box {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 8px;
+      padding: 18px 22px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.83rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
+    .prompt-box .kw { color: #89b4fa; }
+    .prompt-box .str { color: #a6e3a1; }
+    .footer {
+      margin-top: 48px;
+      border-top: 1px solid #e3eaf5;
+      padding-top: 16px;
+      font-size: 0.82rem;
+      color: #888;
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { box-shadow: none; padding: 24px 32px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Modèle NLP – Groq / LLaMA 3.3 70B</h1>
+  <p class="subtitle">HR Talent Portal – Talan Tunisie &nbsp;|&nbsp; Mars 2026</p>
+
+  <!-- FLUX GLOBAL -->
+  <h2><span class="num">★</span> Flux global de traitement</h2>
+  <div class="flow">
+    <div class="flow-step">Candidat<br/>dépose CV</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Lead créé<br/>dans Salesforce</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Trigger<br/>CVScoringTrigger</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Groq API<br/>LLaMA 3.3 70B</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Score +<br/>Recommandation</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Conversion<br/>Lead → Opportunité</div>
+  </div>
+
+  <!-- ÉTAPE 1 -->
+  <h2><span class="num">1</span> Dépôt du CV – LWC <code>applicationForm</code></h2>
+  <div class="card">
+    <p>Le candidat accède au portail et remplit le formulaire de candidature. Il sélectionne une offre d'emploi (<span class="badge">RecordType : Job_Posting</span>) et télécharge son CV (PDF/DOCX).</p>
+    <p style="margin-top:8px">Le composant LWC <code>applicationForm.js</code> utilise <code>apex/ApplicationController.createApplication</code> pour créer un <strong>Lead Salesforce</strong> avec <code>LeadSource = 'Talent Portal'</code> et attache le CV via <code>ContentDocument</code>.</p>
+  </div>
+
+  <!-- ÉTAPE 2 -->
+  <h2><span class="num">2</span> Déclenchement – Trigger <code>CVScoringTrigger</code></h2>
+  <div class="card">
+    <p>Dès qu'un Lead est inséré, le trigger <code>CVScoringTrigger.trigger</code> s'exécute en contexte <code>after insert</code>.</p>
+    <p style="margin-top:8px">Il appelle <code>CVScoringService.processLeads(newLeads)</code> en mode <strong>asynchrone</strong> via <code>@future(callout=true)</code> pour contourner la limite Salesforce sur les callouts synchrones.</p>
+  </div>
+
+  <!-- ÉTAPE 3 -->
+  <h2><span class="num">3</span> Extraction du CV</h2>
+  <div class="card">
+    <p><code>CVScoringService</code> récupère le fichier CV lié au Lead via <code>ContentDocumentLink</code> :</p>
+    <p style="margin-top:6px"><code>SELECT ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId = :leadId</code></p>
+    <p style="margin-top:8px">Le contenu binaire du CV est alors converti en texte (<code>VersionData</code>) et transmis au modèle NLP.</p>
+  </div>
+
+  <!-- ÉTAPE 4 -->
+  <h2><span class="num">4</span> Appel à l'API Groq – LLaMA 3.3 70B</h2>
+  <div class="card">
+    <p><strong>Endpoint :</strong> <code>https://api.groq.com/openai/v1/chat/completions</code></p>
+    <p style="margin-top:6px"><strong>Modèle :</strong> <code>llama-3.3-70b-versatile</code></p>
+    <p style="margin-top:6px"><strong>Clé API :</strong> stockée en Custom Setting <code>AI_Configuration__c.Groq_API_Key__c</code></p>
+    <p style="margin-top:10px"><strong>Prompt système envoyé :</strong></p>
+    <div class="prompt-box"><span class="kw">System:</span> <span class="str">Tu es un expert RH spécialisé dans le recrutement tech.
+Analyse ce CV et retourne UNIQUEMENT un JSON avec :
+{
+  "score": &lt;0-100&gt;,
+  "recommendation": "&lt;texte court en français&gt;",
+  "points_forts": "&lt;liste des forces&gt;",
+  "points_faibles": "&lt;axes d amélioration&gt;"
+}</span>
+
+<span class="kw">User:</span> <span class="str">Voici le CV à analyser :
+[contenu extrait du PDF/DOCX]</span></div>
+  </div>
+
+  <!-- ÉTAPE 5 -->
+  <h2><span class="num">5</span> Traitement de la réponse Groq</h2>
+  <div class="card">
+    <p>La réponse JSON est parsée par <code>CVScoringService</code>. Les champs sont mappés sur le Lead Salesforce :</p>
+    <table>
+      <tr><th>Champ JSON Groq</th><th>Champ Lead Salesforce</th><th>Type</th></tr>
+      <tr><td><code>score</code></td><td><code>Score_Matching__c</code></td><td>Number (0–100)</td></tr>
+      <tr><td><code>recommendation</code></td><td><code>AI_Recommendation__c</code></td><td>Long Text Area</td></tr>
+      <tr><td><code>points_forts</code></td><td><code>AI_Points_Forts__c</code></td><td>Long Text Area</td></tr>
+      <tr><td><code>points_faibles</code></td><td><code>AI_Points_Faibles__c</code></td><td>Long Text Area</td></tr>
+    </table>
+  </div>
+
+  <!-- ÉTAPE 6 -->
+  <h2><span class="num">6</span> Décision de qualification</h2>
+  <div class="card">
+    <p>Un seuil de qualification est défini dans le code :</p>
+    <p style="margin-top:6px"><code>QUALIFICATION_THRESHOLD = 30</code></p>
+    <table style="margin-top:12px">
+      <tr><th>Score</th><th>Action</th><th>Statut Lead</th></tr>
+      <tr>
+        <td><span class="badge green">≥ 30</span></td>
+        <td>Lead converti → Contact + Opportunité créés</td>
+        <td><code>Closed - Converted</code></td>
+      </tr>
+      <tr>
+        <td><span class="badge red">&lt; 30</span></td>
+        <td>Lead conservé, pas de conversion</td>
+        <td><code>Open / Unqualified</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ÉTAPE 7 -->
+  <h2><span class="num">7</span> Conversion Lead → Contact + Opportunité</h2>
+  <div class="card">
+    <p>Si le score est suffisant, <code>CVScoringService</code> :</p>
+    <ol style="margin-left:20px; margin-top:8px; line-height:2">
+      <li>Crée ou récupère un <strong>Account</strong> <code>Candidats Portal</code></li>
+      <li>Crée un <strong>Contact</strong> (avec gestion des doublons – non bloquant)</li>
+      <li>Crée une <strong>Opportunity</strong> avec <code>RecordType = Application</code>, stage <code>Gaming</code>, nom <code>[Prénom Nom] - Candidature (Score%)</code></li>
+      <li>Met à jour le <strong>Lead</strong> → <code>IsConverted = true</code></li>
+      <li>Envoie un <strong>email automatique</strong> au candidat avec son score et la recommandation IA</li>
+    </ol>
+  </div>
+
+  <!-- ÉTAPE 8 -->
+  <h2><span class="num">8</span> Suivi dans le portail – LWC <code>myApplications</code></h2>
+  <div class="card">
+    <p>Le candidat peut consulter l'état de sa candidature dans la section <em>Mes Candidatures</em> du portail :</p>
+    <table style="margin-top:10px">
+      <tr><th>Stage Opportunité</th><th>Signification</th></tr>
+      <tr><td><span class="badge orange">Gaming</span></td><td>En attente – dossier reçu</td></tr>
+      <tr><td><span class="badge">Technique</span></td><td>Entretien technique planifié</td></tr>
+      <tr><td><span class="badge">Architecture</span></td><td>Revue architecture / cas pratique</td></tr>
+      <tr><td><span class="badge">RH Fit</span></td><td>Entretien RH final</td></tr>
+      <tr><td><span class="badge green">Closed Won</span></td><td>Candidat retenu ✅</td></tr>
+      <tr><td><span class="badge red">Closed Lost</span></td><td>Candidature non retenue ❌</td></tr>
+    </table>
+  </div>
+
+  <!-- RÉSUMÉ TECHNIQUE -->
+  <h2><span class="num">★</span> Composants techniques clés</h2>
+  <div class="card">
+    <table>
+      <tr><th>Composant</th><th>Rôle</th></tr>
+      <tr><td><code>CVScoringTrigger.trigger</code></td><td>Déclencheur after insert sur Lead</td></tr>
+      <tr><td><code>CVScoringService.cls</code></td><td>Logique métier : callout Groq, scoring, conversion</td></tr>
+      <tr><td><code>JobPostingController.cls</code></td><td>Retourne les offres (RecordType = Job_Posting)</td></tr>
+      <tr><td><code>ApplicationController.cls</code></td><td>Création Lead + gestion candidatures</td></tr>
+      <tr><td><code>applicationForm</code> LWC</td><td>Formulaire de candidature + upload CV</td></tr>
+      <tr><td><code>myApplications</code> LWC</td><td>Tableau de bord candidat</td></tr>
+      <tr><td><code>AI_Configuration__c</code></td><td>Custom Setting – stockage clé API Groq</td></tr>
+      <tr><td>Remote Site <code>Groq_API</code></td><td>Autorisation callout vers api.groq.com</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    HR Talent Portal – Talan Tunisie &nbsp;|&nbsp; Généré le Mars 2026 &nbsp;|&nbsp; Modèle : LLaMA 3.3 70B via Groq API
+  </div>
+
+</div>
+</body>
+</html>

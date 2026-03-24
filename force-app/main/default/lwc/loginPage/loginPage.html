@@ -1,0 +1,34 @@
+<template>
+    <div class="modal-backdrop" if:true={showModal} onclick={handleBackdropClick}>
+        <div class="login-modal-pro" onclick={stopPropagation}>
+            <button class="close-modal-btn" onclick={close}>×</button>
+            <div class="login-modal-content">
+                <div class="login-form-col">
+                    <div class="login-header-pro">
+                        <h2>Bienvenue sur votre espace candidat</h2>
+                        <p class="login-sub">Connectez-vous pour suivre vos candidatures et accéder à toutes les fonctionnalités IA.</p>
+                    </div>
+                    <form class="login-form-pro" onsubmit={handleSubmit}>
+                        <label>Email</label>
+                        <input type="email" class="input-pro" value={email} onchange={handleEmailChange} required />
+                        <label>Mot de passe</label>
+                        <input type="password" class="input-pro" value={password} onchange={handlePasswordChange} required />
+                        <button class="login-btn-pro" type="submit">Se connecter</button>
+                    </form>
+                    <div class="login-footer-pro">
+                        <a href="/s/reset-mot-de-passe">Mot de passe oublié ?</a>
+                    </div>
+                    <div class="qr-choice-separator">
+                        <span>— ou connectez-vous par QR code —</span>
+                    </div>
+                    <c-qr-code-auth></c-qr-code-auth>
+                </div>
+                <div class="login-image-col">
+                    <div class="login-image-wrapper">
+                        <img src="/sfsites/c/resource/imageLogin" alt="Talent IA" class="login-hero-img" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

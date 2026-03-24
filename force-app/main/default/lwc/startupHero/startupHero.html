@@ -1,0 +1,85 @@
+<template>
+  <div class="full-page-wrapper">
+    <!-- SECTION 1 : HERO (Ton code actuel amélioré) -->
+    <section class="hero">
+      <div class="glow glowA"></div>
+      <div class="glow glowB"></div>
+
+      <div class="card hero-card">
+        <p class="kicker">HR Talent Intelligence • Salesforce + IA</p>
+        <h1 class="title">Rejoignez Notre Équipe Tech<span class="dot">.</span></h1>
+        <p class="subtitle">
+          Postulez en quelques minutes, déposez votre CV et suivez votre candidature en temps réel.
+        </p>
+
+        <div class="ctaRow">
+          <a class="btn primary" href={jobsUrl}>Voir les Offres</a>
+          <a class="btn ghost" href={applyUrl}>Postuler maintenant</a>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="statNum">⚡</div><div class="statTxt">Matching intelligent</div></div>
+          <div class="stat"><div class="statNum">🔒</div><div class="statTxt">Données sécurisées</div></div>
+          <div class="stat"><div class="statNum">🚀</div><div class="statTxt">Suivi temps réel</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2 : LE PROCESSUS (Gaming -> Tech -> Arch -> RH) -->
+    <section class="process-section">
+        <div class="container">
+            <h2 class="section-heading">Votre parcours de sélection<span class="dot">.</span></h2>
+            <div class="process-grid">
+                <div class="process-item">
+                    <div class="proc-icon">🎮</div>
+                    <h3>01. Gaming</h3>
+                    <p>Évaluation ludique de vos soft-skills et de votre logique via nos tests immersifs.</p>
+                </div>
+                <div class="process-item">
+                    <div class="proc-icon">💻</div>
+                    <h3>02. Technique</h3>
+                    <p>Échange approfondi avec nos leads sur vos stacks et vos réalisations.</p>
+                </div>
+                <div class="process-item">
+                    <div class="proc-icon">🏛️</div>
+                    <h3>03. Architecture</h3>
+                    <p>Mise en situation sur la conception de systèmes complexes et évolutifs.</p>
+                </div>
+                <div class="process-item">
+                    <div class="proc-icon">🤝</div>
+                    <h3>04. RH Fit</h3>
+                    <p>Dernière étape pour valider l'adéquation avec notre culture et vos aspirations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3 : L'INTELLIGENCE ARTIFICIELLE -->
+    <section class="ai-detail-section">
+        <div class="ai-card">
+            <div class="ai-text">
+                <p class="kicker">Technologie Einstein</p>
+                <h2>L'IA qui comprend votre potentiel</h2>
+                <p>Notre plateforme n'utilise pas de simples mots-clés. Nous analysons la sémantique de votre parcours pour vous proposer des missions où vous aurez un impact réel.</p>
+                <ul class="benefit-list">
+                    <li>✓ Parsing automatique ultra-précis</li>
+                    <li>✓ Score de matching transparent</li>
+                    <li>✓ Feedback personnalisé après chaque étape</li>
+                </ul>
+            </div>
+            <div class="ai-visual">
+                <div class="pulse-circle">AI</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4 : FOOTER CTA -->
+    <footer class="footer-cta">
+        <h2>Prêt à transformer le futur ?</h2>
+        <a class="btn primary" href={applyUrl}>Déposer mon CV</a>
+        <div class="legal">
+            <p>© 2025 Talent Intelligence Platform • Propulsé par Salesforce</p>
+        </div>
+    </footer>
+  </div>
+</template>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BusinessProcess xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HR_Talent_Process</fullName>
+    <description>Processus RH pour le portail Talent</description>
+    <isActive>true</isActive>
+    <values>
+        <fullName>Gaming</fullName>
+    </values>
+    <values>
+        <fullName>Technique</fullName>
+    </values>
+    <values>
+        <fullName>Architecture</fullName>
+    </values>
+    <values>
+        <fullName>RH Fit</fullName>
+    </values>
+    <values>
+        <fullName>Closed Won</fullName>
+    </values>
+    <values>
+        <fullName>Closed Lost</fullName>
+    </values>
+</BusinessProcess>

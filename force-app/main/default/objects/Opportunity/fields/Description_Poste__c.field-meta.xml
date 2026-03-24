@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Description_Poste__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Description détaillée de la position/offre d'emploi</description>
+    <externalId>false</externalId>
+    <label>Description Poste</label>
+    <length>4000</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>15</visibleLines>
+</CustomField>

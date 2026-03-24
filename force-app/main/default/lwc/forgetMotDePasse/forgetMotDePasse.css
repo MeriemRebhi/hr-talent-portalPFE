@@ -1,0 +1,76 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f2f5;
+}
+.card {
+    width: 400px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    padding: 40px 32px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.header h1 {
+    color: #11998e;
+    margin-bottom: 8px;
+    font-size: 28px;
+}
+.header p {
+    color: #555;
+    margin-bottom: 24px;
+}
+.form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+.submit {
+    background: linear-gradient(135deg,#11998e,#38ef7d);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.submit:hover {
+    background: linear-gradient(135deg,#38ef7d,#11998e);
+}
+.success {
+    color: #2d6a4f;
+    background: #f0fff4;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    text-align: center;
+}
+.error {
+    color: #b5520a;
+    background: #fffbf0;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    text-align: center;
+}
+.footer-link {
+    margin-top: 24px;
+    text-align: center;
+}
+.footer-link a {
+    color: #11998e;
+    text-decoration: underline;
+    font-weight: 600;
+}
