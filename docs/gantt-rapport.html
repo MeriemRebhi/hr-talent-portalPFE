@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planning PFE — Version Rapport</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter','Segoe UI',sans-serif; background:#fff; padding:30px 40px; color:#1a1a1a; }
+        .page { max-width:960px; margin:0 auto; }
+
+        h1 { font-size:18px; font-weight:800; color:#1a3a5c; text-align:center; margin-bottom:4px; }
+        .sub { font-size:11px; color:#8a96a8; text-align:center; margin-bottom:24px; }
+
+        /* ── Table ── */
+        table { width:100%; border-collapse:collapse; }
+        th, td { border:1px solid #d8dee6; }
+        thead th { background:#f5f7fa; padding:8px 6px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#6b7a90; text-align:center; }
+        thead th.left { text-align:left; padding-left:14px; }
+
+        /* Months */
+        .months { display:flex; }
+        .m { flex:1; text-align:center; font-size:9px; font-weight:700; color:#4a5a72; padding:3px 0; border-right:1px solid #d8dee6; text-transform:uppercase; letter-spacing:.05em; }
+        .m:last-child { border-right:none; }
+
+        /* Weeks sub row */
+        .weeks { display:flex; }
+        .w { flex:1; text-align:center; font-size:7px; color:#b0b8c8; font-weight:600; padding:2px 0; border-right:1px solid #eef0f4; }
+        .w:last-child { border-right:none; }
+
+        /* ── Phase rows ── */
+        .phase td { padding:0; vertical-align:middle; height:32px; }
+        .phase:hover td { background:#fafbfd; }
+        .phase-name { padding:6px 14px; font-size:11px; font-weight:600; color:#2c3e50; white-space:nowrap; }
+        .phase-period { font-size:9px; color:#8a96a8; font-weight:600; text-align:center; padding:4px; }
+
+        /* ── Chart cell ── */
+        .chart { position:relative; height:32px; }
+        .chart .grid { position:absolute; inset:0; display:flex; pointer-events:none; z-index:1; }
+        .chart .grid .gl { flex:1; border-right:1px solid #f0f2f5; }
+        .chart .grid .gl:nth-child(4n) { border-right-color:#e6e9ee; }
+        .chart .grid .gl:last-child { border-right:none; }
+
+        .bar { position:absolute; top:7px; height:18px; border-radius:5px; z-index:2; }
+
+        .bar-formation { background:linear-gradient(135deg,#a78bfa,#8b5cf6); }
+        .bar-sprint1   { background:linear-gradient(135deg,#60a5fa,#3b82f6); }
+        .bar-sprint2   { background:linear-gradient(135deg,#34d399,#10b981); }
+        .bar-sprint3   { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
+        .bar-sprint4   { background:linear-gradient(135deg,#f472b6,#ec4899); }
+        .bar-doc       { background:repeating-linear-gradient(135deg,rgba(251,146,60,.8),rgba(251,146,60,.8) 3px,rgba(249,115,22,.8) 3px,rgba(249,115,22,.8) 6px); }
+
+        /* ── Milestones ── */
+        .milestones { display:flex; justify-content:center; gap:18px; margin-top:18px; flex-wrap:wrap; }
+        .ms { display:flex; align-items:center; gap:5px; font-size:9px; color:#4a5a72; font-weight:600; }
+        .dia { width:9px; height:9px; background:#e53e3e; transform:rotate(45deg); border-radius:1.5px; }
+        .ms .d { font-weight:700; color:#1a3a5c; }
+
+        /* ── Legend ── */
+        .legend { display:flex; justify-content:center; gap:16px; margin-top:14px; flex-wrap:wrap; padding-top:12px; border-top:1.5px solid #e8ecf2; }
+        .leg { display:flex; align-items:center; gap:5px; font-size:9px; color:#4a5a72; font-weight:600; }
+        .lc { width:20px; height:8px; border-radius:3px; flex-shrink:0; }
+
+        /* ── Editable ── */
+        .phase-name[contenteditable=true]:focus { outline:2px solid #3b82f6; outline-offset:-2px; border-radius:3px; background:#eff6ff; }
+        .date-input { border:none; background:transparent; font-family:inherit; font-size:10px; color:#4a5a72; font-weight:600; text-align:center; padding:6px 2px; width:100%; cursor:pointer; }
+        .date-input:focus { outline:2px solid #3b82f6; outline-offset:-2px; border-radius:3px; background:#eff6ff; }
+        .del-btn { background:none; border:none; color:#ddd; font-size:12px; cursor:pointer; padding:0 4px; transition:color .15s; vertical-align:middle; }
+        .del-btn:hover { color:#e53935; }
+        .add-btn { background:none; border:none; color:#3b82f6; font-size:10px; font-weight:700; cursor:pointer; padding:3px 14px; font-family:inherit; }
+        .add-btn:hover { text-decoration:underline; }
+        .toolbar { display:flex; gap:10px; justify-content:flex-end; margin-bottom:14px; }
+        .toolbar button { padding:7px 14px; border-radius:7px; border:1.5px solid #1a3a5c; background:#fff; font-weight:600; font-size:11px; color:#1a3a5c; cursor:pointer; transition:all .2s; font-family:inherit; }
+        .toolbar button:hover { background:#f0f4f8; }
+        .toolbar .btn-green { border-color:#2F7D59; color:#2F7D59; }
+        .toolbar .btn-green:hover { background:#E8F5E9; }
+        .note { text-align:center; color:#b0b8c8; font-size:10px; margin-top:16px; }
+
+        @media print {
+            body { padding:15px 20px; }
+            @page { size:A4 landscape; margin:12mm; }
+            .toolbar,.del-btn,.add-btn,.note { display:none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <button class="btn-green" onclick="renderAll()">🔄 Rafraîchir</button>
+    <button onclick="window.print()">🖨️ Imprimer / PDF</button>
+</div>
+
+<div class="page">
+
+    <h1>Diagramme de Gantt — Planning du projet PFE</h1>
+    <p class="sub">HR Talent Portal • Talan Tunisie • Février – Juin 2026 (4 mois)</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="left" style="width:230px;">Phase</th>
+                <th style="width:75px;">Début</th>
+                <th style="width:75px;">Fin</th>
+                <th>
+                    <div class="months">
+                        <div class="m">Février</div>
+                        <div class="m">Mars</div>
+                        <div class="m">Avril</div>
+                        <div class="m">Mai</div>
+                        <div class="m">Juin</div>
+                    </div>
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>
+                    <div class="weeks" id="weeksHeader"></div>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+
+    <div class="milestones">
+        <div class="ms"><div class="dia"></div><span class="d">01 Fév</span> Début stage</div>
+        <div class="ms"><div class="dia"></div><span class="d">01 Mar</span> Sprint 1</div>
+        <div class="ms"><div class="dia"></div><span class="d">15 Mar</span> Sprint 2</div>
+        <div class="ms"><div class="dia"></div><span class="d">12 Avr</span> Sprint 3</div>
+        <div class="ms"><div class="dia"></div><span class="d">10 Mai</span> Sprint 4</div>
+        <div class="ms"><div class="dia"></div><span class="d">24 Mai</span> Fin sprints</div>
+        <div class="ms"><div class="dia"></div><span class="d">07 Jun</span> Fin stage</div>
+    </div>
+
+    <div class="legend">
+        <div class="leg"><div class="lc" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6)"></div>Formation</div>
+        <div class="leg"><div class="lc" style="background:linear-gradient(135deg,#60a5fa,#3b82f6)"></div>Sprint 1</div>
+        <div class="leg"><div class="lc" style="background:linear-gradient(135deg,#34d399,#10b981)"></div>Sprint 2</div>
+        <div class="leg"><div class="lc" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)"></div>Sprint 3</div>
+        <div class="leg"><div class="lc" style="background:linear-gradient(135deg,#f472b6,#ec4899)"></div>Sprint 4</div>
+        <div class="leg"><div class="lc" style="background:repeating-linear-gradient(135deg,rgba(251,146,60,.8),rgba(251,146,60,.8) 3px,rgba(249,115,22,.8) 3px,rgba(249,115,22,.8) 6px)"></div>Documentation</div>
+        <div class="leg"><div class="dia" style="width:7px;height:7px;"></div>Jalon</div>
+    </div>
+
+</div>
+
+<p class="note">💡 Cliquez sur un nom, une date pour modifier • "Rafraîchir" met à jour les barres • Ctrl+P pour PDF (Paysage)</p>
+
+<script>
+const S = new Date(2026,1,1), E = new Date(2026,5,7);
+const T = (E-S)/864e5;
+
+// Weeks header
+const wh = document.getElementById('weeksHeader');
+for(let i=1;i<=18;i++){const d=document.createElement('div');d.className='w';d.textContent='S'+i;wh.appendChild(d);}
+
+function pct(d){return Math.max(0,Math.min(100,(new Date(d)-S)/864e5/T*100));}
+const grid = Array.from({length:18},()=>'<div class="gl"></div>').join('');
+
+const phases = [
+    { name:'Formation',                                      start:'2026-02-01', end:'2026-03-01', bar:'bar-formation' },
+    { name:'Sprint 1 — Utilisateurs & Offres',               start:'2026-03-01', end:'2026-03-15', bar:'bar-sprint1' },
+    { name:'Sprint 2 — 1ère phase recrutement (Pistes)',      start:'2026-03-15', end:'2026-04-12', bar:'bar-sprint2' },
+    { name:'Sprint 3 — 2ème phase recrutement (Opportunités)',start:'2026-04-12', end:'2026-05-10', bar:'bar-sprint3' },
+    { name:'Sprint 4 — Reporting, Dashboards & Chatbot',     start:'2026-05-10', end:'2026-05-24', bar:'bar-sprint4' },
+    { name:'Documentation & Rapport de stage',                start:'2026-03-15', end:'2026-06-07', bar:'bar-doc' },
+];
+
+function renderAll(){
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    phases.forEach((p, i) => {
+        const l = pct(p.start), w = pct(p.end) - l;
+        const tr = document.createElement('tr');
+        tr.className = 'phase';
+        tr.innerHTML = `
+            <td>
+                <span class="del-btn" title="Supprimer" onclick="delPhase(${i})">✕</span>
+                <span class="phase-name" contenteditable="true" onblur="phases[${i}].name=this.textContent.trim()">${p.name}</span>
+            </td>
+            <td><input type="date" class="date-input" value="${p.start}" onchange="phases[${i}].start=this.value;renderAll()"></td>
+            <td><input type="date" class="date-input" value="${p.end}" onchange="phases[${i}].end=this.value;renderAll()"></td>
+            <td><div class="chart">
+                <div class="grid">${grid}</div>
+                <div class="bar ${p.bar}" style="left:${l}%;width:${w}%" title="${p.name}"></div>
+            </div></td>`;
+        tbody.appendChild(tr);
+    });
+    // Add button
+    const ar = document.createElement('tr');
+    ar.innerHTML = `<td colspan="4"><button class="add-btn" onclick="addPhase()">+ Ajouter une phase</button></td>`;
+    tbody.appendChild(ar);
+}
+
+function delPhase(i){ if(confirm('Supprimer cette phase ?')){ phases.splice(i,1); renderAll(); }}
+
+function addPhase(){
+    const last = phases.length ? phases[phases.length-1] : null;
+    const s = last ? last.end : '2026-03-01';
+    const eD = new Date(s); eD.setDate(eD.getDate()+14);
+    phases.push({ name:'Nouvelle phase', start:s, end:eD.toISOString().slice(0,10), bar:'bar-sprint1' });
+    renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>

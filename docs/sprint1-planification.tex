@@ -1,0 +1,328 @@
+\chapter{Sprint 1 : Planification}
+
+\label{sec:organisme}
+
+\section{Introduction}
+
+Tout projet d'ingénierie logicielle débute par une phase fondamentale d'élicitation et de formalisation des besoins. Ce chapitre constitue le socle de notre démarche de développement pour la \textbf{Talent Intelligence Platform} — une solution de recrutement augmentée par l'intelligence artificielle, intégralement bâtie sur l'écosystème Salesforce au profit de \textbf{Talan Tunisie}.
+
+Notre approche se distingue par la convergence de trois piliers technologiques : un portail Experience Cloud offrant une expérience candidat fluide, un moteur d'intelligence artificielle reposant sur le modèle \textit{Meta LLaMA 3.3 70B Versatile} via l'API Groq pour le scoring des CV, la génération de contenus et la création dynamique de questions d'évaluation, ainsi qu'un back-office Apex orchestrant l'ensemble du pipeline de recrutement de bout en bout.
+
+Dans les sections qui suivent, nous commencerons par cartographier les différents acteurs gravitant autour de la plateforme et leurs interactions respectives. Nous formaliserons ensuite les exigences fonctionnelles — structurées par profil utilisateur — et les contraintes non fonctionnelles qui encadrent la qualité du système. Cette analyse alimentera directement notre découpage en sprints, garantissant un développement itératif, mesurable et aligné sur les priorités métiers de Talan.
+
+\section{Analyse des besoins}
+
+L'objectif de cette section est double : d'une part, circonscrire le périmètre du système en identifiant précisément les entités qui interagissent avec lui ; d'autre part, spécifier les comportements attendus (exigences fonctionnelles) et les propriétés qualitatives (exigences non fonctionnelles) que la plateforme doit satisfaire.
+
+\subsection{Identification des acteurs}
+
+Un acteur, au sens UML, désigne toute entité externe — personne physique, système tiers ou processus automatisé — qui échange des stimuli avec le système. L'identification rigoureuse de ces acteurs est un prérequis indispensable à la modélisation des cas d'utilisation.
+
+Notre plateforme de recrutement met en jeu cinq acteurs principaux et un acteur système. Contrairement à une application web classique où les rôles se limitent souvent à un triptyque utilisateur/administrateur/système, notre contexte Salesforce introduit une granularité plus fine : le cycle de vie d'un candidat implique une transformation d'objet (Lead $\rightarrow$ Contact $\rightarrow$ Opportunity) qui fait intervenir des profils distincts à chaque étape. Le tableau~\ref{tab:acteurs} synthétise ces acteurs et leurs périmètres d'action.
+
+\begin{longtable}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Acteur} & \textbf{Rôle et périmètre d'interaction} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Acteur} & \textbf{Rôle et périmètre d'interaction} \\
+\hline
+\endhead
+
+\endfoot
+
+\hline
+\endlastfoot
+
+Visiteur (Guest User) & Utilisateur non authentifié naviguant sur le portail public Experience Cloud. Il dispose d'un accès en lecture seule aux offres d'emploi via le composant \texttt{jobList}, peut appliquer des filtres de recherche (mot-clé, localisation, type de contrat, département) et soumettre une candidature à travers un formulaire multi-étapes (\texttt{applicationForm}) incluant un mécanisme d'upload chunké de CV pouvant atteindre 10~Mo. En termes Salesforce, ses actions génèrent la création d'un objet \texttt{Lead} avec les pièces jointes associées. \\
+\hline
+
+Candidat (Community User) & Utilisateur authentifié sur l'espace B2C Experience Cloud, issu de la conversion automatique d'un Lead qualifié (score IA > 15\%). Le candidat accède à un tableau de bord personnel (\texttt{candidateDashboard}) lui permettant de : visualiser le pipeline de sa candidature à travers sept étapes (Gaming $\rightarrow$ Technique $\rightarrow$ Architecture $\rightarrow$ RH Fit $\rightarrow$ Décision), passer le test gaming gamifié avec des questions générées par l'IA et validées côté serveur, consulter son score de matching IA et la recommandation associée, interagir avec le chatbot NLP contextuel, et mettre à jour ses informations de profil. Son compte portail est créé automatiquement lors de la conversion avec un profil \textit{Customer Community Login User}. \\
+\hline
+
+Recruteur (Internal User) & Utilisateur interne Salesforce opérant depuis le dashboard recruteur (\texttt{recruteurDashboard}). Ses responsabilités couvrent la gestion complète du cycle offre-candidature : publication et clôture des offres d'emploi, génération de descriptions professionnelles par IA (LLaMA 3.3 70B, température 0.7), déclenchement de la génération automatique de 25 questions gaming adaptées au poste via le service \texttt{GamingQuestionService}, planification des sessions de test (individuelle avec date/durée/email automatique, ou en lot avec créneaux consécutifs et pause configurable), avancement des candidats dans le pipeline avec notification e-mail à chaque transition d'étape, et relance du scoring IA si nécessaire. \\
+\hline
+
+Manager (Internal User) & Expert évaluateur intervenant lors des entretiens techniques et d'architecture. Le manager accède au dashboard dédié pour consulter les dossiers candidats enrichis par l'IA (score de compatibilité, recommandation textuelle, points forts et points faibles identifiés automatiquement). Il participe aux entretiens, consigne ses comptes-rendus d'évaluation, et prend la décision finale lors de l'étape RH Fit — acceptation (\textit{Closed Won}) ou refus (\textit{Closed Lost}) du candidat — en s'appuyant sur l'ensemble des données collectées tout au long du pipeline. \\
+\hline
+
+Responsable RH (Admin) & Acteur disposant du niveau d'habilitation le plus élevé sur la plateforme. Le responsable RH supervise l'ensemble du processus de recrutement via des tableaux de bord consolidés présentant les indicateurs clés de performance (taux de conversion Lead $\rightarrow$ Contact, score moyen des candidats, nombre de leads actifs par département, Time-to-Hire). Il administre les profils utilisateurs et les \texttt{PermissionSets}, pilote les processus d'onboarding pour les candidats retenus, et supervise la génération des documents contractuels. \\
+\hline
+
+\caption{Identification des acteurs du système et leurs périmètres d'interaction}
+\label{tab:acteurs}
+\end{longtable}
+
+\FloatBarrier
+
+\subsection{Diagramme de cas d'utilisation global}
+
+À partir de l'identification des acteurs et de leurs périmètres d'action, nous avons élaboré le diagramme de cas d'utilisation global illustré par la figure~\ref{fig:uc-global}. Ce diagramme synthétise l'ensemble des interactions entre les six acteurs du système et les dix-sept cas d'utilisation de la plateforme. Les relations stéréotypées \texttt{<<include>>} modélisent les comportements systématiquement invoqués (l'authentification est un prérequis à toute action du candidat, le dépôt de candidature déclenche automatiquement le scoring IA), tandis que la relation \texttt{<<extend>>} traduit un comportement conditionnel (la décision du manager exploite le score IA lorsqu'il est disponible).
+
+% ──────────────────────────────────────────────
+% Prérequis dans le préambule :
+%   \usepackage{tikz}
+%   \usetikzlibrary{shapes.geometric, arrows.meta, calc}
+%   \usepackage{float}
+% ──────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\resizebox{0.96\textwidth}{!}{%
+\begin{tikzpicture}[
+    % ── Styles ──
+    uc/.style={ellipse, draw=blue!50!black, fill=blue!5, text width=2.7cm,
+               align=center, font=\footnotesize, inner sep=3pt, minimum height=1cm},
+    ucia/.style={ellipse, draw=orange!60!black, fill=orange!8, text width=2.7cm,
+               align=center, font=\footnotesize, inner sep=3pt, minimum height=1cm},
+    ucauth/.style={ellipse, draw=teal!60!black, fill=teal!6, text width=2.7cm,
+               align=center, font=\footnotesize, inner sep=3pt, minimum height=1cm},
+    assoc/.style={thick, gray!60!black},
+    inc/.style={-{Stealth[length=4pt]}, dashed, blue!50!black},
+    ext/.style={-{Stealth[length=4pt]}, dashed, red!50!black}
+]
+
+% ═══════════════════════════════════════════════
+%                SYSTEM BOUNDARY
+% ═══════════════════════════════════════════════
+\draw[draw=blue!40!black, rounded corners=10pt, thick, fill=blue!2, fill opacity=0.3]
+    (3.2, -7.2) rectangle (16.3, 11.2);
+\node[font=\bfseries\large, blue!50!black] at (9.75, 11.55) {HR Talent Portal (Salesforce)};
+
+% ═══════════════════════════════════════════════
+%                    ACTORS
+% ═══════════════════════════════════════════════
+
+% ── Candidat (y centre ≈ 8.8) ──
+\draw[thick] (0.5,9.28) circle(0.18);
+\draw[thick] (0.5,9.1)--(0.5,8.65);
+\draw[thick] (0.28,8.9)--(0.72,8.9);
+\draw[thick] (0.5,8.65)--(0.32,8.3);
+\draw[thick] (0.5,8.65)--(0.68,8.3);
+\node[font=\footnotesize\bfseries] at (0.5,8.05) {Candidat};
+
+% ── Visiteur (y centre ≈ 4.8) ──
+\draw[thick] (0.5,5.28) circle(0.18);
+\draw[thick] (0.5,5.1)--(0.5,4.65);
+\draw[thick] (0.28,4.9)--(0.72,4.9);
+\draw[thick] (0.5,4.65)--(0.32,4.3);
+\draw[thick] (0.5,4.65)--(0.68,4.3);
+\node[font=\footnotesize\bfseries] at (0.5,4.05) {Visiteur};
+
+% ── Recruteur (y centre ≈ 0.8) ──
+\draw[thick] (0.5,1.28) circle(0.18);
+\draw[thick] (0.5,1.1)--(0.5,0.65);
+\draw[thick] (0.28,0.9)--(0.72,0.9);
+\draw[thick] (0.5,0.65)--(0.32,0.3);
+\draw[thick] (0.5,0.65)--(0.68,0.3);
+\node[font=\footnotesize\bfseries] at (0.5,0.05) {Recruteur};
+
+% ── Manager (y centre ≈ −2.8) ──
+\draw[thick] (0.5,-2.32) circle(0.18);
+\draw[thick] (0.5,-2.5)--(0.5,-2.95);
+\draw[thick] (0.28,-2.7)--(0.72,-2.7);
+\draw[thick] (0.5,-2.95)--(0.32,-3.3);
+\draw[thick] (0.5,-2.95)--(0.68,-3.3);
+\node[font=\footnotesize\bfseries] at (0.5,-3.55) {Manager};
+
+% ── Responsable RH (y centre ≈ −5.5) ──
+\draw[thick] (0.5,-5.02) circle(0.18);
+\draw[thick] (0.5,-5.2)--(0.5,-5.65);
+\draw[thick] (0.28,-5.4)--(0.72,-5.4);
+\draw[thick] (0.5,-5.65)--(0.32,-6.0);
+\draw[thick] (0.5,-5.65)--(0.68,-6.0);
+\node[font=\footnotesize\bfseries] at (0.5,-6.3) {Responsable RH};
+
+% ── Système IA (right side, y centre ≈ 4.0) ──
+\node[draw, rectangle, rounded corners=2pt, font=\scriptsize, fill=orange!10,
+      inner sep=2pt] at (19,5.0) {\guillemotleft System\guillemotright};
+\draw[thick] (19,4.48) circle(0.18);
+\draw[thick] (19,4.3)--(19,3.85);
+\draw[thick] (18.78,4.1)--(19.22,4.1);
+\draw[thick] (19,3.85)--(18.82,3.5);
+\draw[thick] (19,3.85)--(19.18,3.5);
+\node[font=\footnotesize\bfseries] at (19,3.25) {Système IA};
+
+% ═══════════════════════════════════════════════
+%                  USE CASES
+% ═══════════════════════════════════════════════
+
+% ── Zone Candidat ──
+\node[uc] (uc_gaming)  at (6.5,10)   {Passer le Test Gaming};
+\node[uc] (uc_profil)  at (6.5,8.2)  {Gérer son profil B2C};
+\node[uc] (uc_suivi)   at (6.5,6.4)  {Suivre l'avancement du dossier};
+\node[uc] (uc_chat)    at (13,10)    {Interagir avec le Chatbot NLP};
+
+% ── Zone partagée ──
+\node[uc]     (uc_offres)  at (6.5,4.6) {Consulter les offres d'emploi};
+\node[uc]     (uc_deposer) at (6.5,2.8) {Déposer candidature (Upload CV)};
+\node[ucauth] (uc_auth)    at (13,7.5)  {S'authentifier};
+
+% ── Zone Recruteur ──
+\node[uc] (uc_publier)  at (6.5,1.0)  {Publier les offres d'emploi};
+\node[uc] (uc_gendesc)  at (6.5,-0.8) {Générer description offre par IA};
+\node[uc] (uc_genquest) at (13,1.0)   {Générer questions Gaming IA};
+\node[uc] (uc_planif)   at (13,-0.8)  {Planifier les tests gaming};
+
+% ── Zone Manager ──
+\node[uc] (uc_feedback) at (6.5,-2.8) {Saisir feedback évaluateur};
+\node[uc] (uc_valider)  at (13,-2.8)  {Valider / Refuser un candidat};
+
+% ── Zone Responsable RH ──
+\node[uc] (uc_kpi)     at (6.5,-5.2) {Consulter Dashboards \& KPIs};
+\node[uc] (uc_onboard) at (13,-5.2)  {Gérer Onboarding \& Contrats};
+
+% ── Zone Système IA ──
+\node[ucia] (uc_scorer) at (13,5.2)  {Scorer le CV (Analyse NLP)};
+\node[ucia] (uc_match)  at (13,3.2)  {Calculer Match Score};
+
+% ═══════════════════════════════════════════════
+%             ASSOCIATIONS (traits pleins)
+% ═══════════════════════════════════════════════
+
+% Candidat
+\draw[assoc] (0.9,8.9)  -- (uc_gaming.west);
+\draw[assoc] (0.9,8.7)  -- (uc_profil.west);
+\draw[assoc] (0.9,8.5)  -- (uc_suivi.west);
+\draw[assoc] (0.9,9.0)  -- (uc_chat.south west);
+\draw[assoc] (0.9,8.3)  -- (uc_offres.170);
+
+% Visiteur
+\draw[assoc] (0.9,4.8)  -- (uc_offres.west);
+\draw[assoc] (0.9,4.6)  -- (uc_deposer.west);
+
+% Recruteur
+\draw[assoc] (0.9,0.9)  -- (uc_publier.west);
+\draw[assoc] (0.9,0.7)  -- (uc_gendesc.west);
+\draw[assoc] (0.9,1.0)  -- (uc_genquest.south west);
+\draw[assoc] (0.9,0.5)  -- (uc_planif.south west);
+
+% Manager
+\draw[assoc] (0.9,-2.7) -- (uc_feedback.west);
+\draw[assoc] (0.9,-2.9) -- (uc_valider.south west);
+
+% Responsable RH
+\draw[assoc] (0.9,-5.4) -- (uc_kpi.west);
+\draw[assoc] (0.9,-5.6) -- (uc_onboard.south west);
+
+% Système IA
+\draw[assoc] (18.1,4.2) -- (uc_scorer.east);
+\draw[assoc] (18.1,4.0) -- (uc_match.east);
+\draw[assoc] (18.1,3.8) -- (uc_genquest.east);
+
+% ═══════════════════════════════════════════════
+%          RELATIONS <<include>> (tirets bleus)
+% ═══════════════════════════════════════════════
+
+% Toute action candidat inclut l'authentification
+\draw[inc] (uc_gaming.east)
+    -- node[above,font=\scriptsize,sloped,pos=0.45] {\guillemotleft include\guillemotright} (uc_auth.160);
+\draw[inc] (uc_profil.east)
+    -- node[above,font=\scriptsize,sloped,pos=0.45] {\guillemotleft include\guillemotright} (uc_auth.185);
+\draw[inc] (uc_suivi.east)
+    -- node[below,font=\scriptsize,sloped,pos=0.45] {\guillemotleft include\guillemotright} (uc_auth.200);
+\draw[inc] (uc_chat.south)
+    -- node[right,font=\scriptsize,pos=0.4] {\guillemotleft include\guillemotright} (uc_auth.north);
+
+% Dépôt de candidature inclut le scoring IA
+\draw[inc] (uc_deposer.east)
+    -- node[above,font=\scriptsize,sloped,pos=0.5] {\guillemotleft include\guillemotright} (uc_scorer.west);
+
+% ═══════════════════════════════════════════════
+%          RELATION <<extend>> (tirets rouges)
+% ═══════════════════════════════════════════════
+
+% Décision du manager s'appuie optionnellement sur le score IA
+\draw[ext] (uc_valider.east) .. controls (16,-1.5) and (16,1.5) ..
+    node[right,font=\scriptsize,pos=0.5] {\guillemotleft extend\guillemotright} (uc_match.east);
+
+\end{tikzpicture}
+}%
+\caption{Diagramme de cas d'utilisation global du HR Talent Portal}
+\label{fig:uc-global}
+\end{figure}
+
+\subsection{Identification des exigences fonctionnelles}
+
+Les exigences fonctionnelles formalisent les services que la plateforme \textbf{Talent Intelligence Platform} doit rendre opérationnels pour couvrir l'intégralité du processus de recrutement chez Talan. Nous les avons organisées selon les profils d'acteurs identifiés précédemment, en veillant à refléter la réalité des flux implémentés dans l'écosystème Salesforce.
+
+\begin{itemize}
+
+\item \textbf{Pour les visiteurs (Utilisateurs non-identifiés) :}
+\begin{itemize}
+    \item \textbf{Consulter les offres d'emploi :} Le visiteur parcourt le catalogue des postes vacants exposés sur le portail public. Un système de filtrage multicritère (recherche textuelle avec autocomplétion, localisation géographique, nature du contrat parmi CDI/CDD/Stage/Freelance/Alternance, et département Talan) permet d'affiner les résultats. Chaque offre est présentée dans une modal détaillée incluant le titre, la description complète, le salaire proposé et un bouton d'action pour postuler.
+    \item \textbf{Déposer une candidature :} Le visiteur remplit un formulaire structuré en plusieurs étapes et y joint son CV. Le mécanisme d'upload repose sur un découpage en chunks (chunked upload) supportant des fichiers jusqu'à 10~Mo, avec création automatique d'un objet \texttt{Lead} côté Salesforce et rattachement du document via \texttt{ContentDocumentLink}.
+\end{itemize}
+
+\item \textbf{Pour les candidats (Après authentification sur l'espace B2C) :}
+\begin{itemize}
+    \item \textbf{S'authentifier de manière sécurisée :} Le candidat se connecte via son adresse e-mail. Le système résout dynamiquement le \texttt{username} Salesforce correspondant et déclenche l'authentification native via \texttt{Site.login()}. En cas d'oubli de mot de passe, un mécanisme de réinitialisation par token SHA-256 (généré par CSPRNG, à usage unique, expirant sous 24 heures) est mis à disposition.
+    \item \textbf{Suivre l'avancement de sa candidature :} Le tableau de bord candidat affiche un pipeline visuel en sept étapes avec indicateur de progression. Le candidat identifie instantanément la phase courante de chaque candidature soumise et peut accéder au lien du test gaming lorsque celui-ci est planifié.
+    \item \textbf{Gérer son profil B2C :} Le candidat modifie ses coordonnées (nom, e-mail, téléphone) et peut téléverser un nouveau CV depuis son espace personnel.
+    \item \textbf{Passer le Test Gaming gamifié :} Le candidat réalise une évaluation ludique composée de 10 questions sélectionnées aléatoirement côté serveur (via \texttt{Crypto.getRandomInteger()}) parmi un pool de 25 questions générées par l'IA et spécifiquement adaptées au poste visé. Trois types de questions sont proposés : QCM (choix multiples), puzzles logiques et exercices d'ordonnancement. Un timer dynamique s'adapte à la difficulté (30s/25s/20s/35s). Les réponses correctes ne transitent jamais côté client — chaque soumission est validée en temps réel par l'appel Apex \texttt{validateAnswer()}.
+    \item \textbf{Interagir avec le chatbot NLP :} Un widget conversationnel flottant (\texttt{agentforceChat}) permet au candidat de poser des questions en langage naturel. Le système détecte l'intention (offres, score IA, statut candidature, aide) par analyse de mots-clés et retourne des réponses contextualisées depuis les données Salesforce.
+\end{itemize}
+
+\item \textbf{Pour les recruteurs (Back-office Salesforce) :}
+\begin{itemize}
+    \item \textbf{Publier et gérer les offres d'emploi :} Le recruteur crée des offres avec l'ensemble des champs métier (département, localisation, type de contrat, salaire, description) et peut les clôturer ou les réouvrir en un clic. Chaque offre correspond à un objet \texttt{Opportunity} de type \textit{Job\_Posting}.
+    \item \textbf{Générer des descriptions d'offres par IA :} À partir d'un brouillon même imparfait (fautes, style notes), le recruteur déclenche la génération d'une description professionnelle structurée (introduction, missions, profil recherché, avantages) via le modèle LLaMA 3.3 70B avec une température de 0.7 pour favoriser la créativité rédactionnelle.
+    \item \textbf{Déclencher la génération de questions Gaming par IA :} Pour chaque offre, le recruteur peut lancer la création automatique d'un jeu de 25 questions d'évaluation. Le service \texttt{GamingQuestionService} (implémenté comme \texttt{Queueable} avec \texttt{AllowsCallouts}) interroge l'API Groq avec un prompt système spécifiant la répartition souhaitée ($\sim$8 faciles, $\sim$10 moyennes, $\sim$7 difficiles ; $\sim$15 QCM, $\sim$5 puzzles, $\sim$5 ordonnancements). Les questions sont persistées dans l'objet personnalisé \texttt{Gaming\_Question\_\_c} avec un lien \texttt{Lookup} vers l'offre concernée.
+    \item \textbf{Orchestrer le scoring IA des CV :} Le scoring est déclenché automatiquement par le trigger \texttt{CVScoringTrigger} dès qu'un CV est attaché à un Lead. Le recruteur peut néanmoins relancer manuellement l'analyse IA depuis le dashboard en cas de besoin.
+    \item \textbf{Planifier les sessions de test gaming :} Le recruteur dispose de deux modes de planification : individuel (sélection d'une date, d'une durée et envoi automatique d'un e-mail d'invitation) et en lot (définition de créneaux consécutifs avec intervalle de pause configurable entre chaque candidat).
+    \item \textbf{Piloter le pipeline de recrutement :} Le recruteur fait progresser chaque candidat d'étape en étape (Gaming $\rightarrow$ Technique $\rightarrow$ Architecture $\rightarrow$ RH Fit $\rightarrow$ Décision). Chaque transition déclenche l'envoi automatique d'un e-mail de notification au candidat concerné.
+\end{itemize}
+
+\item \textbf{Pour les managers (Experts évaluateurs) :}
+\begin{itemize}
+    \item \textbf{Consulter les dossiers candidats enrichis :} Le manager accède à des fiches candidats complètes intégrant le score de matching IA (0--100), la recommandation textuelle générée automatiquement, la liste des points forts et des axes d'amélioration identifiés, ainsi que le résultat du test gaming.
+    \item \textbf{Saisir le feedback évaluateur :} À l'issue de chaque entretien (technique ou architecture), le manager consigne son compte-rendu et attribue une note qualitative qui vient compléter le dossier du candidat.
+    \item \textbf{Valider ou refuser un candidat :} Lors de l'étape RH Fit, le manager prend la décision finale en s'appuyant sur la synthèse de l'ensemble des données collectées : score IA, performance au test gaming, retours d'entretiens. L'acceptation fait passer l'opportunité en \textit{Closed Won}, le refus en \textit{Closed Lost}.
+\end{itemize}
+
+\item \textbf{Pour le responsable RH (Gouvernance et Pilotage) :}
+\begin{itemize}
+    \item \textbf{Piloter via les Dashboards et KPIs :} Le responsable RH dispose de tableaux de bord consolidés présentant les métriques essentielles : taux de conversion par étape du pipeline, score moyen des candidats par département, volume de leads actifs, durée moyenne du cycle de recrutement (Time-to-Hire), et répartition des candidatures par source.
+    \item \textbf{Superviser l'Onboarding :} Une fois la décision d'embauche validée, le responsable RH déclenche les processus d'intégration du nouveau collaborateur au sein de l'organisation Talan.
+    \item \textbf{Administrer la plateforme :} Il gère les habilitations utilisateurs, les \texttt{PermissionSets}, les profils Experience Cloud et veille au bon fonctionnement des automatisations (Flows, Triggers).
+\end{itemize}
+
+\item \textbf{Pour le système IA (Acteur système automatisé) :}
+
+Bien que ne constituant pas un acteur humain, le sous-système d'intelligence artificielle joue un rôle central dans l'automatisation du recrutement. Il intervient à trois niveaux :
+
+\begin{itemize}
+    \item \textbf{Scoring NLP des CV :} Dès le rattachement d'un CV à un Lead, le service \texttt{CVScoringService} (classe Apex \texttt{Queueable} avec \texttt{AllowsCallouts}) extrait le contenu textuel du document, construit un prompt contextuel incluant les exigences du poste, et soumet l'ensemble au modèle LLaMA 3.3 70B (température 0.3 pour la constance). L'IA retourne un score sur 100 pondéré selon quatre axes (Compétences Techniques : 40\%, Expérience : 25\%, Formation : 20\%, Soft Skills : 15\%), une recommandation textuelle, et l'identification des points forts et faibles du profil.
+    \item \textbf{Génération dynamique de questions Gaming :} Le service \texttt{GamingQuestionService} adresse un prompt structuré à l'API Groq (température 0.7) détaillant le poste cible, la répartition par type (QCM, puzzle, ordonnancement) et par difficulté (facile, moyen, difficile), ainsi que les contraintes de format (JSON strict, langue française, temps alloué par difficulté). Les 25 questions générées sont insérées dans l'objet \texttt{Gaming\_Question\_\_c} avec l'ensemble des métadonnées (options A à E, réponse correcte, type, difficulté, temps imparti).
+    \item \textbf{Génération de descriptions d'offres :} Le contrôleur \texttt{InternalDashboardController} soumet un brouillon de description au modèle LLaMA 3.3 70B qui le restructure en quatre sections normalisées (introduction, missions, profil recherché, avantages chez Talan) tout en corrigeant la grammaire et l'orthographe.
+\end{itemize}
+
+\end{itemize}
+
+\subsection{Identification des exigences non fonctionnelles}
+
+Au-delà des fonctionnalités métier, la plateforme doit satisfaire un ensemble de propriétés qualitatives qui conditionnent l'expérience utilisateur, la robustesse et la pérennité du système. Ces exigences transversales ont guidé nos choix architecturaux tout au long du développement.
+
+\begin{itemize}
+    \item \textbf{Convivialité et ergonomie :} La plateforme s'appuie sur 18 composants Lightning Web Components (LWC) conçus selon les principes du \textit{Material Design} adapté à l'univers Salesforce. Chaque interface intègre des micro-interactions (transitions CSS, animations de feedback, barres de progression dynamiques) visant à réduire la charge cognitive de l'utilisateur. Le test gaming, par exemple, propose un compte à rebours visuel animé, une révélation progressive du score et des indicateurs colorés de réponse correcte/incorrecte — le tout sans rechargement de page grâce à la réactivité native des LWC.
+
+    \item \textbf{Disponibilité et fiabilité :} L'hébergement intégral sur l'infrastructure Salesforce Cloud garantit un taux de disponibilité conforme aux SLA de la plateforme (99,9\%). Les traitements lourds (scoring IA, génération de questions) sont implémentés en classes \texttt{Queueable} asynchrones, évitant tout blocage de l'interface utilisateur et respectant les \textit{Governor Limits} de Salesforce (100 callouts par transaction, 10 000 lignes DML, etc.).
+
+    \item \textbf{Sécurité :} La sécurité constitue un axe majeur de notre architecture, avec une approche \textit{defense-in-depth} :
+    \begin{itemize}
+        \item \textbf{Authentification renforcée :} Résolution dynamique email $\rightarrow$ username via \texttt{Site.login()}, sans exposition du username Salesforce au candidat.
+        \item \textbf{Réinitialisation par token sécurisé :} Génération d'un aléa cryptographique de 256 bits via \texttt{Crypto.getRandomInteger()} (CSPRNG natif Salesforce). Seul le hash SHA-256 du token est persisté dans \texttt{Password\_Reset\_Token\_\_c} — le token en clair n'existe qu'en mémoire lors de la génération. Chaque token est à usage unique (\texttt{Is\_Used\_\_c}), expire sous 24 heures (\texttt{Expiration\_\_c}) et tolère au maximum 3 tentatives (\texttt{Attempts\_\_c}).
+        \item \textbf{Anti-énumération :} Les messages d'erreur affichés sont volontairement génériques (même réponse pour un token invalide, expiré ou déjà utilisé), empêchant un attaquant de déduire l'existence d'un compte.
+        \item \textbf{Audit et traçabilité :} Chaque opération sensible (génération de token, tentative de login, échec de validation, détection de brute-force) est consignée dans l'objet \texttt{Security\_Audit\_Log\_\_c} avec horodatage, adresse e-mail, niveau de sévérité et détails contextuels.
+        \item \textbf{Protection du test gaming :} Les réponses correctes des questions ne sont jamais transmises au navigateur. La validation s'effectue exclusivement côté serveur via \texttt{validateAnswer()}, éliminant tout risque d'extraction par inspection du code source client.
+        \item \textbf{Contrôle d'accès granulaire :} Un \texttt{PermissionSet} dédié (\texttt{Security\_Objects\_Full\_Access}) gouverne l'accès aux champs des objets sensibles. Le profil Guest du site Experience dispose d'un accès strictement limité aux classes Apex exposées via \texttt{@AuraEnabled}.
+    \end{itemize}
+
+    \item \textbf{Scalabilité :} L'architecture modulaire de la plateforme — 18 composants LWC découplés, 15 classes Apex à responsabilité unique, 3 objets personnalisés extensibles et 2 Record Types paramétrables — favorise l'extension horizontale. L'ajout d'un nouveau type de test, d'un canal de recrutement ou d'un critère de scoring peut se faire sans refactoring de l'existant, en exploitant les mécanismes natifs Salesforce (nouveaux champs, Flows supplémentaires, composants LWC additionnels).
+
+    \item \textbf{Maintenabilité :} Le projet suit rigoureusement le format \textit{SFDX Project} avec une arborescence normalisée (\texttt{force-app/main/default/}). Le déploiement s'opère via \texttt{Salesforce CLI (sf)}, permettant des mises en production reproductibles et versionnées. La séparation claire entre couche de présentation (LWC), couche métier (Apex) et couche de données (Custom Objects + Standard Objects) facilite la localisation des anomalies et l'intégration de correctifs sans effets de bord.
+
+    \item \textbf{Performance :} Les appels à l'API Groq sont encapsulés dans des traitements \texttt{Queueable} asynchrones, libérant immédiatement l'interface utilisateur. Le dashboard recruteur implémente un mécanisme de polling léger (intervalles de 3 secondes, maximum 15 tentatives) pour informer du statut de génération des questions IA, sans surcharger les ressources serveur. La sélection aléatoire des questions gaming repose sur \texttt{Crypto.getRandomInteger()} exécuté côté Apex, éliminant les allers-retours réseau superflus.
+\end{itemize}

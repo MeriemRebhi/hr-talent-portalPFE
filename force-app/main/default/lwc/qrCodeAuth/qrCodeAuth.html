@@ -1,0 +1,12 @@
+<template>
+    <div class="qr-container">
+        <h3>Vérification par QR Code</h3>
+        <canvas lwc:dom="manual" class="qr-canvas"></canvas>
+        <div class="qr-instructions">
+            <p>Scannez ce QR code avec votre mobile pour valider la connexion.</p>
+        </div>
+        <template if:true={isValidated}>
+            <div class="qr-success">✅ Validation réussie !</div>
+        </template>
+    </div>
+</template>

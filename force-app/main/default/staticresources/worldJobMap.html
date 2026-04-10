@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Talan – Carte mondiale des offres</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root {
+            --green:  #34d399;
+            --green2: #059669;
+            --blue:   #38bdf8;
+            --orange: #fb923c;
+            --purple: #a78bfa;
+            --dark:   #0f172a;
+            --card:   rgba(15,23,42,0.92);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,'Segoe UI',sans-serif; background:var(--dark); overflow:hidden; }
+        #map { position:absolute; inset:0; z-index:1; }
+
+        /* ── Loading ── */
+        #loading {
+            position:absolute; inset:0; z-index:3000;
+            background:var(--dark);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+            transition:opacity .6s;
+        }
+        #loading.hidden { opacity:0; pointer-events:none; }
+        .load-logo { font-size:30px; font-weight:900; color:#fff; letter-spacing:-1px; }
+        .load-logo span { color:var(--green); }
+        .load-bar { width:100px; height:3px; background:rgba(255,255,255,.1); border-radius:10px; overflow:hidden; }
+        .load-bar-inner { height:100%; background:linear-gradient(90deg,var(--green2),var(--green)); animation:loadBar 1.4s ease-in-out infinite; }
+        @keyframes loadBar { 0%{width:0} 50%{width:100%} 100%{width:0} }
+        .load-text { font-size:12px; color:rgba(255,255,255,.4); }
+
+        /* ── Title ── */
+        #title-box {
+            position:absolute; top:14px; left:14px; z-index:1000;
+            background:rgba(15,23,42,.88);
+            backdrop-filter:blur(16px);
+            border:1px solid rgba(52,211,153,.25);
+            border-radius:14px; padding:10px 16px;
+            box-shadow:0 4px 24px rgba(0,0,0,.35);
+        }
+        .title-logo { font-size:17px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+        .title-logo span { color:var(--green); }
+        .title-sub { font-size:10px; color:rgba(255,255,255,.45); margin-top:2px; letter-spacing:.4px; }
+
+        /* ── Stats Bar ── */
+        #stats-bar {
+            position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:1000;
+            display:flex; align-items:center; gap:16px;
+            background:rgba(15,23,42,.85);
+            backdrop-filter:blur(20px);
+            border:1px solid rgba(255,255,255,.1);
+            border-radius:50px; padding:9px 22px;
+            box-shadow:0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(52,211,153,.15);
+            white-space:nowrap;
+        }
+        .sp { display:flex; align-items:center; gap:6px; font-size:13px; color:rgba(255,255,255,.75); }
+        .sp strong { color:var(--green); font-size:15px; font-weight:800; }
+        .sdiv { width:1px; height:22px; background:rgba(255,255,255,.12); }
+
+        /* ── Filters ── */
+        #filters {
+            position:absolute; bottom:48px; left:50%; transform:translateX(-50%);
+            z-index:1000; display:flex; gap:7px; flex-wrap:wrap; justify-content:center;
+            max-width:85%;
+        }
+        .fc {
+            background:rgba(15,23,42,.82); backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.12); border-radius:20px;
+            padding:6px 15px; font-size:12px; color:rgba(255,255,255,.65);
+            cursor:pointer; transition:all .2s; white-space:nowrap; font-family:inherit;
+        }
+        .fc:hover,.fc.on { background:var(--green2); border-color:var(--green); color:#fff; box-shadow:0 0 14px rgba(52,211,153,.3); }
+
+        /* ── Legend ── */
+        #legend {
+            position:absolute; bottom:86px; right:14px; z-index:1000;
+            background:rgba(15,23,42,.88); backdrop-filter:blur(16px);
+            border:1px solid rgba(255,255,255,.1); border-radius:14px;
+            padding:14px 16px; box-shadow:0 8px 32px rgba(0,0,0,.4);
+        }
+        .leg-t { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+        .leg-r { display:flex; align-items:center; gap:8px; font-size:12px; color:rgba(255,255,255,.75); margin-bottom:7px; }
+        .leg-r:last-child { margin-bottom:0; }
+        .leg-d { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+
+        /* ── Leaflet overrides ── */
+        .leaflet-popup-content-wrapper {
+            background:rgba(15,23,42,.96) !important;
+            backdrop-filter:blur(20px) !important;
+            border:1px solid rgba(255,255,255,.1) !important;
+            border-radius:18px !important;
+            box-shadow:0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(52,211,153,.12) !important;
+            color:#fff !important; padding:0 !important; min-width:240px;
+        }
+        .leaflet-popup-tip-container { display:none !important; }
+        .leaflet-popup-close-button { color:rgba(255,255,255,.35) !important; top:14px !important; right:14px !important; font-size:18px !important; z-index:10; }
+        .leaflet-popup-close-button:hover { color:#fff !important; }
+        .leaflet-popup-content { margin:0 !important; width:auto !important; }
+        .leaflet-control-zoom { border:none !important; box-shadow:0 4px 16px rgba(0,0,0,.45) !important; }
+        .leaflet-control-zoom a {
+            background:rgba(15,23,42,.9) !important; color:rgba(255,255,255,.8) !important;
+            border:1px solid rgba(255,255,255,.1) !important;
+        }
+        .leaflet-control-zoom a:hover { background:rgba(5,150,105,.8) !important; color:#fff !important; }
+        .leaflet-control-attribution { background:rgba(15,23,42,.6) !important; color:rgba(255,255,255,.3) !important; font-size:9px !important; }
+        .leaflet-control-attribution a { color:rgba(255,255,255,.35) !important; }
+
+        /* ── Popup card ── */
+        .pc { padding:20px 22px 22px; }
+        .pc-badge {
+            display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase;
+            letter-spacing:.9px; padding:3px 11px; border-radius:20px; margin-bottom:11px;
+        }
+        .pc-badge.off { background:rgba(52,211,153,.15); color:var(--green); border:1px solid rgba(52,211,153,.3); }
+        .pc-badge.job { background:rgba(56,189,248,.15); color:var(--blue);  border:1px solid rgba(56,189,248,.3); }
+        .pc-badge.me  { background:rgba(251,146,60,.15);  color:var(--orange);border:1px solid rgba(251,146,60,.3); }
+        .pc-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:10px; line-height:1.35; }
+        .pc-rows { display:flex; flex-direction:column; gap:6px; }
+        .pc-row { display:flex; align-items:center; gap:7px; font-size:12px; color:rgba(255,255,255,.58); }
+        .pc-row svg { width:13px; height:13px; flex-shrink:0; color:rgba(255,255,255,.35); }
+
+        /* ── Keyframes for inline marker animations ── */
+        @keyframes pr { 0%{transform:scale(.8);opacity:.8} 100%{transform:scale(2.2);opacity:0} }
+        @keyframes jp { 0%{opacity:.6;transform:scale(.7)} 100%{opacity:0;transform:scale(2.4)} }
+    </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+    <div class="load-logo">talan<span>.</span></div>
+    <div class="load-bar"><div class="load-bar-inner"></div></div>
+    <div class="load-text">Chargement de la carte mondiale...</div>
+</div>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Title -->
+<div id="title-box">
+    <div class="title-logo">talan<span>.</span></div>
+    <div class="title-sub">Carte mondiale des offres</div>
+</div>
+
+<!-- Stats -->
+<div id="stats-bar">
+    <div class="sp"><strong id="sj">—</strong> offres</div>
+    <div class="sdiv"></div>
+    <div class="sp"><strong id="sc">—</strong> pays</div>
+    <div class="sdiv"></div>
+    <div class="sp"><strong id="so">17</strong> bureaux</div>
+</div>
+
+<!-- Filters -->
+<div id="filters"></div>
+
+<!-- Legend -->
+<div id="legend">
+    <div class="leg-t">Légende</div>
+    <div class="leg-r"><div class="leg-d" style="background:#34d399;box-shadow:0 0 8px #34d399;"></div>Bureau Talan</div>
+    <div class="leg-r"><div class="leg-d" style="background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></div>Offre d'emploi</div>
+    <div class="leg-r"><div class="leg-d" style="background:#fb923c;box-shadow:0 0 8px #fb923c;"></div>Ma localisation</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+// TALAN OFFICES — 17 bureaux dans le monde
+// ═══════════════════════════════════════════════════
+const OFFICES = [
+    { name:'Paris (Siège)',    country:'France',         lat:48.8566,  lng:2.3522,   teams:['IT','Finance','RH','Data','Cloud','Conseil'] },
+    { name:'Lyon',             country:'France',         lat:45.7640,  lng:4.8357,   teams:['IT','Conseil'] },
+    { name:'Toulouse',         country:'France',         lat:43.6047,  lng:1.4442,   teams:['IT','Aéronautique'] },
+    { name:'Bordeaux',         country:'France',         lat:44.8378,  lng:-0.5792,  teams:['IT'] },
+    { name:'Nantes',           country:'France',         lat:47.2184,  lng:-1.5536,  teams:['IT','Finance'] },
+    { name:'Lille',            country:'France',         lat:50.6292,  lng:3.0573,   teams:['IT'] },
+    { name:'Tunis',            country:'Tunisie',        lat:36.8065,  lng:10.1815,  teams:['IT','Dev','Data','Cloud'] },
+    { name:'Casablanca',       country:'Maroc',          lat:33.5731,  lng:-7.5898,  teams:['IT','Finance'] },
+    { name:'Bruxelles',        country:'Belgique',       lat:50.8503,  lng:4.3517,   teams:['IT','Finance','Banque'] },
+    { name:'Luxembourg',       country:'Luxembourg',     lat:49.6117,  lng:6.1319,   teams:['Finance','Banque'] },
+    { name:'Madrid',           country:'Espagne',        lat:40.4168,  lng:-3.7038,  teams:['IT','Conseil'] },
+    { name:'Montréal',         country:'Canada',         lat:45.5017,  lng:-73.5673, teams:['IT','Data'] },
+    { name:'Dakar',            country:'Sénégal',        lat:14.6928,  lng:-17.4467, teams:['IT','Télécoms'] },
+    { name:'Abidjan',          country:"Côte d'Ivoire",  lat:5.3600,   lng:-4.0083,  teams:['IT','Finance'] },
+    { name:'São Paulo',        country:'Brésil',         lat:-23.5505, lng:-46.6333, teams:['IT','Conseil'] },
+    { name:'Genève',           country:'Suisse',         lat:46.2044,  lng:6.1432,   teams:['Finance','Conseil'] },
+    { name:'Amsterdam',        country:'Pays-Bas',       lat:52.3676,  lng:4.9041,   teams:['IT','Data','Finance'] },
+];
+
+// ═══════════════════════════════════════════════════
+// GEOCODING — villes → coordonnées
+// ═══════════════════════════════════════════════════
+const COORDS = {
+    // Tunisie
+    'tunis':[36.8065,10.1815], 'sfax':[34.7406,10.7603], 'sousse':[35.8245,10.6346],
+    'ariana':[36.8625,10.1956], 'el ghazala':[36.8667,10.1833], 'la marsa':[36.8784,10.3247],
+    'monastir':[35.7779,10.8262], 'bizerte':[37.2745,9.8739], 'kairouan':[35.6781,10.0962],
+    'nabeul':[36.4561,10.7376], 'gabès':[33.8832,10.0982],
+    // France
+    'paris':[48.8566,2.3522], 'lyon':[45.7640,4.8357], 'toulouse':[43.6047,1.4442],
+    'bordeaux':[44.8378,-0.5792], 'nantes':[47.2184,-1.5536], 'lille':[50.6292,3.0573],
+    'strasbourg':[48.5734,7.7521], 'marseille':[43.2965,5.3698], 'nice':[43.7102,7.2620],
+    'montpellier':[43.6108,3.8767], 'rennes':[48.1173,-1.6778], 'grenoble':[45.1885,5.7245],
+    'dijon':[47.3220,5.0415], 'rouen':[49.4432,1.0993], 'reims':[49.2583,4.0317],
+    // Maroc
+    'casablanca':[33.5731,-7.5898], 'rabat':[33.9716,-6.8498], 'marrakech':[31.6295,-7.9811],
+    'fès':[34.0181,-5.0078], 'tanger':[35.7673,-5.7998],
+    // Belgique
+    'bruxelles':[50.8503,4.3517], 'brussels':[50.8503,4.3517], 'anvers':[51.2194,4.4025],
+    'gand':[51.0543,3.7174], 'liège':[50.6452,5.5731],
+    // Luxembourg
+    'luxembourg':[49.6117,6.1319],
+    // Pays-Bas
+    'amsterdam':[52.3676,4.9041], 'rotterdam':[51.9244,4.4777], 'la haye':[52.0705,4.3007],
+    // Allemagne
+    'frankfurt':[50.1109,8.6821], 'berlin':[52.5200,13.4050], 'munich':[48.1351,11.5820],
+    'hambourg':[53.5511,9.9937], 'cologne':[50.9333,6.9500], 'düsseldorf':[51.2217,6.7762],
+    // Espagne
+    'madrid':[40.4168,-3.7038], 'barcelone':[41.3851,2.1734], 'barcelona':[41.3851,2.1734],
+    'séville':[37.3891,-5.9845], 'valence':[39.4699,-0.3763],
+    // UK
+    'london':[51.5074,-0.1278], 'londres':[51.5074,-0.1278], 'manchester':[53.4808,-2.2426],
+    // Suisse
+    'genève':[46.2044,6.1432], 'geneva':[46.2044,6.1432], 'zürich':[47.3769,8.5417],
+    'zurich':[47.3769,8.5417], 'bâle':[47.5596,7.5886],
+    // Canada
+    'montréal':[45.5017,-73.5673], 'montreal':[45.5017,-73.5673],
+    'toronto':[43.6532,-79.3832], 'vancouver':[49.2827,-123.1207],
+    // USA
+    'new york':[40.7128,-74.0060], 'washington':[38.9072,-77.0369],
+    'los angeles':[34.0522,-118.2437], 'chicago':[41.8781,-87.6298],
+    // Brésil
+    'são paulo':[-23.5505,-46.6333], 'sao paulo':[-23.5505,-46.6333],
+    'rio de janeiro':[-22.9068,-43.1729],
+    // Sénégal
+    'dakar':[14.6928,-17.4467],
+    // Côte d'Ivoire
+    "côte d'ivoire":[5.3600,-4.0083], 'abidjan':[5.3600,-4.0083],
+    // UAE
+    'dubai':[25.2048,55.2708], 'dubaï':[25.2048,55.2708], 'abu dhabi':[24.4539,54.3773],
+    // Singapour
+    'singapour':[1.3521,103.8198], 'singapore':[1.3521,103.8198],
+    // Italie
+    'rome':[41.9028,12.4964], 'milan':[45.4654,9.1859],
+    // Portugal
+    'lisbonne':[38.7169,-9.1395], 'porto':[41.1579,-8.6291],
+    // Pologne
+    'varsovie':[52.2297,21.0122], 'cracovie':[50.0647,19.9450],
+    // Suède
+    'stockholm':[59.3293,18.0686], 'göteborg':[57.7089,11.9746],
+    // Norvège
+    'oslo':[59.9139,10.7522],
+    // Danemark
+    'copenhague':[55.6761,12.5683],
+    // Australie
+    'sydney':[-33.8688,151.2093], 'melbourne':[-37.8136,144.9631],
+};
+
+// ═══════════════════════════════════════════════════
+// DEPT COLORS
+// ═══════════════════════════════════════════════════
+const DC = {
+    'IT':'#38bdf8','Finance':'#a78bfa','RH':'#fb7185','Data':'#34d399',
+    'Cloud':'#60a5fa','Marketing':'#fbbf24','Conseil':'#f472b6',
+    'Dev':'#38bdf8','Télécoms':'#2dd4bf','Banque':'#818cf8'
+};
+function deptColor(d){ return DC[d]||'#38bdf8'; }
+
+// ═══════════════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════════════
+let map, jobMarkers=[], candidateMarker=null, jobsData=[];
+
+function initMap(){
+    map = L.map('map',{ center:[25,10], zoom:2, zoomControl:true, attributionControl:true });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+        attribution:'&copy;<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy;<a href="https://carto.com/attributions">CARTO</a>',
+        subdomains:'abcd', maxZoom:19
+    }).addTo(map);
+
+    // Talan offices
+    OFFICES.forEach(o=>{
+        L.marker([o.lat,o.lng],{ icon:officeIcon() })
+         .bindPopup(officePopup(o),{ maxWidth:290 })
+         .addTo(map);
+    });
+
+    // Listen postMessage from parent LWC
+    window.addEventListener('message',e=>{
+        if(e.data && e.data.type==='INIT_MAP') renderJobs(e.data);
+    });
+
+    // Notify parent we're ready
+    try{ window.parent.postMessage({ type:'MAP_READY' },'*'); }catch(e){}
+
+    setTimeout(()=>{ document.getElementById('loading').classList.add('hidden'); },900);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER JOBS
+// ═══════════════════════════════════════════════════
+function renderJobs(data){
+    jobsData = data.jobPostings||[];
+
+    // Clear old job markers
+    jobMarkers.forEach(m=>map.removeLayer(m));
+    jobMarkers=[];
+
+    // Candidate location
+    if(data.candidateCity){
+        const c=getCoords(data.candidateCity);
+        if(c){
+            if(candidateMarker) map.removeLayer(candidateMarker);
+            candidateMarker=L.marker(c,{ icon:candidateIcon(), zIndexOffset:500 })
+                .bindPopup(mePopup(data.candidateCity),{ maxWidth:240 })
+                .addTo(map);
+        }
+    }
+
+    // Stats
+    const countries=new Set();
+    const depts=new Set(['Tous']);
+
+    jobsData.forEach(j=>{
+        if(j.department) depts.add(j.department);
+        const c=getCoords(j.location);
+        if(!c) return;
+        const city=(j.location||'').toLowerCase().trim();
+        countries.add(city);
+        const m=L.marker(c,{ icon:jobIcon(j.department) })
+            .bindPopup(jobPopup(j),{ maxWidth:300 });
+        m._dept=j.department||'';
+        m.addTo(map);
+        jobMarkers.push(m);
+    });
+
+    document.getElementById('sj').textContent=jobsData.length;
+    document.getElementById('sc').textContent=countries.size||'—';
+    buildFilters([...depts]);
+}
+
+function buildFilters(depts){
+    const el=document.getElementById('filters');
+    el.innerHTML='';
+    depts.forEach(d=>{
+        const b=document.createElement('button');
+        b.className='fc'+(d==='Tous'?' on':'');
+        b.textContent=d;
+        b.onclick=()=>{
+            document.querySelectorAll('.fc').forEach(x=>x.classList.remove('on'));
+            b.classList.add('on');
+            filterJobs(d==='Tous'?null:d);
+        };
+        el.appendChild(b);
+    });
+}
+
+function filterJobs(dept){
+    jobMarkers.forEach(m=>{
+        if(!dept||m._dept===dept){ m.addTo(map); }
+        else{ map.removeLayer(m); }
+    });
+}
+
+function getCoords(loc){
+    if(!loc) return null;
+    const k=loc.toLowerCase().trim();
+    return COORDS[k]||null;
+}
+
+// ═══════════════════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════════════════
+function officeIcon(){
+    const s=`<svg width="15" height="15" viewBox="0 0 24 24" fill="white"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9m6 12V9" stroke="rgba(255,255,255,.4)" stroke-width="1.5" fill="none"/></svg>`;
+    return L.divIcon({ className:'', html:`
+        <div style="position:relative;width:34px;height:34px;">
+            <div style="position:absolute;inset:-9px;border-radius:50%;border:1.5px solid rgba(52,211,153,.5);animation:pr 2.2s ease-out infinite;"></div>
+            <div style="position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(52,211,153,.22);animation:pr 2.8s .4s ease-out infinite;"></div>
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#166534,#059669);display:flex;align-items:center;justify-content:center;box-shadow:0 0 22px rgba(52,211,153,.65),0 4px 14px rgba(0,0,0,.55);border:2px solid rgba(52,211,153,.7);">${s}</div>
+        </div>`, iconSize:[34,34], iconAnchor:[17,17], popupAnchor:[0,-22] });
+}
+
+function jobIcon(dept){
+    const color=deptColor(dept);
+    const s=`<svg width="11" height="11" viewBox="0 0 24 24" fill="white"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="rgba(255,255,255,.5)" stroke-width="1.5" fill="none"/></svg>`;
+    return L.divIcon({ className:'', html:`
+        <div style="position:relative;width:26px;height:26px;">
+            <div style="position:absolute;inset:-7px;border-radius:50%;background:${color};opacity:0;animation:jp 2.6s ease-out infinite;"></div>
+            <div style="width:26px;height:26px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px ${color}bb,0 3px 10px rgba(0,0,0,.5);border:2.5px solid rgba(255,255,255,.35);">${s}</div>
+        </div>`, iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-18] });
+}
+
+function candidateIcon(){
+    const s=`<svg width="17" height="17" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>`;
+    return L.divIcon({ className:'', html:`
+        <div style="position:relative;width:38px;height:38px;">
+            <div style="position:absolute;inset:-7px;border-radius:50%;background:#fb923c;opacity:0;animation:jp 2.1s ease-out infinite;"></div>
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ea580c,#fb923c);display:flex;align-items:center;justify-content:center;box-shadow:0 0 22px rgba(251,146,60,.7),0 4px 14px rgba(0,0,0,.55);border:2.5px solid rgba(255,255,255,.5);">${s}</div>
+        </div>`, iconSize:[38,38], iconAnchor:[19,19], popupAnchor:[0,-26] });
+}
+
+// ═══════════════════════════════════════════════════
+// POPUPS
+// ═══════════════════════════════════════════════════
+const PIN=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const DEPT_IC=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`;
+const CLK=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const GLOBE=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+const TEAM=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+const DOC=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+const USR=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+
+function officePopup(o){
+    return `<div class="pc">
+        <span class="pc-badge off">Bureau Talan</span>
+        <div class="pc-title">${o.name}</div>
+        <div class="pc-rows">
+            <div class="pc-row">${GLOBE}<span>${o.country}</span></div>
+            <div class="pc-row">${TEAM}<span>${o.teams.join(' &middot; ')}</span></div>
+        </div>
+    </div>`;
+}
+
+function jobPopup(j){
+    const cd=j.closeDate ? new Date(j.closeDate).toLocaleDateString('fr-FR') : '—';
+    return `<div class="pc">
+        <span class="pc-badge job">Offre d'emploi</span>
+        <div class="pc-title">${j.name}</div>
+        <div class="pc-rows">
+            ${j.location?`<div class="pc-row">${PIN}<span>${j.location}</span></div>`:''}
+            ${j.department?`<div class="pc-row">${DEPT_IC}<span>${j.department}</span></div>`:''}
+            ${j.contractType?`<div class="pc-row">${DOC}<span>${j.contractType}</span></div>`:''}
+            <div class="pc-row">${CLK}<span>Clôture&nbsp;: ${cd}</span></div>
+        </div>
+    </div>`;
+}
+
+function mePopup(city){
+    return `<div class="pc">
+        <span class="pc-badge me">Ma localisation</span>
+        <div class="pc-title">${city}</div>
+        <div class="pc-rows">
+            <div class="pc-row">${USR}<span>Votre position actuelle</span></div>
+        </div>
+    </div>`;
+}
+
+// Start
+window.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>

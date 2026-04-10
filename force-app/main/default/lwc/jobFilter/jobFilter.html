@@ -1,0 +1,94 @@
+<template>
+  <!-- Top Navigation Bar -->
+  <div class="topnav">
+    <div class="topnav-left">
+      <button class="topnav-home" onclick={goHome}>
+        <svg class="topnav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+        Accueil
+      </button>
+      <span class="topnav-sep">/</span>
+      <span class="topnav-current">Offres d'emploi</span>
+    </div>
+    <button class="topnav-cta" onclick={goHome}>
+      <svg class="topnav-cta-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+      Retour
+    </button>
+  </div>
+
+  <div class="filter-card">
+
+    <div class="filter-header">
+      <span class="filter-title">🔎 Rechercher une offre</span>
+      <button class="reset-btn" onclick={handleReset}>Réinitialiser</button>
+    </div>
+
+    <div class="filter-body">
+
+      <!-- Recherche mot clé -->
+      <div class="filter-group full-width">
+        <label class="filter-label">Mot clé</label>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Poste, compétence, description..."
+            value={keyword}
+            onkeyup={handleKeyword}
+          />
+        </div>
+      </div>
+
+      <!-- Localisation -->
+      <div class="filter-group">
+        <label class="filter-label">📍 Localisation</label>
+        <select class="filter-select" onchange={handleLocalisation}>
+          <option value="">Toutes</option>
+          <option value="Tunis">Tunis</option>
+          <option value="Casablanca">Casablanca</option>
+          <option value="Rabat">Rabat</option>
+          <option value="Remote">Remote</option>
+          <option value="Paris">Paris</option>
+        </select>
+      </div>
+
+      <!-- Type de Contrat -->
+      <div class="filter-group">
+        <label class="filter-label">💼 Type de Contrat</label>
+        <select class="filter-select" onchange={handleContrat}>
+          <option value="">Tous</option>
+          <option value="CDI">CDI</option>
+          <option value="CDD">CDD</option>
+          <option value="Stage">Stage</option>
+          <option value="Freelance">Freelance</option>
+          <option value="Alternance">Alternance</option>
+        </select>
+      </div>
+
+      <!-- Département -->
+      <div class="filter-group">
+        <label class="filter-label">🏢 Département</label>
+        <select class="filter-select" onchange={handleDepartement}>
+          <option value="">Tous</option>
+          <option value="Data &amp; AI">Data &amp; AI</option>
+          <option value="Digital &amp; Cloud">Digital &amp; Cloud</option>
+          <option value="Consulting">Consulting</option>
+          <option value="Cybersécurité">Cybersécurité</option>
+          <option value="ERP &amp; CRM">ERP &amp; CRM</option>
+          <option value="Stratégie &amp; Management">Stratégie &amp; Management</option>
+          <option value="Innovation &amp; R&amp;D">Innovation &amp; R&amp;D</option>
+          <option value="Fonctions Support">Fonctions Support</option>
+          <option value="Talent &amp; RH">Talent &amp; RH</option>
+          <option value="Salesforce">Salesforce</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Résultats count -->
+    <div class="filter-footer">
+      <span class="results-count">{resultsLabel}</span>
+    </div>
+
+  </div>
+</template>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Application</fullName>
+    <active>true</active>
+    <businessProcess>HR_Talent_Process</businessProcess>
+    <description>Candidatures soumises via le portail RH</description>
+    <label>Application</label>
+</RecordType>

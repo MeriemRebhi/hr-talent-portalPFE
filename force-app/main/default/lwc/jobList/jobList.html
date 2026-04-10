@@ -1,0 +1,142 @@
+<template>
+  <div class="wrap">
+
+    <div class="header">
+      <span class="kicker">HR Talent Intelligence</span>
+      <h2 class="title">Offres disponibles<span class="dot">.</span></h2>
+      <p class="subtitle">Explorez les meilleures opportunités et lancez votre carrière.</p>
+    </div>
+
+    <template if:true={isLoading}>
+      <div class="loading">⏳ Chargement des offres...</div>
+    </template>
+
+    <template if:true={errorMessage}>
+      <div class="error">⚠️ {errorMessage}</div>
+    </template>
+
+    <!-- Filtre -->
+    <c-job-filter
+      onfilter={handleFilter}
+      total-results={jobs.length}>
+    </c-job-filter>
+
+    <!-- Job Cards Grid -->
+    <div class="grid">
+      <template for:each={jobs} for:item="job">
+        <article key={job.Id} class="card">
+
+          <div class="cardTop">
+            <h3 class="jobTitle">{job.Name}</h3>
+            <template if:true={job.Type_de_Contrat__c}>
+              <span class="badge">{job.Type_de_Contrat__c}</span>
+            </template>
+          </div>
+
+          <div class="meta">
+            <div class="metaRow">
+              <span class="label">📍 Localisation</span>
+              <span class="value">{job.Localisation__c}</span>
+            </div>
+            <template if:true={job.Departement__c}>
+              <div class="metaRow">
+                <span class="label">🏢 Département</span>
+                <span class="value">{job.Departement__c}</span>
+              </div>
+            </template>
+            <div class="metaRow">
+              <span class="label">💰 Salaire</span>
+              <span class="value">{job.Salaire_Propos__c} TND</span>
+            </div>
+            <div class="metaRow">
+              <span class="label">📅 Date limite</span>
+              <span class="value">{job.CloseDate}</span>
+            </div>
+          </div>
+
+          <div class="description-preview">
+            <h4 class="desc-label">📝 Description</h4>
+            <p class="job-excerpt">{job.Description_Poste__c}</p>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-secondary" data-id={job.Id} onclick={handleSeeMore}>
+              Voir plus
+            </button>
+            <button class="btn btn-primary" data-id={job.Id} onclick={handleApply}>
+              Postuler →
+            </button>
+          </div>
+
+        </article>
+      </template>
+    </div>
+
+  </div>
+
+  <!-- Modal Détails Offre -->
+  <template if:true={showDetailModal}>
+    <div class="modal-overlay" onclick={closeDetailModal}>
+      <div class="modal-content" onclick={stopPropagation}>
+        <button class="modal-close" onclick={closeDetailModal}>✕</button>
+
+        <div class="modal-header">
+          <h2 class="modal-title">{selectedJob.Name}</h2>
+          <template if:true={selectedJob.Type_de_Contrat__c}>
+            <span class="modal-badge">{selectedJob.Type_de_Contrat__c}</span>
+          </template>
+        </div>
+
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">📍 Localisation</span>
+              <span class="detail-value">{selectedJob.Localisation__c}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">💼 Type de Contrat</span>
+              <span class="detail-value">{selectedJob.Type_de_Contrat__c}</span>
+            </div>
+            <template if:true={selectedJob.Departement__c}>
+              <div class="detail-item">
+                <span class="detail-label">🏢 Département</span>
+                <span class="detail-value">{selectedJob.Departement__c}</span>
+              </div>
+            </template>
+            <div class="detail-item">
+              <span class="detail-label">💰 Salaire</span>
+              <span class="detail-value">{selectedJob.Salaire_Propos__c} TND</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">📅 Date limite</span>
+              <span class="detail-value">{selectedJob.CloseDate}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>📝 Description du poste</h4>
+            <p>{selectedJob.Description_Poste__c}</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick={closeDetailModal}>Fermer</button>
+          <button class="btn btn-primary" data-id={selectedJob.Id} onclick={handleApplyFromModal}>
+            Postuler maintenant →
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </template>
+
+  <!-- Application Form -->
+  <template if:true={showApplicationForm}>
+    <c-application-form
+      is-open={showApplicationForm}
+      onclose={closeApplicationForm}
+      job-id={selectedJobId}>
+    </c-application-form>
+  </template>
+
+</template>

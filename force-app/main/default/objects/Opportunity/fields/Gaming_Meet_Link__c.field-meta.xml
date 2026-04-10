@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Gaming_Meet_Link__c</fullName>
+    <description>Lien du test Gaming</description>
+    <externalId>false</externalId>
+    <label>Lien Meet Gaming</label>
+    <required>false</required>
+    <type>Url</type>
+</CustomField>

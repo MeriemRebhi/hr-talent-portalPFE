@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Attempts__c</fullName>
+    <defaultValue>0</defaultValue>
+    <description>Nombre de tentatives d utilisation du token - max 3 pour le rate limiting</description>
+    <label>Attempts</label>
+    <precision>2</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

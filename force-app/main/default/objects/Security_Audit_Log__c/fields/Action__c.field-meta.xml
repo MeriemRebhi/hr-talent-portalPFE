@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Action__c</fullName>
+    <description>Type d action: PASSWORD_SET, PASSWORD_CHANGE, TOKEN_CREATED, TOKEN_EXPIRED, TOKEN_FAILED, ACCOUNT_CREATED, LOGIN_FAILED_RATE_LIMIT</description>
+    <label>Action</label>
+    <length>50</length>
+    <required>true</required>
+    <type>Text</type>
+</CustomField>

@@ -1,0 +1,420 @@
+<template>
+
+    <!-- ══════ LOADING ══════ -->
+    <template if:true={isLoading}>
+        <div class="gt-shell gt-center">
+            <div class="gt-spinner"></div>
+            <p class="gt-loading-txt">Chargement du test...</p>
+        </div>
+    </template>
+
+    <!-- ══════ ERROR ══════ -->
+    <template if:true={isError}>
+        <div class="gt-shell gt-center">
+            <div class="gt-error-icon">
+                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <h2 class="gt-error-title">Impossible de charger le test</h2>
+            <p class="gt-error-sub">Vérifiez le lien ou contactez le recruteur.</p>
+            <template if:true={errorDetail}>
+                <p class="gt-error-sub" style="margin-top:8px;font-size:12px;opacity:.7;">{errorDetail}</p>
+            </template>
+        </div>
+    </template>
+
+    <!-- ══════ ALREADY COMPLETED ══════ -->
+    <template if:true={isAlreadyDone}>
+        <div class="gt-shell gt-center">
+            <div class="gt-done-icon">
+                <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#2F7D59" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h2 class="gt-done-title">Test déjà complété</h2>
+            <p class="gt-done-sub">Votre score : <strong>{existingScore}%</strong></p>
+            <p class="gt-done-info">Le recruteur a été notifié de vos résultats.</p>
+            <button class="gt-back-login-btn" onclick={goToLogin}>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Retour à la connexion
+            </button>
+        </div>
+    </template>
+
+    <!-- ══════ NOT SCHEDULED ══════ -->
+    <template if:true={isNotScheduled}>
+        <div class="gt-shell gt-center">
+            <div class="gt-wait-icon">
+                <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#667eea" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h2 class="gt-wait-title">Test pas encore planifié</h2>
+            <p class="gt-wait-sub">Bonjour <strong>{candidateName}</strong>,</p>
+            <p class="gt-wait-info">Votre test Gaming n'a pas encore été planifié par le recruteur.<br/>Vous recevrez un email d'invitation avec la date et le lien d'accès.</p>
+            <div class="gt-wait-hint">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span>Vérifiez votre boîte email pour l'invitation.</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════ TOO EARLY — date not reached ══════ -->
+    <template if:true={isTooEarly}>
+        <div class="gt-shell gt-center">
+            <div class="gt-wait-icon">
+                <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h2 class="gt-wait-title">Test pas encore disponible</h2>
+            <p class="gt-wait-sub">Bonjour <strong>{candidateName}</strong>,</p>
+            <p class="gt-wait-info">Votre test Gaming est planifié pour le :<br/><strong>{scheduledDateFmt}</strong></p>
+            <p class="gt-wait-info" style="margin-top:8px;opacity:.7;">Revenez à la date et l'heure prévues pour commencer le test.</p>
+            <div class="gt-wait-hint">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Le lien sera actif à partir de la date planifiée.</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════ WELCOME SCREEN ══════ -->
+    <template if:true={isWelcome}>
+        <div class="gt-shell">
+            <div class="gt-welcome">
+                <div class="gt-welcome-glow"></div>
+                <div class="gt-welcome-content">
+                    <!-- Header -->
+                    <div class="gt-w-header">
+                        <div class="gt-w-icon">
+                            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="6" width="20" height="12" rx="3"/>
+                                <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+                                <circle cx="16" cy="11" r="1" fill="currentColor"/>
+                                <circle cx="18" cy="13" r="1" fill="currentColor"/>
+                                <circle cx="14" cy="13" r="1" fill="currentColor"/>
+                                <circle cx="16" cy="15" r="1" fill="currentColor"/>
+                                <line x1="6" y1="10" x2="10" y2="10"/>
+                                <line x1="8" y1="8" x2="8" y2="12"/>
+                            </svg>
+                        </div>
+                        <h1 class="gt-w-title">Test Gaming</h1>
+                        <p class="gt-w-job">{jobTitle}</p>
+                    </div>
+
+                    <!-- Candidate -->
+                    <div class="gt-w-candidate">
+                        <div class="gt-w-avatar">{candidateInitials}</div>
+                        <div>
+                            <p class="gt-w-name">Bienvenue, {candidateName} !</p>
+                            <template if:true={scheduledDateFmt}>
+                                <p class="gt-w-sub">Planifié le {scheduledDateFmt}</p>
+                            </template>
+                            <template if:false={scheduledDateFmt}>
+                                <p class="gt-w-sub">Prêt(e) pour le défi ?</p>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Rules -->
+                    <div class="gt-w-rules">
+                        <div class="gt-w-rule">
+                            <div class="gt-rule-icon gt-rule-q">
+                                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <div>
+                                <p class="gt-rule-title">10 Questions</p>
+                                <p class="gt-rule-desc">Quiz + Puzzles logiques adaptés au poste</p>
+                            </div>
+                        </div>
+                        <div class="gt-w-rule">
+                            <div class="gt-rule-icon gt-rule-t">
+                                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div>
+                                <p class="gt-rule-title">Chronomètre</p>
+                                <p class="gt-rule-desc">30s par question · Bonus vitesse si &lt;15s</p>
+                            </div>
+                        </div>
+                        <div class="gt-w-rule">
+                            <div class="gt-rule-icon gt-rule-s">
+                                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <div>
+                                <p class="gt-rule-title">Score automatique</p>
+                                <p class="gt-rule-desc">≥60% = Passage au stage Technique</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thresholds -->
+                    <div class="gt-w-thresholds">
+                        <div class="gt-th gt-th-green"><span class="gt-th-pct">≥80%</span> Excellent</div>
+                        <div class="gt-th gt-th-blue"><span class="gt-th-pct">≥60%</span> Réussi</div>
+                        <div class="gt-th gt-th-orange"><span class="gt-th-pct">40-59%</span> À revoir</div>
+                        <div class="gt-th gt-th-red"><span class="gt-th-pct">&lt;40%</span> Non retenu</div>
+                    </div>
+
+                    <!-- Anti-cheat warning -->
+                    <div class="gt-anticheat-notice">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        <div>
+                            <strong>Mode sécurisé activé</strong>
+                            <p>Toute tentative de quitter cette fenêtre (changement d'onglet, alt+tab, clic hors fenêtre) entraînera l'arrêt immédiat du test avec un score de 0%.</p>
+                        </div>
+                    </div>
+
+                    <!-- Start -->
+                    <button class="gt-start-btn" onclick={startCountdown}>
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Commencer le test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════ COUNTDOWN 3-2-1 ══════ -->
+    <template if:true={isCountdown}>
+        <div class="gt-shell gt-center">
+            <div class="gt-countdown-num">{countdownNum}</div>
+            <p class="gt-countdown-label">Préparez-vous...</p>
+        </div>
+    </template>
+
+    <!-- ══════ QUIZ ══════ -->
+    <template if:true={isQuiz}>
+        <div class="gt-shell">
+            <div class="gt-quiz">
+                <!-- Top bar -->
+                <div class="gt-q-topbar">
+                    <div class="gt-q-progress-info">
+                        <span class="gt-q-num">Question {questionNumber}/{totalQuestions}</span>
+                        <span class={currentQuestion.diffBadgeClass}>{currentQuestion.diffLabel}</span>
+                    </div>
+                    <!-- Circular Timer -->
+                    <div class={circularTimerClass}>
+                        <svg class="gt-circle-svg" viewBox="0 0 80 80">
+                            <circle class="gt-circle-bg" cx="40" cy="40" r="34"/>
+                            <circle class="gt-circle-fg" cx="40" cy="40" r="34" style={circleStrokeDash}/>
+                        </svg>
+                        <div class="gt-circle-inner">
+                            <span class="gt-circle-time">{timeLeftFormatted}</span>
+                            <span class="gt-circle-label">sec</span>
+                        </div>
+                    </div>
+                    <div class="gt-q-score-live">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        {liveScore} pts
+                    </div>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="gt-q-progress-bar">
+                    <div class="gt-q-progress-fill" style={progressStyle}></div>
+                </div>
+
+                <!-- Question card -->
+                <div class="gt-q-card">
+                    <template if:true={currentQuestion.isOrder}>
+                        <span class="gt-q-type-badge gt-type-order">
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><polyline points="7 3 3 6 7 9"/><polyline points="17 15 21 18 17 21"/></svg>
+                            Remettez dans l'ordre
+                        </span>
+                    </template>
+                    <template if:true={currentQuestion.isPuzzle}>
+                        <span class="gt-q-type-badge gt-type-puzzle">
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                            Puzzle logique
+                        </span>
+                    </template>
+                    <template if:true={currentQuestion.isMcq}>
+                        <span class="gt-q-type-badge gt-type-mcq">
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Quiz technique
+                        </span>
+                    </template>
+
+                    <h2 class="gt-q-text">{currentQuestion.question}</h2>
+
+                    <!-- Order type -->
+                    <template if:true={isOrderQuestion}>
+                        <div class="gt-order-list">
+                            <template for:each={currentQuestion.orderItemsWithState} for:item="item">
+                                <div key={item.key} class={item.itemClass}>
+                                    <span class="gt-order-num">{item.num}</span>
+                                    <span class="gt-order-text">{item.text}</span>
+                                    <div class="gt-order-arrows">
+                                        <template if:true={item.canUp}>
+                                            <button class="gt-order-btn" data-idx={item.idx} onclick={moveOrderUp}>▲</button>
+                                        </template>
+                                        <template if:false={item.canUp}>
+                                            <span class="gt-order-btn-blank"></span>
+                                        </template>
+                                        <template if:true={item.canDown}>
+                                            <button class="gt-order-btn" data-idx={item.idx} onclick={moveOrderDown}>▼</button>
+                                        </template>
+                                        <template if:false={item.canDown}>
+                                            <span class="gt-order-btn-blank"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <template if:false={orderLocked}>
+                            <button class="gt-order-validate" onclick={validateOrder}>
+                                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                Valider l'ordre
+                            </button>
+                        </template>
+                    </template>
+
+                    <!-- MCQ / Puzzle options -->
+                    <template if:true={isMcqOrPuzzle}>
+                        <div class="gt-q-options">
+                            <template for:each={currentQuestion.optionsWithState} for:item="opt">
+                                <button key={opt.index}
+                                    class={opt.cssClass}
+                                    data-index={opt.index}
+                                    onclick={selectAnswer}
+                                    disabled={answered}>
+                                    <span class="gt-opt-letter">{opt.letter}</span>
+                                    <span class="gt-opt-text">{opt.text}</span>
+                                    <template if:true={opt.showCheck}>
+                                        <span class="gt-opt-icon gt-opt-correct">✓</span>
+                                    </template>
+                                    <template if:true={opt.showCross}>
+                                        <span class="gt-opt-icon gt-opt-wrong">✕</span>
+                                    </template>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Speed bonus indicator -->
+                <template if:true={showSpeedBonus}>
+                    <div class="gt-speed-bonus">⚡ +2 pts Bonus Vitesse !</div>
+                </template>
+
+                <!-- Tab switch warning overlay -->
+                <template if:true={showTabWarning}>
+                    <div class="gt-tab-warning">
+                        <div class="gt-tab-warning-box">
+                            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                            <h3 class="gt-tab-warning-title">⚠ Avertissement !</h3>
+                            <p class="gt-tab-warning-text">Vous avez quitté la fenêtre du test. <strong>Au prochain changement d'onglet ou de fenêtre, votre test sera automatiquement terminé avec un score de 0%.</strong></p>
+                            <p class="gt-tab-warning-count">Tentative {tabViolations}/1 — Prochaine = élimination</p>
+                            <button class="gt-tab-warning-btn" onclick={dismissTabWarning}>J'ai compris, continuer le test</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════ TEST TERMINATED (anti-cheat) ══════ -->
+    <template if:true={isTerminated}>
+        <div class="gt-shell gt-center">
+            <div class="gt-terminated">
+                <div class="gt-terminated-icon">
+                    <svg width="72" height="72" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="1.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <h2 class="gt-terminated-title">Test terminé — Violation détectée</h2>
+                <p class="gt-terminated-text">Vous avez quitté la fenêtre du test à plusieurs reprises. Pour des raisons d'intégrité, votre test a été automatiquement arrêté.</p>
+                <div class="gt-terminated-score">
+                    <span class="gt-terminated-score-num">0%</span>
+                    <span class="gt-terminated-score-lbl">Score enregistré</span>
+                </div>
+                <p class="gt-terminated-info">Le recruteur a été notifié. Contactez-le pour toute question.</p>
+                <button class="gt-back-login-btn" onclick={goToLogin}>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Retour à la connexion
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════ RESULTS ══════ -->
+    <template if:true={isResults}>
+        <div class="gt-shell">
+            <div class="gt-results">
+                <template if:true={passed}>
+                    <div class="gt-confetti"></div>
+                </template>
+
+                <!-- Score ring -->
+                <div class="gt-r-ring-wrap">
+                    <svg class="gt-r-ring" viewBox="0 0 120 120">
+                        <circle class="gt-r-ring-bg" cx="60" cy="60" r="52"/>
+                        <circle class={ringFillClass} cx="60" cy="60" r="52"
+                            stroke-dasharray="326.73"
+                            style={ringDashStyle}/>
+                    </svg>
+                    <div class="gt-r-ring-text">
+                        <span class="gt-r-score-num">{displayScore}</span>
+                        <span class="gt-r-score-pct">%</span>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <template if:true={passed}>
+                    <div class="gt-r-status gt-r-passed">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Test réussi !
+                    </div>
+                </template>
+                <template if:false={passed}>
+                    <div class="gt-r-status gt-r-failed">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        Test non réussi
+                    </div>
+                </template>
+
+                <!-- Recommendation -->
+                <p class="gt-r-reco">{recommendation}</p>
+
+                <!-- Stats grid -->
+                <div class="gt-r-stats">
+                    <div class="gt-r-stat">
+                        <span class="gt-r-stat-val">{correctCount}/{totalQuestions}</span>
+                        <span class="gt-r-stat-lbl">Bonnes réponses</span>
+                    </div>
+                    <div class="gt-r-stat">
+                        <span class="gt-r-stat-val">{totalTimeFormatted}</span>
+                        <span class="gt-r-stat-lbl">Temps total</span>
+                    </div>
+                    <div class="gt-r-stat">
+                        <span class="gt-r-stat-val">{speedBonusTotal}</span>
+                        <span class="gt-r-stat-lbl">Bonus vitesse</span>
+                    </div>
+                    <div class="gt-r-stat">
+                        <span class="gt-r-stat-val">{resultStage}</span>
+                        <span class="gt-r-stat-lbl">Nouveau stage</span>
+                    </div>
+                </div>
+
+                <!-- Review answers -->
+                <div class="gt-r-review">
+                    <h3 class="gt-r-review-title">Récapitulatif</h3>
+                    <template for:each={answersReview} for:item="a">
+                        <div key={a.id} class={a.rowClass}>
+                            <span class="gt-rv-num">{a.num}</span>
+                            <span class="gt-rv-q">{a.questionShort}</span>
+                            <span class={a.iconClass}>{a.icon}</span>
+                            <span class="gt-rv-pts">{a.points} pts</span>
+                        </div>
+                    </template>
+                </div>
+                <button class="gt-back-login-btn" onclick={goToLogin}>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Retour à la connexion
+                </button>
+            </div>
+        </div>
+    </template>
+
+</template>

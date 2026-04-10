@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Candidature__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True si cette Opportunity est une candidature (créée par conversion Lead). False si c'est une offre d'emploi Job Posting.</description>
+    <externalId>false</externalId>
+    <label>Est une Candidature</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

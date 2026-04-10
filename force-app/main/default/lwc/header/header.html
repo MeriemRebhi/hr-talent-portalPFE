@@ -1,0 +1,137 @@
+<template>
+    <!-- ═══════ NAVBAR ═══════ -->
+    <nav class="navbar">
+        <div class="nav-wrapper">
+            <div class="logo-section" onclick={handleLogoClick}>
+                <div class="logo-mark">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="logo-info">
+                    <span class="brand-name">Talan Talent</span>
+                    <span class="brand-sub">Intelligence RH</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li><button class="nav-link active" onclick={handleLogoClick}>Accueil</button></li>
+                <li><button class="nav-link" onclick={handleJobsClick}>Offres d'emploi</button></li>
+                <li><button class="nav-link" onclick={handleContactClick}>Contact</button></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="btn-postuler" onclick={handleJobsClick}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                    Postuler
+                </button>
+                <button class="profile-btn" onclick={handleProfileClick}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+            </div>
+
+            <!-- Mobile menu toggle -->
+            <button class="mobile-toggle" onclick={toggleMobileMenu}>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <template if:true={mobileMenuOpen}>
+            <div class="mobile-menu">
+                <button class="mobile-link" onclick={handleLogoClick}>Accueil</button>
+                <button class="mobile-link" onclick={handleJobsClick}>Offres d'emploi</button>
+                <button class="mobile-link" onclick={handleContactClick}>Contact</button>
+                <button class="mobile-link mobile-cta" onclick={handleJobsClick}>Postuler maintenant</button>
+            </div>
+        </template>
+    </nav>
+
+    <!-- ═══════ HERO ═══════ -->
+    <header class="hero">
+        <div class="hero-wrapper">
+            <div class="hero-content">
+                <div class="hero-label">
+                    <span class="label-dot"></span>
+                    Talan Tunisie — Recrutement IA
+                </div>
+
+                <h1 class="hero-heading">
+                    Construisez votre<br/>
+                    <span>carrière tech</span><br/>
+                    avec Talan.
+                </h1>
+
+                <p class="hero-desc">
+                    Rejoignez un leader de la transformation digitale. Notre IA analyse votre parcours et vous connecte aux missions qui correspondent à vos ambitions.
+                </p>
+
+                <div class="hero-actions">
+                    <button class="btn btn-fill" onclick={handleJobsClick}>
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Découvrir les offres
+                    </button>
+                    <button class="btn btn-outline" onclick={handleApplyClick}>
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Déposer mon CV
+                    </button>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat">
+                        <strong>47+</strong>
+                        <span>Postes ouverts</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <strong>1500+</strong>
+                        <span>Talents recrutés</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <strong>98%</strong>
+                        <span>Satisfaction</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="img-wrapper">
+                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600&q=80" alt="Équipe Talan" class="hero-img"/>
+                    <div class="img-overlay"></div>
+                </div>
+
+                <div class="float-card card-top">
+                    <div class="fc-icon fc-icon-ai">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v2H8V6a4 4 0 014-4z"/><rect x="3" y="8" width="18" height="14" rx="2"/><circle cx="9" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-label">IA Matching</div>
+                        <div class="card-val">Score 94%</div>
+                    </div>
+                </div>
+
+                <div class="float-card card-bottom">
+                    <div class="fc-icon fc-icon-job">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-label">Nouveau poste</div>
+                        <div class="card-val">Dev Salesforce</div>
+                    </div>
+                </div>
+
+                <div class="float-card card-left">
+                    <div class="fc-icon fc-icon-ok">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-label">Candidature</div>
+                        <div class="card-val">Acceptée</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-circle circle-1"></div>
+        <div class="bg-circle circle-2"></div>
+    </header>
+</template>

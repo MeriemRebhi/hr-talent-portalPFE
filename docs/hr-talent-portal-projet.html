@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Talent Portal — Présentation du Projet PFE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        :root {
+            --primary: #4f46e5; --primary-d: #3730a3; --primary-l: #eef2ff;
+            --accent: #7c3aed; --accent-l: #f5f3ff;
+            --success: #059669; --success-l: #ecfdf5;
+            --warning: #d97706; --warning-l: #fffbeb;
+            --danger: #dc2626; --danger-l: #fef2f2;
+            --info: #0284c7; --info-l: #f0f9ff;
+            --g50:#f9fafb; --g100:#f3f4f6; --g200:#e5e7eb; --g300:#d1d5db;
+            --g400:#9ca3af; --g500:#6b7280; --g700:#374151; --g900:#111827;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',-apple-system,sans-serif;color:var(--g900);line-height:1.7;background:#fff;font-size:10.5pt;}
+        @media print{
+            body{font-size:9.5pt;}
+            .page-break{page-break-before:always;}
+            .cover{height:100vh;}
+            .no-print{display:none;}
+        }
+
+        /* ── COVER ── */
+        .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+            background:linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%);color:#fff;padding:60px 40px;position:relative;overflow:hidden;}
+        .cover::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.3),transparent 70%);top:-100px;right:-100px;}
+        .cover::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(79,70,229,.25),transparent 70%);bottom:-80px;left:-80px;}
+        .cover *{position:relative;z-index:1;}
+        .cover-badge{display:inline-block;background:rgba(124,58,237,.4);border:1px solid rgba(124,58,237,.6);padding:6px 20px;border-radius:30px;font-size:9pt;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:24px;backdrop-filter:blur(4px);}
+        .cover h1{font-size:38pt;font-weight:900;line-height:1.1;margin-bottom:12px;background:linear-gradient(135deg,#fff,#c7d2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .cover h2{font-size:14pt;font-weight:400;opacity:.85;margin-bottom:40px;max-width:600px;}
+        .cover-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px;width:100%;max-width:600px;}
+        .cover-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px;backdrop-filter:blur(6px);}
+        .cover-stat .num{font-size:24pt;font-weight:800;color:#a5b4fc;}
+        .cover-stat .lbl{font-size:8pt;text-transform:uppercase;letter-spacing:.8px;opacity:.7;}
+        .cover-meta{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px 36px;backdrop-filter:blur(6px);}
+        .cover-meta p{font-size:10pt;opacity:.85;margin:4px 0;}
+        .cover-meta strong{font-weight:600;color:#c7d2fe;}
+
+        /* ── CONTENT ── */
+        .content{max-width:820px;margin:0 auto;padding:40px 50px;}
+        h2{font-size:16pt;font-weight:800;color:var(--g900);margin:36px 0 14px;display:flex;align-items:center;gap:10px;}
+        h2 .icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+        h2 .icon.blue{background:var(--primary-l);color:var(--primary);}
+        h2 .icon.purple{background:var(--accent-l);color:var(--accent);}
+        h2 .icon.green{background:var(--success-l);color:var(--success);}
+        h2 .icon.orange{background:var(--warning-l);color:var(--warning);}
+        h2 .icon.red{background:var(--danger-l);color:var(--danger);}
+        h2 .icon.sky{background:var(--info-l);color:var(--info);}
+        h3{font-size:12pt;font-weight:700;color:var(--g700);margin:18px 0 8px;}
+        p{margin:6px 0;color:var(--g700);}
+
+        /* ── TOC ── */
+        .toc{background:linear-gradient(135deg,var(--primary-l),var(--accent-l));border-radius:14px;padding:24px 30px;margin:20px 0 30px;}
+        .toc h3{margin-top:0;color:var(--primary-d);}
+        .toc ol{padding-left:20px;columns:2;column-gap:30px;}
+        .toc li{padding:4px 0;font-size:10pt;break-inside:avoid;}
+
+        /* ── CARDS ── */
+        .feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:14px 0;}
+        .feature-card{background:var(--g50);border:1px solid var(--g200);border-radius:12px;padding:18px;transition:box-shadow .2s;}
+        .feature-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);}
+        .feature-card h4{font-size:10.5pt;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+        .feature-card h4 .emoji{font-size:16px;}
+        .feature-card p{font-size:9.5pt;margin:0;color:var(--g500);}
+
+        .highlight-box{border-radius:14px;padding:22px 26px;margin:16px 0;}
+        .highlight-box.purple{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;}
+        .highlight-box.blue{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;}
+        .highlight-box.green{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;}
+        .highlight-box.orange{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;}
+        .highlight-box h4{font-size:11pt;font-weight:700;margin-bottom:8px;}
+
+        /* ── PIPELINE ── */
+        .pipeline{display:flex;align-items:center;gap:0;margin:16px 0;flex-wrap:wrap;}
+        .pipe-step{background:white;border:2px solid var(--g200);border-radius:10px;padding:10px 16px;text-align:center;flex:1;min-width:100px;position:relative;}
+        .pipe-step .step-num{font-size:8pt;color:var(--g400);text-transform:uppercase;letter-spacing:.5px;}
+        .pipe-step .step-name{font-weight:700;font-size:9.5pt;}
+        .pipe-step.active{border-color:var(--primary);background:var(--primary-l);}
+        .pipe-arrow{font-size:16px;color:var(--g300);margin:0 -2px;flex-shrink:0;}
+
+        /* ── TABLES ── */
+        table{width:100%;border-collapse:collapse;margin:10px 0;font-size:9pt;}
+        th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--g200);}
+        th{background:var(--g50);font-weight:600;color:var(--g500);font-size:8pt;text-transform:uppercase;letter-spacing:.5px;}
+
+        /* ── CODE ── */
+        code{background:var(--g100);padding:1px 5px;border-radius:4px;font-family:'Fira Code',monospace;font-size:8.5pt;color:#7c3aed;}
+
+        /* ── ARCH ── */
+        .arch-box{background:#1e1e2e;color:#cdd6f4;border-radius:14px;padding:24px;margin:14px 0;font-family:'Fira Code',monospace;font-size:8.5pt;line-height:1.8;white-space:pre;overflow-x:auto;}
+        .arch-box .hl{color:#89b4fa;} .arch-box .gr{color:#a6e3a1;} .arch-box .yl{color:#f9e2af;} .arch-box .pk{color:#f5c2e7;} .arch-box .rd{color:#f38ba8;}
+
+        /* ── BADGES ── */
+        .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+        .badge-p{background:var(--primary-l);color:var(--primary);}
+        .badge-g{background:var(--success-l);color:var(--success);}
+        .badge-o{background:var(--warning-l);color:var(--warning);}
+        .badge-r{background:var(--danger-l);color:var(--danger);}
+        .badge-a{background:var(--accent-l);color:var(--accent);}
+
+        ul,ol{padding-left:20px;margin:6px 0;}
+        li{margin:3px 0;color:var(--g700);font-size:9.5pt;}
+
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;}
+        .stat-card{background:white;border:1px solid var(--g200);border-radius:10px;padding:14px;text-align:center;}
+        .stat-card .num{font-size:22pt;font-weight:800;color:var(--primary);}
+        .stat-card .lbl{font-size:7.5pt;color:var(--g400);text-transform:uppercase;letter-spacing:.5px;}
+
+        .footer{text-align:center;padding:30px;color:var(--g400);font-size:8.5pt;border-top:1px solid var(--g200);margin-top:40px;}
+
+        .img-placeholder{background:var(--g100);border:2px dashed var(--g300);border-radius:12px;padding:40px;text-align:center;color:var(--g400);font-size:9pt;margin:12px 0;}
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ COVER ═══════════════ -->
+<div class="cover">
+    <div class="cover-badge">Projet de Fin d'Études 2026</div>
+    <h1>HR Talent Portal</h1>
+    <h2>Portail de Recrutement Intelligent propulsé par l'IA — Talan Tunisie</h2>
+    <div class="cover-grid">
+        <div class="cover-stat"><div class="num">18</div><div class="lbl">Composants LWC</div></div>
+        <div class="cover-stat"><div class="num">15</div><div class="lbl">Classes Apex</div></div>
+        <div class="cover-stat"><div class="num">3</div><div class="lbl">Intégrations IA</div></div>
+    </div>
+    <div class="cover-meta">
+        <p><strong>Plateforme :</strong> Salesforce (Experience Cloud + LWC + Apex)</p>
+        <p><strong>IA :</strong> Groq API — Meta LLaMA 3.3 70B Versatile</p>
+        <p><strong>Réalisé par :</strong> Meriem Rebhi</p>
+        <p><strong>Entreprise :</strong> Talan Tunisie — ESN Leader en IT &amp; Consulting</p>
+    </div>
+</div>
+
+<!-- ═══════════════ CONTENT ═══════════════ -->
+<div class="content">
+
+<div class="toc">
+    <h3>Table des matières</h3>
+    <ol>
+        <li>Vision du Projet</li>
+        <li>Les 5 Acteurs du Portail</li>
+        <li>Analyse des Besoins</li>
+        <li>Architecture Technique</li>
+        <li>Pipeline de Recrutement E2E</li>
+        <li>Scoring IA des CV</li>
+        <li>Test Gaming Gamifié</li>
+        <li>Tableau de Bord Recruteur</li>
+        <li>Tableau de Bord Candidat</li>
+        <li>Génération IA des Offres</li>
+        <li>Chatbot IA (NLP)</li>
+        <li>Système d'Emails Automatisés</li>
+        <li>Authentification &amp; Sécurité</li>
+        <li>Composants LWC</li>
+        <li>Classes Apex</li>
+        <li>Modèle de Données</li>
+        <li>Stack Technique Complète</li>
+    </ol>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon blue">🎯</span> 1. Vision du Projet</h2>
+
+<p>Le <strong>HR Talent Portal</strong> est une plateforme de recrutement <strong>end-to-end</strong> développée sur Salesforce pour <strong>Talan Tunisie</strong>. Elle automatise et enrichit l'ensemble du processus de recrutement grâce à l'intelligence artificielle :</p>
+
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">🤖</span> Scoring IA automatique</h4>
+        <p>Chaque CV déposé est analysé par l'IA (LLaMA 3.3 70B) qui attribue un score de compatibilité, une recommandation et identifie les points forts/faibles</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🎮</span> Test Gaming gamifié + IA</h4>
+        <p>Évaluation ludique avec <strong>questions générées dynamiquement par l'IA</strong> (Groq LLaMA 3.3 70B) adaptées au poste, timer par question, bonus de vitesse, <strong>validation serveur</strong> (réponses jamais côté client) et <strong>système anti-triche</strong></p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">📊</span> Dashboard Recruteur</h4>
+        <p>Vue pipeline complète avec KPIs, filtres avancés, planification (individuelle + lot), gestion des offres et génération IA de descriptions</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🌐</span> Portail Candidat</h4>
+        <p>Espace personnel avec suivi des candidatures en temps réel, profil éditable, carte interactive des postes, et accès aux tests gaming</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon purple">👥</span> 2. Les 5 Acteurs du Portail</h2>
+
+<table>
+    <thead><tr><th>Acteur</th><th>Rôle</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Visiteur</strong></td><td>Consulte le site web, visualise les offres d'emploi et peut déposer une candidature via le portail public Experience Cloud.</td></tr>
+        <tr><td><strong>Candidat</strong></td><td>Après acceptation, suit ses candidatures en tant que contact. Accède à son compte via la plateforme Talan Bridge. Passe le test gaming, consulte son score IA, chatte avec le bot IA et modifie son profil.</td></tr>
+        <tr><td><strong>Recruteur</strong></td><td>Gère les offres d'emploi, consulte les candidats, planifie les entretiens et les tests gaming, génère des questions gaming par IA, avance les candidats dans le pipeline, crée/clôture les offres et génère des descriptions avec l'IA.</td></tr>
+        <tr><td><strong>Manager</strong></td><td>Supervise les processus liés aux opportunités (suivi des entretiens), participe aux entretiens et contrats. C'est l'acteur décideur de la validation ou le refus d'un candidat.</td></tr>
+        <tr><td><strong>Responsable RH</strong></td><td>Dispose d'un accès privilégié pour administrer les utilisateurs et leurs profils. Visualise les KPIs globaux (taux de conversion, score moyen, leads actifs), pilote l'onboarding et la génération des contrats.</td></tr>
+    </tbody>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon blue">📋</span> 2b. Analyse des Besoins</h2>
+
+<p>Cette section identifie les acteurs impliqués dans le système, tout en détaillant les exigences fonctionnelles et non fonctionnelles.</p>
+
+<h3>Exigences Fonctionnelles</h3>
+
+<div class="highlight-box blue">
+<h4>Pour les visiteurs (Utilisateurs non-identifiés)</h4>
+<ul>
+    <li><strong>Consulter les offres d'emploi :</strong> Accéder au catalogue des postes vacants publiés sur le portail public.</li>
+    <li><strong>Déposer une candidature :</strong> Soumettre un formulaire de postulation en téléversant un curriculum vitae (Upload CV).</li>
+</ul>
+</div>
+
+<div class="highlight-box purple">
+<h4>Pour les candidats (Après authentification sur l'espace B2C)</h4>
+<ul>
+    <li><strong>S'authentifier :</strong> Accéder de manière sécurisée à son espace personnel.</li>
+    <li><strong>Suivre l'avancement du dossier :</strong> Visualiser en temps réel le statut de ses candidatures (en cours, validé, refusé).</li>
+    <li><strong>Gérer son profil B2C :</strong> Mettre à jour ses informations personnelles et ses compétences techniques.</li>
+    <li><strong>Passer le Test Gaming :</strong> Réaliser les tests ludiques d'évaluation des <em>soft skills</em> intégrés à la plateforme.</li>
+</ul>
+</div>
+
+<div class="highlight-box green">
+<h4>Pour les recruteurs (Back-office Salesforce)</h4>
+<ul>
+    <li><strong>Publier les offres d'emploi :</strong> Créer et diffuser de nouveaux besoins en recrutement sur Experience Cloud.</li>
+    <li><strong>Orchestrer l'IA (Parsing NLP) :</strong> Lancer l'analyse automatique des documents déposés.</li>
+    <li><strong>Générer des questions Gaming par IA :</strong> Déclencher la génération automatique de questions adaptées au poste via Groq LLaMA 3.3 70B.</li>
+    <li><strong>Planifier les entretiens :</strong> Coordonner les rendez-vous entre les candidats retenus et les experts techniques.</li>
+    <li><strong>Envoyer des notifications :</strong> Automatiser la communication par e-mail avec les candidats à chaque étape (Staging).</li>
+</ul>
+</div>
+
+<div class="highlight-box orange">
+<h4>Pour les managers (Experts évaluateurs)</h4>
+<ul>
+    <li><strong>Consulter les profils candidats :</strong> Accéder aux dossiers qualifiés par le moteur de matching IA.</li>
+    <li><strong>Saisir le feedback évaluateur :</strong> Consigner les comptes-rendus d'entretiens et les notes techniques.</li>
+    <li><strong>Valider ou refuser un candidat :</strong> Prendre une décision de recrutement basée sur les résultats des tests et le score de matching IA.</li>
+</ul>
+</div>
+
+<div class="highlight-box" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;">
+<h4>Pour le responsable RH (Gouvernance et Pilotage)</h4>
+<ul>
+    <li><strong>Consulter les Dashboards &amp; KPIs :</strong> Piloter la performance globale du recrutement (Time-to-Hire, qualité du sourcing).</li>
+    <li><strong>Gérer l'Onboarding :</strong> Déclencher les processus d'intégration pour les candidats ayant accepté l'offre.</li>
+    <li><strong>Générer les contrats :</strong> Automatiser la création et le suivi des documents contractuels d'embauche.</li>
+</ul>
+</div>
+
+<div class="highlight-box" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;">
+<h4>Pour le système IA (Acteur système automatisé)</h4>
+<ul>
+    <li><strong>Analyse NLP :</strong> Extraire les données sémantiques des fichiers PDF/Docx.</li>
+    <li><strong>Calcul du Match Score :</strong> Générer un score de compatibilité entre le profil du candidat et les exigences du poste.</li>
+    <li><strong>Génération de questions Gaming :</strong> Créer 25 questions dynamiques adaptées au poste via l'API Groq.</li>
+</ul>
+</div>
+
+<h3>Exigences Non Fonctionnelles</h3>
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">🎨</span> Convivialité &amp; Ergonomie</h4>
+        <p>Interfaces intuitives et faciles à utiliser, design responsive et moderne</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">⏰</span> Disponibilité</h4>
+        <p>L'application doit être toujours disponible et accessible aux utilisateurs (hébergée sur Salesforce Cloud)</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🔒</span> Sécurité</h4>
+        <p>Profils avec autorisations spécifiques, token SHA-256, rate limiting, audit logging, FLS enforced</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">📈</span> Scalabilité &amp; Maintenabilité</h4>
+        <p>Architecture modulaire permettant l'ajout de caractéristiques futures et la maintenance continue</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon blue">🏗️</span> 3. Architecture Technique</h2>
+
+<div class="arch-box"><span class="yl">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="yl">│</span>                    <span class="pk">EXPERIENCE CLOUD</span>  (Portail Public)           <span class="yl">│</span>
+<span class="yl">│</span>  <span class="gr">startupHero</span> · <span class="gr">header</span> · <span class="gr">jobList</span> · <span class="gr">applicationForm</span> · <span class="gr">loginPage</span>  <span class="yl">│</span>
+<span class="yl">│</span>  <span class="gr">candidateDashboard</span> · <span class="gr">gamingTest</span> · <span class="gr">agentforceChat</span>             <span class="yl">│</span>
+<span class="yl">└────────────────────────────┬─────────────────────────────────┘</span>
+                             │ <span class="hl">@AuraEnabled</span>
+                             ▼
+<span class="hl">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│</span>                       <span class="pk">APEX BACKEND</span>                            <span class="hl">│</span>
+<span class="hl">│</span>                                                              <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">CVScoringService</span>        → Scoring IA + Conversion auto      <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">ApplicationController</span>   → Candidatures + Upload CV chunké   <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">InternalDashboardCtrl</span>   → Recruiter/Manager dashboards      <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">GamingTestController</span>    → Test Gaming + Auto-avancement      <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">CandidateChatController</span> → Chatbot NLP                       <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">GamingQuestionService</span>   → Génération IA questions gaming    <span class="hl">│</span>
+<span class="hl">│</span>  <span class="gr">Agent*Controller (×3)</span>   → Agentforce Bot (InvocableMethod)  <span class="hl">│</span>
+<span class="hl">└────────────────────────────┬─────────────────────────────────┘</span>
+                             │ <span class="rd">HTTPS POST</span>
+                             ▼
+<span class="rd">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="rd">│</span>                      <span class="pk">GROQ CLOUD API</span>                          <span class="rd">│</span>
+<span class="rd">│</span>              <span class="yl">Meta LLaMA 3.3 — 70B Versatile</span>                   <span class="rd">│</span>
+<span class="rd">│</span>                                                              <span class="rd">│</span>
+<span class="rd">│</span>  <span class="gr">Scoring CV</span> (temp=0.3)    <span class="gr">Génération offres</span> (temp=0.7)      <span class="rd">│</span>
+<span class="rd">│</span>  <span class="gr">Questions Gaming</span> (temp=0.7)                                <span class="rd">│</span>
+<span class="rd">│</span>  Score 0-100 + Reco       Description pro structurée         <span class="rd">│</span>
+<span class="rd">└──────────────────────────────────────────────────────────────┘</span></div>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon green">🔄</span> 4. Pipeline de Recrutement End-to-End</h2>
+
+<div class="pipeline">
+    <div class="pipe-step"><div class="step-num">Étape 1</div><div class="step-name">Candidature</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 2</div><div class="step-name">Scoring IA</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 3</div><div class="step-name">Conversion</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step active"><div class="step-num">Étape 4</div><div class="step-name">Gaming</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 5</div><div class="step-name">Technique</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 6</div><div class="step-name">Architecture</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 7</div><div class="step-name">RH Fit</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-color:var(--success);background:var(--success-l)"><div class="step-num">Final</div><div class="step-name">Décision</div></div>
+</div>
+
+<div class="highlight-box green">
+    <h4>Flux détaillé :</h4>
+    <ol>
+        <li><strong>Le candidat</strong> parcourt les offres sur le portail Experience Cloud et postule via le formulaire multi-étapes</li>
+        <li><strong>Un Lead</strong> est créé automatiquement avec les infos du candidat</li>
+        <li><strong>Le CV est uploadé</strong> (upload chunké jusqu'à 10 Mo) → le trigger <code>CVScoringTrigger</code> se déclenche</li>
+        <li><strong>L'IA analyse le CV</strong> via Groq API : extraction du texte, comparaison avec le poste, scoring (Tech 40%, Expérience 25%, Formation 20%, Soft Skills 15%)</li>
+        <li><strong>Score &gt; 15%</strong> → Lead qualifié → <strong>Flow auto-conversion</strong> : Lead → Contact + Account + Opportunity (stage « Gaming »)</li>
+        <li><strong>Un utilisateur portail</strong> est créé automatiquement + email de bienvenue avec identifiants</li>
+        <li><strong>Le recruteur planifie</strong> le test gaming (individuel ou en lot) → email d'invitation envoyé</li>
+        <li><strong>Le candidat passe le test</strong> (10 questions adaptées au poste, timer, bonus vitesse)</li>
+        <li><strong>Score ≥ 60%</strong> → passage automatique à « Technique » | <strong>Score &lt; 40%</strong> → refusé</li>
+        <li><strong>Le recruteur avance</strong> le candidat : Technique → Architecture → RH Fit → Décision finale</li>
+        <li><strong>Email de notification</strong> envoyé au candidat à chaque changement d'étape</li>
+    </ol>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon purple">🤖</span> 5. Scoring IA des CV</h2>
+
+<p>Le cœur intelligent du portail. Chaque CV déposé est <strong>automatiquement analysé</strong> par l'IA sans intervention humaine.</p>
+
+<div class="highlight-box purple">
+    <h4>Fonctionnement technique</h4>
+    <table>
+        <tr><th>Élément</th><th>Détails</th></tr>
+        <tr><td>Déclencheur</td><td>Trigger <code>CVScoringTrigger</code> sur <code>ContentDocumentLink</code> (after insert)</td></tr>
+        <tr><td>Classe</td><td><code>CVScoringService</code> — Queueable avec AllowsCallouts</td></tr>
+        <tr><td>API</td><td>Groq — <code>https://api.groq.com/openai/v1/chat/completions</code></td></tr>
+        <tr><td>Modèle</td><td><strong>Meta LLaMA 3.3 70B Versatile</strong></td></tr>
+        <tr><td>Temperature</td><td>0.3 (scoring consistant et fiable)</td></tr>
+    </table>
+</div>
+
+<h3>Grille de scoring</h3>
+<table>
+    <thead><tr><th>Critère</th><th>Poids</th><th>Ce que l'IA évalue</th></tr></thead>
+    <tbody>
+        <tr><td>Compétences Techniques</td><td><strong>40%</strong></td><td>Langages, frameworks, outils cités dans le CV vs. requis pour le poste</td></tr>
+        <tr><td>Expérience</td><td><strong>25%</strong></td><td>Nombre d'années, pertinence des postes précédents, progression de carrière</td></tr>
+        <tr><td>Formation</td><td><strong>20%</strong></td><td>Diplômes, certifications, formations pertinentes</td></tr>
+        <tr><td>Soft Skills</td><td><strong>15%</strong></td><td>Communication, leadership, travail d'équipe, adaptabilité</td></tr>
+    </tbody>
+</table>
+
+<h3>Sortie de l'IA</h3>
+<table>
+    <thead><tr><th>Champ</th><th>Exemple</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Score</strong> (0-100)</td><td>78</td></tr>
+        <tr><td><strong>Recommandation</strong></td><td>« Candidat fortement recommandé pour le poste de DevOps »</td></tr>
+        <tr><td><strong>Points forts</strong></td><td>« Excellente maîtrise de Docker/K8s, 5 ans d'expérience CI/CD »</td></tr>
+        <tr><td><strong>Points faibles</strong></td><td>« Manque d'expérience avec les architectures serverless »</td></tr>
+    </tbody>
+</table>
+
+<h3>Seuils de décision automatique</h3>
+<table>
+    <thead><tr><th>Score</th><th>Action</th><th>Lead Rating</th></tr></thead>
+    <tbody>
+        <tr><td>≥ 70%</td><td><span class="badge badge-g">Recommandé</span> → Conversion + Portail</td><td>Hot 🔥</td></tr>
+        <tr><td>50–69%</td><td><span class="badge badge-o">À évaluer</span> → Conversion + Portail</td><td>Warm</td></tr>
+        <tr><td>16–49%</td><td><span class="badge badge-o">Risqué</span> → Conversion + Portail</td><td>Warm</td></tr>
+        <tr><td>≤ 15%</td><td><span class="badge badge-r">Refusé</span> → Candidature rejetée</td><td>Cold</td></tr>
+    </tbody>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon orange">🎮</span> 6. Test Gaming Gamifié</h2>
+
+<p>Un système d'évaluation ludique et engageant avec <strong>génération dynamique de questions par IA</strong> (Groq LLaMA 3.3 70B), remplaçant les questions statiques hardcodées.</p>
+
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">🤖</span> Questions générées par IA</h4>
+        <p>25 questions adaptées au poste générées via <strong>Groq LLaMA 3.3 70B</strong>. Le recruteur clique sur «&nbsp;Générer questions Gaming&nbsp;» depuis le dashboard. Fallback statique (4 banques) si aucune question IA.</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🧩</span> 3 Types de questions</h4>
+        <p>QCM classique (~15), Puzzle logique/mathématique (~5), Ordonnancement (~5) — répartition automatique par l'IA</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">⏱️</span> Timer dynamique par difficulté</h4>
+        <p>Facile: 30s, Moyen: 25s, Difficile: 20s, Ordonnancement: 35s — auto-avance au timeout</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">⚡</span> Validation serveur sécurisée</h4>
+        <p>Les réponses correctes ne sont <strong>jamais envoyées au client</strong>. Chaque réponse est validée côté serveur via <code>validateAnswer()</code>. +2 bonus vitesse si &lt;50% du temps.</p>
+    </div>
+</div>
+
+<div class="highlight-box blue">
+    <h4>🔄 Architecture dynamique (Avant / Après)</h4>
+    <table>
+        <thead><tr><th>Aspect</th><th>Avant (statique)</th><th>Après (dynamique IA)</th></tr></thead>
+        <tbody>
+            <tr><td>Source des questions</td><td>100 questions hardcodées dans le JS</td><td>25 questions générées par IA par offre, stockées dans <code>Gaming_Question__c</code></td></tr>
+            <tr><td>Réponses correctes</td><td>Visibles dans le code source client</td><td>Jamais envoyées au client — validation serveur uniquement</td></tr>
+            <tr><td>Adaptation au poste</td><td>Détection basique par catégorie</td><td>Questions 100% adaptées au titre et description du poste</td></tr>
+            <tr><td>Sélection</td><td>10 aléatoires parmi 25 (client)</td><td>10 aléatoires via <code>Crypto.getRandomInteger()</code> (serveur)</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="highlight-box orange">
+    <h4>Déroulement du test</h4>
+    <ol>
+        <li>Le recruteur génère les questions IA depuis le dashboard (🤖 bouton par offre)</li>
+        <li><strong>GamingQuestionService</strong> (Queueable) appelle Groq API → 25 questions stockées en base</li>
+        <li>Le candidat reçoit l'email d'invitation avec le lien du test</li>
+        <li><strong>10 questions aléatoires</strong> sont servies par Apex (sans réponses correctes)</li>
+        <li>Compte à rebours <strong>3-2-1</strong> puis le quiz démarre</li>
+        <li>Timer individuel par question avec barre de progression visuelle</li>
+        <li>Chaque réponse est <strong>validée côté serveur</strong> en temps réel</li>
+        <li>Révélation animée du score final</li>
+        <li><strong>Score ≥ 60%</strong> → passage automatique à l'étape « Technique »</li>
+        <li><strong>Score &lt; 40%</strong> → candidature automatiquement refusée (Closed Lost)</li>
+    </ol>
+</div>
+
+<div class="highlight-box" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;">
+    <h4 style="color:#dc2626;">🔒 Système Anti-Triche — Mode Sécurisé</h4>
+    <p>Le test intègre un <strong>système de surveillance en temps réel</strong> qui détecte toute tentative de quitter la fenêtre du test :</p>
+    <ul style="margin:10px 0;padding-left:20px;color:var(--g700);">
+        <li><strong>Détection multi-événements</strong> : <code>visibilitychange</code> (changement d'onglet) + <code>blur</code> (Alt+Tab, clic hors fenêtre, notification)</li>
+        <li><strong>Avertissement préalable</strong> : sur l'écran d'accueil, un bandeau rouge informe le candidat des règles</li>
+        <li><strong>1ère violation</strong> → Overlay d'avertissement rouge avec animation shake : «&nbsp;Au prochain changement, le test sera terminé avec 0%&nbsp;»</li>
+        <li><strong>2ème violation</strong> → Test automatiquement terminé, <strong>score 0% soumis à Salesforce</strong>, écran « Violation détectée » avec bouclier rouge</li>
+        <li>Les listeners sont activés au début du quiz et nettoyés proprement en fin de test (pas de fuites mémoire)</li>
+    </ul>
+    <p style="font-size:9pt;color:var(--g500);margin-top:8px;">Technologies : <code>document.visibilitychange</code>, <code>window.blur</code>, soumission Apex automatique via <code>submitTestResults</code></p>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon blue">📊</span> 7. Tableau de Bord Recruteur</h2>
+
+<p>Interface centrale pour la gestion de toutes les candidatures et offres d'emploi.</p>
+
+<h3>Onglet Candidatures</h3>
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">📈</span> KPIs en temps réel</h4>
+        <p>5 cartes : Gaming, Technique, Architecture, RH Fit, Clôturés — avec barres de progression</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🔍</span> Filtres avancés</h4>
+        <p>Recherche par nom, filtre par poste, par score (≥70%/50-69%/30-49%/&lt;30%), tri multi-critères</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">📅</span> Planification Gaming</h4>
+        <p>Individuelle (date + durée + email auto) et en Lot (créneaux consécutifs avec pause configurable)</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">👁️</span> Détail candidat</h4>
+        <p>Modal avec score IA, score gaming, analyse IA, points forts, email, téléphone</p>
+    </div>
+</div>
+
+<h3>Onglet Offres d'emploi</h3>
+<ul>
+    <li><strong>Grille d'offres</strong> avec département, localisation, contrat, salaire, nombre de candidatures</li>
+    <li><strong>Création d'offre</strong> via modal avec tous les champs + <strong>génération IA</strong> de la description</li>
+    <li><strong>Clôturer / Réouvrir</strong> une offre en un clic</li>
+</ul>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon green">🌐</span> 8. Tableau de Bord Candidat</h2>
+
+<p>Espace personnel accessible après connexion au portail Experience Cloud.</p>
+
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">🏠</span> Vue d'ensemble</h4>
+        <p>Profil candidat (nom, email, téléphone) + sidebar avec liste des candidatures et leur état</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">📋</span> Suivi candidatures</h4>
+        <p>Pipeline visuel (Gaming → Technique → Architecture → RH Fit → Terminé) par candidature, avec lien vers le test gaming</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">✏️</span> Profil éditable</h4>
+        <p>Modification des infos personnelles et upload de nouveau CV</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🗺️</span> Carte interactive</h4>
+        <p>Carte monde avec les localisations des offres d'emploi (via static resource worldJobMap)</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon purple">✨</span> 9. Génération IA des Descriptions d'Offres</h2>
+
+<div class="highlight-box purple">
+    <h4>Comment ça fonctionne</h4>
+    <p>Le recruteur saisit une description brouillon (même avec des fautes, incomplète, en style notes) puis clique sur <strong>« Générer avec l'IA »</strong>. Le modèle LLaMA 3.3 70B transforme ce brouillon en une description professionnelle structurée :</p>
+    <ol>
+        <li><strong>Introduction</strong> — Présentation du poste et de Talan Tunisie</li>
+        <li><strong>Missions principales</strong> — Liste détaillée des responsabilités</li>
+        <li><strong>Profil recherché</strong> — Compétences et expérience requises</li>
+        <li><strong>Avantages</strong> — Environnement de travail chez Talan</li>
+    </ol>
+    <p>L'IA corrige automatiquement les fautes d'orthographe et de grammaire. Le recruteur peut modifier le résultat avant publication.</p>
+</div>
+
+<table>
+    <tr><th>Paramètre</th><th>Valeur</th></tr>
+    <tr><td>Modèle</td><td>LLaMA 3.3 70B Versatile</td></tr>
+    <tr><td>Temperature</td><td>0.7 (créativité rédactionnelle)</td></tr>
+    <tr><td>Max tokens</td><td>1000</td></tr>
+    <tr><td>Langue</td><td>Français</td></tr>
+    <tr><td>Format</td><td>Texte brut (pas de HTML/Markdown)</td></tr>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon sky">💬</span> 10. Chatbot IA (NLP)</h2>
+
+<p>Widget flottant sur le portail candidat, accessible via le composant <code>agentforceChat</code>.</p>
+
+<table>
+    <thead><tr><th>Intention détectée</th><th>Mots-clés</th><th>Réponse</th></tr></thead>
+    <tbody>
+        <tr><td>Salutations</td><td>bonjour, salut, hello</td><td>Message d'accueil personnalisé</td></tr>
+        <tr><td>Offres d'emploi</td><td>offre, emploi, poste, job</td><td>Liste des offres actives depuis Salesforce</td></tr>
+        <tr><td>Score IA</td><td>score, analyse, résultat</td><td>Score + recommandation + points forts du candidat</td></tr>
+        <tr><td>Statut candidature</td><td>candidature, statut, avancement</td><td>État actuel de la candidature + historique</td></tr>
+        <tr><td>Aide</td><td>aide, help, besoin</td><td>Guide des fonctionnalités disponibles</td></tr>
+    </tbody>
+</table>
+
+<p>En parallèle, <strong>3 classes @InvocableMethod</strong> (<code>AgentGetAnalyseIA</code>, <code>AgentGetCandidatureStatus</code>, <code>AgentGetOffresDisponibles</code>) permettent l'intégration avec <strong>Salesforce Agentforce / Einstein Bot</strong>.</p>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon green">📧</span> 11. Système d'Emails Automatisés</h2>
+
+<p>6 types d'emails HTML stylisés envoyés automatiquement tout au long du processus :</p>
+
+<table>
+    <thead><tr><th>#</th><th>Email</th><th>Déclencheur</th><th>Contenu</th></tr></thead>
+    <tbody>
+        <tr><td>1</td><td><strong>Email de bienvenue</strong></td><td>Conversion Lead → Contact</td><td>Lien sécurisé (token SHA-256) vers la page <code>/s/set-password</code> pour définir son mot de passe — <strong>aucun mot de passe en clair</strong> dans l'email</td></tr>
+        <tr><td>2</td><td><strong>Notification admin</strong></td><td>Conversion automatique</td><td>Fiche candidat riche : score IA, recommandation, points forts, infos contact</td></tr>
+        <tr><td>3</td><td><strong>Invitation Gaming</strong></td><td>Recruteur planifie le test</td><td>Date/heure, durée, lien vers le test, instructions</td></tr>
+        <tr><td>4</td><td><strong>Changement d'étape</strong></td><td>Recruteur avance le candidat</td><td>Email adapté à l'étape (Technique, Architecture, RH Fit, Accepté, Refusé)</td></tr>
+        <tr><td>5</td><td><strong>Réinitialisation mot de passe</strong></td><td>Candidat demande le reset</td><td>Lien sécurisé avec <strong>token unique SHA-256</strong> (24h, usage unique, rate-limited) — Zéro mot de passe transmis</td></tr>
+        <tr><td>6</td><td><strong>Notification Flow</strong></td><td>Flow de conversion</td><td>Résumé candidat pour l'admin RH</td></tr>
+    </tbody>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon orange">🔐</span> 12. Authentification &amp; Sécurité</h2>
+
+<p>Le portail implémente une architecture de sécurité <strong>multi-couches</strong> conforme aux bonnes pratiques OWASP, comprenant 2 mécanismes d'authentification, un système de réinitialisation par token sécurisé, et un journal d'audit complet.</p>
+
+<h3>12.1 — Mécanismes d'Authentification (2 modes)</h3>
+
+<div class="feature-grid">
+    <div class="feature-card">
+        <h4><span class="emoji">🔑</span> Login classique (Email)</h4>
+        <p>Authentification via <code>Site.login()</code> avec résolution automatique <strong>email → username</strong>. Le candidat saisit son email, le système retrouve le User Salesforce correspondant et authentifie via le username interne.</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">️</span> Profil Experience Cloud</h4>
+        <p><strong>Customer Community Login User</strong> — accès limité au portail via permissions contrôlées. Résolution dynamique du ProfileId (pas de hardcoding).</p>
+    </div>
+    <div class="feature-card">
+        <h4><span class="emoji">🌐</span> Routage Community dynamique</h4>
+        <p>Tous les liens internes (login, reset, accueil) utilisent un getter <code>communityBasePath</code> qui détecte dynamiquement le préfixe <code>/home2</code> depuis <code>window.location.pathname</code> — aucun hardcoding d'URL.</p>
+    </div>
+</div>
+
+<h3>12.2 — Système de Réinitialisation Sécurisée par Token</h3>
+
+<div class="highlight-box" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;">
+    <h4 style="color:#dc2626;">🔒 Architecture Zero-Knowledge — Aucun mot de passe dans les emails</h4>
+    <p>Contrairement à l'approche classique (envoi d'un mot de passe temporaire en clair), le portail implémente un système <strong>token-based</strong> inspiré des standards OAuth/PKCE :</p>
+    <ol style="margin:12px 0;padding-left:20px;">
+        <li><strong>Génération du token</strong> — Un token aléatoire de 256 bits est généré via <code>Crypto.getRandomInteger()</code> (CSPRNG Salesforce)</li>
+        <li><strong>Hachage SHA-256</strong> — Seul le <strong>hash du token</strong> est stocké en base (<code>Password_Reset_Token__c.Token_Hash__c</code>). Le token en clair n'existe qu'en mémoire durant la génération</li>
+        <li><strong>Email sécurisé</strong> — L'email contient uniquement un <strong>lien avec le token</strong> vers la page <code>/s/set-password</code>. Aucun mot de passe n'est transmis</li>
+        <li><strong>Validation côté serveur</strong> — Le token soumis est re-haché (SHA-256) et comparé au hash stocké. Cela empêche toute exploitation même en cas de fuite de la base</li>
+        <li><strong>Changement Salesforce natif</strong> — Le mot de passe est défini via <code>System.setPassword()</code> après validation du token</li>
+    </ol>
+</div>
+
+<h3>Protections anti-attaque</h3>
+<table>
+    <thead><tr><th>Protection</th><th>Mécanisme</th><th>Détail</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Expiration</strong></td><td>TTL 24 heures</td><td>Chaque token expire automatiquement après 24h (<code>Expiration__c</code>)</td></tr>
+        <tr><td><strong>Usage unique</strong></td><td>Flag <code>Is_Used__c</code></td><td>Le token est marqué comme utilisé dès la première validation réussie — impossible de le réutiliser</td></tr>
+        <tr><td><strong>Rate Limiting</strong></td><td>Max 3 tentatives</td><td>Compteur <code>Attempts__c</code> incrémenté à chaque essai. Au-delà de 3, le token est invalidé définitivement</td></tr>
+        <tr><td><strong>Validation mot de passe</strong></td><td>Regex case-sensitive</td><td>Minimum 8 caractères, 1 majuscule (<code>[A-Z]</code>), 1 minuscule (<code>[a-z]</code>), 1 chiffre (<code>[0-9]</code>), 1 spécial — validé via <code>Pattern.matches()</code></td></tr>
+        <tr><td><strong>Messages génériques</strong></td><td>Anti-énumération</td><td>Le même message d'erreur est affiché que le token soit invalide, expiré ou déjà utilisé — empêche l'énumération</td></tr>
+        <tr><td><strong>Audit Trail</strong></td><td><code>Security_Audit_Log__c</code></td><td>Chaque action (génération, succès, échec, tentative brute-force) est loguée avec timestamp, email, sévérité et détails</td></tr>
+    </tbody>
+</table>
+
+<h3>Flux de réinitialisation — Séquence complète</h3>
+<div class="pipeline">
+    <div class="pipe-step"><div class="step-num">Étape 1</div><div class="step-name">Demande</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 2</div><div class="step-name">Token SHA-256</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 3</div><div class="step-name">Email + Lien</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step active"><div class="step-num">Étape 4</div><div class="step-name">Page Set Password</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="step-num">Étape 5</div><div class="step-name">Validation Token</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-color:var(--success);background:var(--success-l)"><div class="step-num">Final</div><div class="step-name">MDP défini</div></div>
+</div>
+
+<h3>12.3 — Objets de sécurité dédiés</h3>
+<table>
+    <thead><tr><th>Objet</th><th>Champs clés</th><th>Rôle</th></tr></thead>
+    <tbody>
+        <tr><td><code>Password_Reset_Token__c</code></td><td><code>Token_Hash__c</code>, <code>User__c</code>, <code>Email__c</code>, <code>Expiration__c</code>, <code>Attempts__c</code>, <code>Is_Used__c</code></td><td>Stockage sécurisé des tokens de réinitialisation (hash uniquement, jamais le token en clair)</td></tr>
+        <tr><td><code>Security_Audit_Log__c</code></td><td><code>Action__c</code>, <code>Email__c</code>, <code>Details__c</code>, <code>Severity__c</code>, <code>Timestamp__c</code></td><td>Journal de sécurité — traçabilité complète de toutes les opérations d'authentification</td></tr>
+    </tbody>
+</table>
+
+<div class="highlight-box blue">
+    <h4>Contrôle d'accès (FLS &amp; PermissionSet)</h4>
+    <p>Les champs sensibles des objets de sécurité sont protégés par un <strong>PermissionSet dédié</strong> (<code>Security_Objects_Full_Access</code>) qui accorde l'accès aux champs non-required uniquement aux administrateurs. Le profil Guest du site Experience a un accès en lecture seule limité via les classes <code>@AuraEnabled</code> avec <code>without sharing</code> ciblé.</p>
+</div>
+
+<h3>12.4 — Composant LWC <code>setPassword</code></h3>
+<div class="highlight-box green">
+    <h4>Page de définition de mot de passe sécurisée</h4>
+    <ul>
+        <li><strong>Extraction du token</strong> depuis les paramètres d'URL (<code>currentPageReference</code>)</li>
+        <li><strong>Validation en temps réel</strong> : jauges visuelles pour chaque critère (longueur, majuscule, minuscule, chiffre, spécial)</li>
+        <li><strong>Confirmation de correspondance</strong> entre les deux champs mot de passe</li>
+        <li><strong>Messages d'erreur en français</strong> : traduction des erreurs Salesforce (« mot de passe déjà utilisé », « token expiré », etc.)</li>
+        <li><strong>Écran de succès</strong> avec lien de connexion dynamique (basePath auto-détecté)</li>
+        <li><strong>Design responsive</strong> avec animations CSS (transitions, hover states, gradient backgrounds)</li>
+    </ul>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon blue">⚡</span> 13. Composants LWC (18)</h2>
+
+<table>
+    <thead><tr><th>#</th><th>Composant</th><th>Rôle</th></tr></thead>
+    <tbody>
+        <tr><td>1</td><td><code>startupHero</code></td><td>Bannière d'accueil avec CTA vers offres et candidatures</td></tr>
+        <tr><td>2</td><td><code>header</code></td><td>Navigation (Home, Offres, Contact, Login)</td></tr>
+        <tr><td>3</td><td><code>footer</code></td><td>Pied de page</td></tr>
+        <tr><td>4</td><td><code>searchBar</code></td><td>Barre de recherche avec autocomplétion et tags populaires</td></tr>
+        <tr><td>5</td><td><code>jobFilter</code></td><td>Filtres offres (mot-clé, localisation, contrat, département)</td></tr>
+        <tr><td>6</td><td><code>jobList</code></td><td>Grille des offres actives avec modal de détail et bouton Postuler</td></tr>
+        <tr><td>7</td><td><code>jobDetail</code></td><td>Vue détaillée d'une offre avec action Postuler</td></tr>
+        <tr><td>8</td><td><code>applicationForm</code></td><td>Formulaire multi-étapes + upload CV chunké (jusqu'à 10 Mo)</td></tr>
+        <tr><td>9</td><td><code>parentForm</code></td><td>Wrapper modal pour applicationForm</td></tr>
+        <tr><td>10</td><td><code>loginPage</code></td><td>Page de connexion (standalone /loginp)</td></tr>
+        <tr><td>11</td><td><code>forgetMotDePasse</code></td><td>Réinitialisation de mot de passe (envoi du lien sécurisé par email)</td></tr>
+        <tr><td>12</td><td><code>setPassword</code></td><td>Page de définition de mot de passe sécurisée (validation token + jauges de force en temps réel)</td></tr>
+        <tr><td>13</td><td><code>registrationForm</code></td><td>Envoi de reset pour utilisateurs existants</td></tr>
+        <tr><td>14</td><td><code>candidateDashboard</code></td><td>Dashboard candidat complet (profil, candidatures, carte, profil éditable)</td></tr>
+        <tr><td>15</td><td><code>myApplications</code></td><td>Liste des candidatures avec pipeline visuel</td></tr>
+        <tr><td>16</td><td><code>gamingTest</code></td><td>Test gaming gamifié (10 questions dynamiques IA, timer, validation serveur, bonus vitesse, anti-triche)</td></tr>
+        <tr><td>17</td><td><code>recruteurDashboard</code></td><td>Dashboard recruteur (pipeline, KPIs, planification, offres, IA, génération questions gaming)</td></tr>
+        <tr><td>18</td><td><code>agentforceChat</code></td><td>Chatbot NLP flottant</td></tr>
+    </tbody>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2><span class="icon purple">🧠</span> 14. Classes Apex (15)</h2>
+
+<table>
+    <thead><tr><th>Classe</th><th>Lignes</th><th>Rôle principal</th></tr></thead>
+    <tbody>
+        <tr><td><code>CVScoringService</code></td><td>~600</td><td>Moteur IA central — scoring CV, conversion Lead, création utilisateur portail, emails</td></tr>
+        <tr><td><code>ApplicationController</code></td><td>~400</td><td>Gestion candidatures — création Lead, upload CV chunké, dashboard candidat</td></tr>
+        <tr><td><code>InternalDashboardController</code></td><td>~885</td><td>Dashboards recruteur/manager — CRUD offres, planification gaming, scoring, génération IA</td></tr>
+        <tr><td><code>GamingTestController</code></td><td>~250</td><td>Test gaming — sert les questions (sans réponses), validation serveur, soumission résultats, auto-avancement</td></tr>
+        <tr><td><code>GamingQuestionService</code></td><td>~200</td><td>Génération IA de questions gaming via Groq LLaMA 3.3 70B (Queueable + Callout)</td></tr>
+        <tr><td><code>CandidateChatController</code></td><td>~200</td><td>Chatbot NLP — détection d'intentions, requêtes Salesforce, réponses contextuelles</td></tr>
+        <tr><td><code>CustomPasswordResetController</code></td><td>~80</td><td>Réinitialisation mot de passe portail (envoi d'email)</td></tr>
+        <tr><td><code>PasswordResetController</code></td><td>~250</td><td>Système sécurisé de reset par token — génération SHA-256, validation, rate limiting, audit logging, <code>System.setPassword()</code></td></tr>
+        <tr><td><code>RegistrationController</code></td><td>~50</td><td>Envoi d'email de reset pour utilisateurs existants</td></tr>
+        <tr><td><code>AgentGetAnalyseIA</code></td><td>~40</td><td>InvocableMethod — retourne l'analyse IA d'un candidat (pour Agentforce)</td></tr>
+        <tr><td><code>AgentGetCandidatureStatus</code></td><td>~40</td><td>InvocableMethod — retourne le statut des candidatures (pour Agentforce)</td></tr>
+        <tr><td><code>AgentGetOffresDisponibles</code></td><td>~40</td><td>InvocableMethod — liste les offres actives (pour Agentforce)</td></tr>
+        <tr><td><code>CVScoringServiceTest</code></td><td>~100</td><td>Classe de test unitaire pour CVScoringService</td></tr>
+    </tbody>
+</table>
+
+<h3>Triggers (2) &amp; Flows (2)</h3>
+<table>
+    <thead><tr><th>Type</th><th>Nom</th><th>Objet</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td><span class="badge badge-a">Trigger</span></td><td><code>CVScoringTrigger</code></td><td>ContentDocumentLink</td><td>Lancement automatique du scoring IA lorsqu'un CV est attaché à un Lead</td></tr>
+        <tr><td><span class="badge badge-a">Trigger</span></td><td><code>LeadConversionTrigger</code></td><td>Lead</td><td>Création d'utilisateur portail lors d'une conversion manuelle</td></tr>
+        <tr><td><span class="badge badge-p">Flow</span></td><td>Auto_Convert_Qualified_Lead</td><td>Lead</td><td>Conversion automatique quand score &gt; 15% et statut validé</td></tr>
+        <tr><td><span class="badge badge-p">Flow</span></td><td>Conversion_Automatique</td><td>Lead</td><td>Version secondaire du flow de conversion</td></tr>
+    </tbody>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon green">🗄️</span> 15. Modèle de Données</h2>
+
+<h3>Custom Setting</h3>
+<table>
+    <tr><th>Objet</th><th>Champ</th><th>Usage</th></tr>
+    <tr><td><code>AI_Configuration__c</code></td><td><code>Groq_API_Key__c</code></td><td>Clé API Groq utilisée pour le scoring CV et la génération de descriptions</td></tr>
+</table>
+
+<h3>Objets de Sécurité &amp; Gaming (3)</h3>
+<table>
+    <thead><tr><th>Objet</th><th>Champs</th><th>Usage</th></tr></thead>
+    <tbody>
+        <tr><td><code>Password_Reset_Token__c</code></td><td><code>Token_Hash__c</code>, <code>User__c</code>, <code>Email__c</code>, <code>Expiration__c</code>, <code>Attempts__c</code>, <code>Is_Used__c</code></td><td>Stockage des hash SHA-256 des tokens de réinitialisation — jamais le token en clair. TTL 24h, usage unique, max 3 tentatives.</td></tr>
+        <tr><td><code>Security_Audit_Log__c</code></td><td><code>Action__c</code>, <code>Email__c</code>, <code>Details__c</code>, <code>Severity__c</code>, <code>Timestamp__c</code></td><td>Journal d'audit — traçabilité complète des opérations de sécurité (génération tokens, login, tentatives ratées, brute-force)</td></tr>
+        <tr><td><code>Gaming_Question__c</code></td><td><code>Job_Posting__c</code> (Lookup), <code>Question_Text__c</code>, <code>Option_A-E__c</code>, <code>Correct_Answer__c</code>, <code>Question_Type__c</code>, <code>Difficulty__c</code>, <code>Time_Limit__c</code></td><td>Questions gaming générées par IA (Groq LLaMA 3.3 70B) — 25 par offre, 3 types (mcq/puzzle/order), 3 difficultés. Réponses correctes jamais envoyées au client.</td></tr>
+    </tbody>
+</table>
+
+<h3>Champs personnalisés — Lead (4)</h3>
+<table>
+    <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td><code>Score_Matching__c</code></td><td>Number(3,0)</td><td>Score IA de compatibilité (0-100)</td></tr>
+        <tr><td><code>AI_Recommendation__c</code></td><td>Long Text</td><td>Recommandation IA textuelle</td></tr>
+        <tr><td><code>AI_Points_Forts__c</code></td><td>Long Text (4000)</td><td>Points forts identifiés par l'IA</td></tr>
+        <tr><td><code>AI_Points_Faibles__c</code></td><td>Long Text</td><td>Points faibles identifiés par l'IA</td></tr>
+    </tbody>
+</table>
+
+<h3>Champs personnalisés — Opportunity (12)</h3>
+<table>
+    <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td><code>Score_Matching__c</code></td><td>Number</td><td>Score IA (copié depuis le Lead)</td></tr>
+        <tr><td><code>Is_Candidature__c</code></td><td>Checkbox</td><td>Distingue candidatures et offres</td></tr>
+        <tr><td><code>Departement__c</code></td><td>Picklist (restreinte)</td><td>10 départements Talan</td></tr>
+        <tr><td><code>Localisation__c</code></td><td>Text</td><td>Lieu du poste</td></tr>
+        <tr><td><code>Type_de_Contrat__c</code></td><td>Text</td><td>CDI, CDD, Stage, Freelance, Alternance</td></tr>
+        <tr><td><code>Salaire_Propos__c</code></td><td>Number</td><td>Salaire proposé</td></tr>
+        <tr><td><code>Description_Poste__c</code></td><td>Text</td><td>Description du poste</td></tr>
+        <tr><td><code>Gaming_Test_DateTime__c</code></td><td>DateTime</td><td>Date/heure du test gaming planifié</td></tr>
+        <tr><td><code>Gaming_Test_Duration__c</code></td><td>Text</td><td>Durée du test (30/60/90/120 min)</td></tr>
+        <tr><td><code>Gaming_Test_Score__c</code></td><td>Number</td><td>Résultat du test gaming</td></tr>
+        <tr><td><code>Gaming_Test_Status__c</code></td><td>Text</td><td>Statut du test (Completed, etc.)</td></tr>
+        <tr><td><code>Gaming_Meet_Link__c</code></td><td>URL</td><td>Lien vers la page du test gaming</td></tr>
+    </tbody>
+</table>
+
+<h3>Record Types — Opportunity (2)</h3>
+<table>
+    <tr><th>Record Type</th><th>Usage</th><th>Stages</th></tr>
+    <tr><td><strong>Application</strong></td><td>Candidatures soumises via le portail</td><td>Gaming → Technique → Architecture → RH Fit → Closed Won / Lost</td></tr>
+    <tr><td><strong>Job_Posting</strong></td><td>Offres d'emploi publiées par les recruteurs</td><td>Open → Closed</td></tr>
+</table>
+
+<!-- ══════════════════════════════════════ -->
+<h2><span class="icon sky">🔧</span> 16. Stack Technique Complète</h2>
+
+<table>
+    <thead><tr><th>Couche</th><th>Technologie</th></tr></thead>
+    <tbody>
+        <tr><td>Frontend</td><td><strong>Lightning Web Components (LWC)</strong> — 18 composants HTML/JS/CSS</td></tr>
+        <tr><td>Backend</td><td><strong>Salesforce Apex</strong> — 15 classes, 2 triggers, 2 flows</td></tr>
+        <tr><td>Portail</td><td><strong>Experience Cloud</strong> — Site public + espace authentifié</td></tr>
+        <tr><td>Intelligence Artificielle</td><td><strong>Groq API</strong> + <strong>Meta LLaMA 3.3 70B</strong> (scoring CV + génération offres + génération questions gaming)</td></tr>
+        <tr><td>Base de données</td><td><strong>Salesforce Objects</strong> — Lead, Opportunity, Contact, Account, Gaming_Question__c + Custom Settings</td></tr>
+        <tr><td>Automatisation</td><td><strong>Record-Triggered Flows</strong> + <strong>Apex Triggers</strong> + <strong>Queueable</strong></td></tr>
+        <tr><td>Authentification</td><td><strong>Site.login()</strong> + <strong>Token-based Password Reset</strong> (SHA-256, CSPRNG, rate limiting, audit log)</td></tr>
+        <tr><td>Chatbot</td><td><strong>NLP keyword-based</strong> (Apex) + <strong>Agentforce @InvocableMethod</strong></td></tr>
+        <tr><td>Carte interactive</td><td><strong>worldJobMap</strong> static resource (Carto CDN + postMessage)</td></tr>
+        <tr><td>Déploiement</td><td><strong>Salesforce CLI (sf)</strong> — SFDX project format</td></tr>
+    </tbody>
+</table>
+
+<div class="stats-grid" style="margin-top:30px;">
+    <div class="stat-card"><div class="num">18</div><div class="lbl">Composants LWC</div></div>
+    <div class="stat-card"><div class="num">15</div><div class="lbl">Classes Apex</div></div>
+    <div class="stat-card"><div class="num">2</div><div class="lbl">Triggers</div></div>
+    <div class="stat-card"><div class="num">2</div><div class="lbl">Flows</div></div>
+    <div class="stat-card"><div class="num">33</div><div class="lbl">Champs custom</div></div>
+    <div class="stat-card"><div class="num">6</div><div class="lbl">Types d'emails</div></div>
+    <div class="stat-card"><div class="num">∞</div><div class="lbl">Questions gaming IA</div></div>
+    <div class="stat-card"><div class="num">3</div><div class="lbl">Intégrations IA</div></div>
+</div>
+
+<div class="footer">
+    <p><strong>HR Talent Portal</strong> — Portail de Recrutement Intelligent propulsé par l'IA</p>
+    <p>Projet de Fin d'Études — Talan Tunisie — 2026</p>
+    <p style="margin-top:4px;opacity:.6;">Réalisé par Meriem Rebhi · Plateforme Salesforce · IA Groq LLaMA 3.3 70B</p>
+</div>
+
+</div>
+</body>
+</html>

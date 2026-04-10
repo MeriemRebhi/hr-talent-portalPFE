@@ -1,0 +1,670 @@
+<template>
+    <!-- ── PLANNING MODAL (individuel) ── -->
+    <template if:true={showPlanModal}>
+        <div class="modal-backdrop" onclick={closePlanModal}></div>
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <span class="modal-icon"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg></span>
+                    <div>
+                        <h2 class="modal-title">Planifier le test Gaming</h2>
+                        <p class="modal-sub">{planCandidatName}</p>
+                    </div>
+                </div>
+                <button class="modal-close" onclick={closePlanModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Date &amp; Heure du test</label>
+                    <input type="datetime-local" class="form-input" value={planDateTime}
+                        onchange={onDateTimeChange} />
+                </div>
+                <div class="form-row">
+                    <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> Durée</label>
+                    <select class="form-select" value={planDuration} onchange={onDurationChange}>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 heure</option>
+                        <option value="90">1h30</option>
+                        <option value="120">2 heures</option>
+                    </select>
+                </div>
+                <div class="meet-preview">
+                    <span class="meet-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg></span>
+                    <div>
+                        <p class="meet-label">Lien du test Gaming (auto-généré)</p>
+                        <p class="meet-link">Quiz en ligne — 10 questions</p>
+                    </div>
+                </div>
+                <div class="modal-note">
+                    <svg class="note-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg> Un email d'invitation sera envoyé automatiquement au candidat.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closePlanModal}>Annuler</button>
+                <button class="btn-send" onclick={confirmSchedule} disabled={isSending}>
+                    <template if:true={isSending}><svg class="btn-icon spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83" /></svg> Envoi...</template>
+                    <template if:false={isSending}><svg class="btn-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg> Envoyer l'invitation</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── BATCH PLANNING MODAL ── -->
+    <template if:true={showBatchModal}>
+        <div class="modal-backdrop" onclick={closeBatchModal}></div>
+        <div class="modal-box batch-modal">
+            <div class="modal-header batch-header">
+                <div class="modal-header-left">
+                    <span class="modal-icon"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" /></svg></span>
+                    <div>
+                        <h2 class="modal-title">Planifier en lot</h2>
+                        <p class="modal-sub">{batchSummary}</p>
+                    </div>
+                </div>
+                <button class="modal-close" onclick={closeBatchModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="batch-form-grid">
+                    <div class="form-row">
+                        <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Début du 1er créneau</label>
+                        <input type="datetime-local" class="form-input" value={batchDateTime}
+                            onchange={onBatchDateTimeChange} />
+                    </div>
+                    <div class="batch-form-row2">
+                        <div class="form-row">
+                            <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> Durée par test</label>
+                            <select class="form-select" value={batchDuration} onchange={onBatchDurationChange}>
+                                <option value="30">30 min</option>
+                                <option value="60">1 heure</option>
+                                <option value="90">1h30</option>
+                                <option value="120">2 heures</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg> Pause entre tests</label>
+                            <select class="form-select" value={batchGap} onchange={onBatchGapChange}>
+                                <option value="0">Aucune</option>
+                                <option value="15">15 min</option>
+                                <option value="30">30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60">1 heure</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview des créneaux -->
+                <template if:true={batchPreview.length}>
+                    <div class="batch-preview">
+                        <div class="batch-preview-title"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="8" y1="14" x2="8" y2="14" /><line x1="12" y1="14" x2="12" y2="14" /><line x1="16" y1="14" x2="16" y2="14" /></svg> Aperçu des créneaux</div>
+                        <div class="batch-slots">
+                            <template for:each={batchPreview} for:item="slot">
+                                <div key={slot.id} class="batch-slot">
+                                    <div class="slot-avatar">{slot.initials}</div>
+                                    <div class="slot-info">
+                                        <span class="slot-name">{slot.name}</span>
+                                        <span class="slot-time">{slot.timeFmt}</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="modal-note">
+                    <svg class="note-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg> Un email d'invitation individuel sera envoyé automatiquement à chaque candidat avec son créneau et lien du test.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeBatchModal}>Annuler</button>
+                <button class="btn-send" onclick={confirmBatchSchedule} disabled={isBatchSending}>
+                    <template if:true={isBatchSending}><svg class="btn-icon spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83" /></svg> Envoi en cours...</template>
+                    <template if:false={isBatchSending}><svg class="btn-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg> Envoyer {selectedCount} invitations</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── CREATE OFFER MODAL ── -->
+    <template if:true={showCreateOfferModal}>
+        <div class="modal-backdrop" onclick={closeCreateOfferModal}></div>
+        <div class="modal-box offer-modal">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <span class="modal-icon"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></span>
+                    <div>
+                        <h2 class="modal-title">Publier une offre d'emploi</h2>
+                        <p class="modal-sub">Diffuser sur Experience Cloud</p>
+                    </div>
+                </div>
+                <button class="modal-close" onclick={closeCreateOfferModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label class="form-label">Titre du poste</label>
+                    <input type="text" class="form-input" value={offerTitle} onchange={onOfferTitleChange} placeholder="Ex: Développeur Full Stack" />
+                </div>
+                <div class="offer-form-grid">
+                    <div class="form-row">
+                        <label class="form-label">Département</label>
+                        <select class="form-select" value={offerDepartment} onchange={onOfferDeptChange}>
+                            <option value="">-- Choisir --</option>
+                            <option value="Data &amp; AI">Data &amp; AI</option>
+                            <option value="Digital &amp; Cloud">Digital &amp; Cloud</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Cybersécurité">Cybersécurité</option>
+                            <option value="ERP &amp; CRM">ERP &amp; CRM</option>
+                            <option value="Stratégie &amp; Management">Stratégie &amp; Management</option>
+                            <option value="Innovation &amp; R&amp;D">Innovation &amp; R&amp;D</option>
+                            <option value="Fonctions Support">Fonctions Support</option>
+                            <option value="Talent &amp; RH">Talent &amp; RH</option>
+                            <option value="Salesforce">Salesforce</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">Localisation</label>
+                        <input type="text" class="form-input" value={offerLocation} onchange={onOfferLocChange} placeholder="Ex: Tunis, Les Berges du Lac" />
+                    </div>
+                </div>
+                <div class="offer-form-grid">
+                    <div class="form-row">
+                        <label class="form-label">Type de contrat</label>
+                        <select class="form-select" value={offerContract} onchange={onOfferContractChange}>
+                            <option value="">-- Choisir --</option>
+                            <option value="CDI">CDI</option>
+                            <option value="CDD">CDD</option>
+                            <option value="Stage">Stage</option>
+                            <option value="Freelance">Freelance</option>
+                            <option value="Alternance">Alternance</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">Salaire (optionnel)</label>
+                        <input type="number" class="form-input" value={offerSalary} onchange={onOfferSalaryChange} placeholder="Ex: 3000" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Date limite</label>
+                    <input type="date" class="form-input" value={offerCloseDate} onchange={onOfferCloseDateChange} />
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Description du poste</label>
+                    <textarea class="form-textarea" value={offerDescription} onchange={onOfferDescChange} rows="8" placeholder="Décrivez les missions, compétences requises... (même en brouillon, l'IA corrigera)"></textarea>
+                    <button class="btn-ai-generate" onclick={generateAIDescription} disabled={isGeneratingDesc}>
+                        <template if:true={isGeneratingDesc}>
+                            <svg class="btn-icon spin" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83" /></svg> Génération IA en cours...
+                        </template>
+                        <template if:false={isGeneratingDesc}>
+                            <svg class="btn-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> Générer avec l'IA
+                        </template>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeCreateOfferModal}>Annuler</button>
+                <button class="btn-send" onclick={confirmCreateOffer} disabled={isCreatingOffer}>
+                    <template if:true={isCreatingOffer}><svg class="btn-icon spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83" /></svg> Création...</template>
+                    <template if:false={isCreatingOffer}><svg class="btn-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Publier l'offre</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── DETAIL CANDIDAT MODAL ── -->
+    <template if:true={showDetailModal}>
+        <div class="modal-backdrop" onclick={closeDetailModal}></div>
+        <div class="modal-box detail-modal">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <div class="detail-avatar">{detailInitials}</div>
+                    <div>
+                        <h2 class="modal-title">{detailName}</h2>
+                        <p class="modal-sub">{detailJob} · {detailStage}</p>
+                    </div>
+                </div>
+                <button class="modal-close" onclick={closeDetailModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+                            Score IA
+                        </div>
+                        <div class="detail-score-big">{detailScore}<span class="detail-pct">%</span></div>
+                        <span class={detailRecoBadge}>{detailReco}</span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/></svg>
+                            Test Gaming
+                        </div>
+                        <template if:true={detailHasGaming}>
+                            <div class="detail-score-big">{detailGamingScore}<span class="detail-pct">%</span></div>
+                            <span class={detailGamingBadge}>{detailGamingLabel}</span>
+                        </template>
+                        <template if:false={detailHasGaming}>
+                            <p class="detail-na">Non passé</p>
+                        </template>
+                    </div>
+                </div>
+                <template if:true={detailAiReco}>
+                    <div class="detail-section">
+                        <h4 class="detail-section-title">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+                            Analyse IA
+                        </h4>
+                        <p class="detail-text">{detailAiReco}</p>
+                    </div>
+                </template>
+                <template if:true={detailForts}>
+                    <div class="detail-section">
+                        <h4 class="detail-section-title">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Points forts
+                        </h4>
+                        <p class="detail-text">{detailForts}</p>
+                    </div>
+                </template>
+                <div class="detail-info-row">
+                    <template if:true={detailEmail}>
+                        <span class="detail-info-item">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            {detailEmail}
+                        </span>
+                    </template>
+                    <template if:true={detailPhone}>
+                        <span class="detail-info-item">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                            {detailPhone}
+                        </span>
+                    </template>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeDetailModal}>Fermer</button>
+            </div>
+        </div>
+    </template>
+
+    <div class="rdb-shell">
+
+        <!-- ── HEADER ── -->
+        <div class="rdb-header">
+            <div class="rdb-header-left">
+                <div class="rdb-avatar">R</div>
+                <div>
+                    <h1 class="rdb-title">Tableau de bord Recruteur</h1>
+                    <p class="rdb-sub">Gestion des candidatures &amp; offres · HR Talent Portal · Talan Tunisie</p>
+                </div>
+            </div>
+            <div class="rdb-header-right">
+                <div class="rdb-badge-total">
+                    <span class="badge-num">{totalCandidats}</span>
+                    <span class="badge-lbl">Candidats</span>
+                </div>
+                <div class="rdb-badge-total badge-offers">
+                    <span class="badge-num">{totalOffres}</span>
+                    <span class="badge-lbl">Offres actives</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TABS ── -->
+        <div class="rdb-tabs">
+            <button class={tabCandClass} data-tab="candidatures" onclick={switchTab}>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                Candidatures
+            </button>
+            <button class={tabOffresClass} data-tab="offres" onclick={switchTab}>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                Offres d'emploi
+            </button>
+        </div>
+
+        <!-- ══════ TAB: CANDIDATURES ══════ -->
+        <template if:true={isCandidaturesTab}>
+        <!-- ── KPI CARDS ── -->
+        <template if:true={isLoaded}>
+            <div class="kpi-grid">
+                <div class="kpi-card kpi-gaming">
+                    <div class="kpi-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3" /><circle cx="8" cy="12" r="1" fill="currentColor" /><circle cx="16" cy="11" r="1" fill="currentColor" /><circle cx="18" cy="13" r="1" fill="currentColor" /><circle cx="14" cy="13" r="1" fill="currentColor" /><circle cx="16" cy="15" r="1" fill="currentColor" /><line x1="6" y1="10" x2="10" y2="10" /><line x1="8" y1="8" x2="8" y2="12" /></svg></div>
+                    <div class="kpi-info">
+                        <span class="kpi-val">{enGaming}</span>
+                        <span class="kpi-lbl">Gaming</span>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-fill" style={gamingBarStyle}></div></div>
+                </div>
+                <div class="kpi-card kpi-tech">
+                    <div class="kpi-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg></div>
+                    <div class="kpi-info">
+                        <span class="kpi-val">{enTechnique}</span>
+                        <span class="kpi-lbl">Technique</span>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-fill" style={techniqueBarStyle}></div></div>
+                </div>
+                <div class="kpi-card kpi-archi">
+                    <div class="kpi-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 21V8l9-5 9 5v13M9 21v-6h6v6M9 9h.01M15 9h.01" /></svg></div>
+                    <div class="kpi-info">
+                        <span class="kpi-val">{enArchitecture}</span>
+                        <span class="kpi-lbl">Architecture</span>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-fill" style={architectureBarStyle}></div></div>
+                </div>
+                <div class="kpi-card kpi-rh">
+                    <div class="kpi-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg></div>
+                    <div class="kpi-info">
+                        <span class="kpi-val">{enRHFit}</span>
+                        <span class="kpi-lbl">RH Fit</span>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-fill" style={rhfitBarStyle}></div></div>
+                </div>
+                <div class="kpi-card kpi-closed">
+                    <div class="kpi-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg></div>
+                    <div class="kpi-info">
+                        <span class="kpi-val">{closedCount}</span>
+                        <span class="kpi-lbl">Clôturés</span>
+                    </div>
+                    <div class="kpi-bar"><div class="kpi-fill" style={closedBarStyle}></div></div>
+                </div>
+            </div>
+
+            <!-- ── FILTRES ── -->
+            <div class="filter-bar">
+                <div class="filter-title"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> Filtrer par stage</div>
+                <div class="filter-chips">
+                    <button class={chipAll} data-stage="" onclick={filterByStage}>Tous</button>
+                    <button class={chipGaming} data-stage="Gaming" onclick={filterByStage}>Gaming</button>
+                    <button class={chipTechnique} data-stage="Technique" onclick={filterByStage}>Technique</button>
+                    <button class={chipArchitecture} data-stage="Architecture" onclick={filterByStage}>Architecture</button>
+                    <button class={chipRHFit} data-stage="RH Fit" onclick={filterByStage}>RH Fit</button>
+                    <button class={chipClosed} data-stage="Closed" onclick={filterByStage}>Clôturés</button>
+                </div>
+            </div>
+
+            <!-- ── BATCH TOOLBAR ── -->
+            <template if:true={hasSelected}>
+                <div class="batch-toolbar">
+                    <div class="batch-toolbar-left">
+                        <span class="batch-count">{selectedCount}</span>
+                        <span class="batch-label">candidat(s) sélectionné(s)</span>
+                    </div>
+                    <button class="btn-batch" onclick={openBatchModal}>
+                        <svg class="btn-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Planifier en lot
+                    </button>
+                </div>
+            </template>
+
+            <!-- ── TABLE CANDIDATS ── -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-header-left">
+                        <h2>Candidatures</h2>
+                        <span class="table-count">{filteredCount} résultats</span>
+                    </div>
+                    <!-- Search & Filters -->
+                    <div class="rdb-filters-row">
+                        <div class="rdb-search-wrap">
+                            <svg class="rdb-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" class="rdb-search" placeholder="Rechercher un candidat..." value={searchTerm} oninput={handleSearch} />
+                        </div>
+                        <select class="rdb-filter-select" onchange={handleJobFilter}>
+                            <option value="">Tous les postes</option>
+                            <template for:each={jobOptions} for:item="job">
+                                <option key={job} value={job}>{job}</option>
+                            </template>
+                        </select>
+                        <select class="rdb-filter-select" onchange={handleScoreFilter}>
+                            <option value="">Tous scores</option>
+                            <option value="high">≥ 70% Recommandé</option>
+                            <option value="mid">50–69% À évaluer</option>
+                            <option value="low">30–49% Risqué</option>
+                            <option value="reject">&lt; 30% Refuser</option>
+                        </select>
+                        <select class="rdb-filter-select" onchange={handleSortFilter}>
+                            <option value="">Tri par défaut</option>
+                            <option value="score-desc">Score ↓</option>
+                            <option value="score-asc">Score ↑</option>
+                            <option value="name-asc">Nom A→Z</option>
+                            <option value="name-desc">Nom Z→A</option>
+                        </select>
+                        <template if:true={hasAdvancedFilters}>
+                            <button class="rdb-clear-btn" onclick={clearAdvancedFilters}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Réinitialiser
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                <div class="table-legend-bar">
+                    <span class="leg-dot leg-high"></span><span class="leg-lbl">≥70% Recommandé</span>
+                    <span class="leg-dot leg-mid"></span><span class="leg-lbl">≥50% À évaluer</span>
+                    <span class="leg-dot leg-low"></span><span class="leg-lbl">≥30% Risqué</span>
+                    <span class="leg-dot leg-reject"></span><span class="leg-lbl">&lt;30% Refuser</span>
+                </div>
+                <template if:true={hasFiltered}>
+                    <div class="rdb-table-wrap">
+                        <table class="rdb-table">
+                            <thead>
+                                <tr>
+                                    <th class="th-check">
+                                        <button class={selectAllCheckClass} onclick={toggleSelectAll} title="Sélectionner tous les Gaming">
+                                            <template if:true={isAllGamingSelected}>✓</template>
+                                        </button>
+                                    </th>
+                                    <th>Candidat</th>
+                                    <th>Stage</th>
+                                    <th>Score IA</th>
+                                    <th>Recommandation</th>
+                                    <th>Test Gaming</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={filteredOpps} for:item="opp">
+                                    <tr key={opp.Id} class="rdb-row">
+                                        <!-- Checkbox -->
+                                        <td class="td-check">
+                                            <template if:true={opp.isGaming}>
+                                                <button class="batch-checkbox" data-id={opp.Id} onclick={toggleSelect}>
+                                                    <template if:true={opp.selected}>✓</template>
+                                                </button>
+                                            </template>
+                                        </td>
+                                        <!-- Candidat -->
+                                        <td>
+                                            <div class="cand-cell">
+                                                <div class="cand-avatar">{opp.initials}</div>
+                                                <div>
+                                                    <div class="cand-name">{opp.Name}</div>
+                                                    <div class="cand-account">{opp.jobTitle}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <!-- Stage -->
+                                        <td>
+                                            <span class={opp.stageBadge}>{opp.StageName}</span>
+                                        </td>
+                                        <!-- Score IA -->
+                                        <td class="td-score">
+                                            <template if:true={opp.hasScore}>
+                                                <div class="score-wrap">
+                                                    <div class="score-num">{opp.score}%</div>
+                                                    <div class="score-bar-bg">
+                                                        <div class={opp.scoreBarClass} style={opp.scoreBarStyle}></div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template if:false={opp.hasScore}>
+                                                <span class="score-na">—</span>
+                                            </template>
+                                        </td>
+                                        <!-- Recommandation -->
+                                        <td>
+                                            <span class={opp.recoBadge}>{opp.reco}</span>
+                                        </td>
+                                        <!-- Test Gaming -->
+                                        <td class="td-gaming">
+                                            <template if:true={opp.hasGamingScore}>
+                                                <div class="gaming-result">
+                                                    <span class={opp.gamingScoreBadge}>{opp.gamingScoreLabel}</span>
+                                                    <span class="gaming-result-label">{opp.gamingResultLabel}</span>
+                                                </div>
+                                            </template>
+                                            <template if:false={opp.hasGamingScore}>
+                                                <template if:true={opp.gamingScheduled}>
+                                                    <div class="gaming-info">
+                                                        <span class="gaming-glow-dot"></span>
+                                                        <span class="gaming-date">{opp.gamingDateFmt}</span>
+                                                        <template if:true={opp.gamingPending}>
+                                                            <span class="gaming-pending">En attente</span>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template if:false={opp.gamingScheduled}>
+                                                    <span class="gaming-na">Non planifié</span>
+                                                </template>
+                                            </template>
+                                        </td>
+                                        <!-- Actions -->
+                                        <td>
+                                            <div class="action-btns">
+                                                <template if:true={opp.isGaming}>
+                                                    <template if:true={opp.gamingScheduled}>
+                                                        <button class="btn-action btn-cancel-rdv"
+                                                            data-id={opp.Id}
+                                                            data-name={opp.Name}
+                                                            onclick={cancelGamingSchedule}>
+                                                            <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Annuler
+                                                        </button>
+                                                    </template>
+                                                    <template if:false={opp.gamingScheduled}>
+                                                        <button class="btn-action btn-plan"
+                                                            data-id={opp.Id}
+                                                            data-name={opp.Name}
+                                                            onclick={openPlanModal}>
+                                                            <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> Planifier
+                                                        </button>
+                                                    </template>
+                                                </template>
+                                                <button class="btn-action btn-rescore"
+                                                    data-id={opp.Id}
+                                                    onclick={handleRescore}
+                                                    title="Relancer l'analyse IA">
+                                                    <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> IA
+                                                </button>
+                                                <button class="btn-action btn-view"
+                                                    data-id={opp.Id}
+                                                    data-name={opp.Name}
+                                                    onclick={openDetailModal}>
+                                                    <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Voir
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template if:false={hasFiltered}>
+                    <div class="empty-table">
+                        <div class="empty-icon"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#94a3b8" stroke-width="1.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></div>
+                        <p>Aucun candidat dans ce stage.</p>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ── TOAST ── -->
+            <template if:true={toastMessage}>
+                <div class={toastClass}>
+                    <span>{toastMessage}</span>
+                </div>
+            </template>
+        </template>
+        </template><!-- /isCandidaturesTab -->
+
+        <!-- ══════ TAB: OFFRES D'EMPLOI ══════ -->
+        <template if:true={isOffresTab}>
+            <div class="offres-section">
+                <div class="offres-header">
+                    <div class="offres-header-left">
+                        <h2>Offres d'emploi</h2>
+                        <span class="table-count">{jobPostings.length} offres</span>
+                    </div>
+                    <button class="btn-create-offer" onclick={openCreateOfferModal}>
+                        <svg class="btn-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nouvelle offre
+                    </button>
+                </div>
+
+                <template if:true={jobPostings.length}>
+                    <div class="offres-grid">
+                        <template for:each={jobPostings} for:item="job">
+                            <div key={job.Id} class="offer-card">
+                                <div class="offer-card-top">
+                                    <div class="offer-dept-badge">{job.Department}</div>
+                                    <span class={job.statusClass}>{job.statusLabel}</span>
+                                </div>
+                                <h3 class="offer-title">{job.Name}</h3>
+                                <div class="offer-meta">
+                                    <span class="offer-meta-item">
+                                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        {job.Location}
+                                    </span>
+                                    <span class="offer-meta-item">
+                                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                                        {job.Contract}
+                                    </span>
+                                    <template if:true={job.Salary}>
+                                        <span class="offer-meta-item">
+                                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                                            {job.Salary}
+                                        </span>
+                                    </template>
+                                </div>
+                                <div class="offer-stats">
+                                    <span class="offer-apps"><strong>{job.AppCount}</strong> candidature(s)</span>
+                                    <span class="offer-date">Créée le {job.createdFmt}</span>
+                                </div>
+                                <div class="offer-actions">
+                                    <template if:false={job.IsClosed}>
+                                        <button class="btn-action btn-close-offer" data-id={job.Id} onclick={closeJobPosting}>
+                                            <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg> Clôturer
+                                        </button>
+                                        <button class="btn-action btn-ai-generate" data-id={job.Id} onclick={generateGamingQuestions}>
+                                            🤖 Générer questions Gaming
+                                        </button>
+                                    </template>
+                                    <template if:true={job.IsClosed}>
+                                        <button class="btn-action btn-reopen-offer" data-id={job.Id} onclick={reopenJobPosting}>
+                                            <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Réouvrir
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template if:false={jobPostings.length}>
+                    <div class="empty-table">
+                        <div class="empty-icon"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#94a3b8" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></div>
+                        <p>Aucune offre d'emploi. Créez votre première offre !</p>
+                    </div>
+                </template>
+            </div>
+
+            <template if:true={toastMessage}>
+                <div class={toastClass}><span>{toastMessage}</span></div>
+            </template>
+        </template><!-- /isOffresTab -->
+
+        <!-- ── LOADING ── -->
+        <template if:false={isLoaded}>
+            <div class="rdb-loading">
+                <div class="rdb-spinner"></div>
+                <p>Chargement des candidatures...</p>
+            </div>
+        </template>
+
+    </div>
+</template>

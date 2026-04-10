@@ -1,0 +1,78 @@
+<template>
+    <!-- Bulle flottante -->
+    <div class="chat-bubble" onclick={toggleChat} title="Assistant RH Talan">
+        <template if:false={isOpen}>
+            <span class="bubble-icon">💬</span>
+            <template if:true={unreadCount}>
+                <span class="unread-badge">{unreadCount}</span>
+            </template>
+        </template>
+        <template if:true={isOpen}>
+            <span class="bubble-icon">✕</span>
+        </template>
+    </div>
+
+    <!-- Fenêtre de chat -->
+    <template if:true={isOpen}>
+        <div class="chat-window">
+            <!-- En-tête -->
+            <div class="chat-header">
+                <div class="header-avatar">🤖</div>
+                <div class="header-info">
+                    <div class="header-name">Assistant RH Talan</div>
+                    <div class="header-status">En ligne</div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="chat-messages" lwc:ref="messagesContainer">
+                <template for:each={messages} for:item="msg">
+                    <div key={msg.id} class={msg.cssClass}>
+                        <template if:true={msg.isBot}>
+                            <div class="msg-avatar">🤖</div>
+                        </template>
+                        <div class="msg-bubble">
+                            <p class="msg-text">{msg.text}</p>
+                            <span class="msg-time">{msg.time}</span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Indicateur de frappe -->
+                <template if:true={isTyping}>
+                    <div class="msg-row bot">
+                        <div class="msg-avatar">🤖</div>
+                        <div class="msg-bubble typing">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Suggestions rapides -->
+            <div class="quick-replies">
+                <button class="quick-btn" onclick={quickStatut}>📋 Mes candidatures</button>
+                <button class="quick-btn" onclick={quickScore}>📊 Score IA</button>
+                <button class="quick-btn" onclick={quickOffres}>💼 Offres dispo</button>
+            </div>
+
+            <!-- Zone de saisie -->
+            <div class="chat-input-area">
+                <input
+                    type="text"
+                    class="chat-input"
+                    placeholder="Posez votre question..."
+                    value={inputValue}
+                    onkeyup={handleKeyUp}
+                    oninput={handleInput}
+                    disabled={isTyping}
+                />
+                <button class="send-btn" onclick={sendMessage} disabled={isSendDisabled}>
+                    ➤
+                </button>
+            </div>
+        </div>
+    </template>
+</template>

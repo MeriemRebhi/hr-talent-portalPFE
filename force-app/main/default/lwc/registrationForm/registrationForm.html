@@ -1,0 +1,18 @@
+<template>
+    <div class="registration-container">
+        <h2>Inscription au Portail Candidat</h2>
+        <template if:true={success}>
+            <div class="success-message">Un email de réinitialisation de mot de passe a été envoyé. Veuillez vérifier votre boîte mail.</div>
+        </template>
+        <template if:true={error}>
+            <div class="error-message">{error}</div>
+        </template>
+        <template if:false={success}>
+            <form onsubmit={handleSubmit}>
+                <label for="email">Email :</label>
+                <input type="email" id="email" name="email" required value={email} onchange={handleEmailChange} />
+                <button type="submit">Recevoir le lien d'accès</button>
+            </form>
+        </template>
+    </div>
+</template>

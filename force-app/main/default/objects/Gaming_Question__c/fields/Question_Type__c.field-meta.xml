@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Question_Type__c</fullName>
+    <description>Type de question : QCM, Puzzle logique, ou Ordonnancement.</description>
+    <label>Question Type</label>
+    <required>true</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>mcq</fullName><default>true</default><label>QCM</label></value>
+            <value><fullName>puzzle</fullName><default>false</default><label>Puzzle</label></value>
+            <value><fullName>order</fullName><default>false</default><label>Ordonnancement</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

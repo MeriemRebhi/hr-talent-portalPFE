@@ -1,0 +1,142 @@
+@startuml
+title Diagramme de cas d'utilisation global - HR Talent Portal
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle stickman
+skinparam monochrome true
+skinparam shadowing false
+
+' ════════════════════════════════════════
+'         ACTEURS (côté gauche)
+' ════════════════════════════════════════
+actor "Visiteur" as V
+actor "Candidat" as C
+actor "Recruteur" as R
+actor "Manager" as M
+actor "Responsable RH" as RRH
+
+' ════════════════════════════════════════
+'     HÉRITAGE ENTRE ACTEURS
+'   Candidat est une spécialisation
+'   de Visiteur (il hérite de Consulter
+'   les offres et Déposer candidature)
+' ════════════════════════════════════════
+V <|-- C
+
+' ════════════════════════════════════════
+'         SYSTÈME PRINCIPAL
+' ════════════════════════════════════════
+rectangle "HR Talent Portal (Salesforce)" {
+
+    ' ── Authentification ──
+    usecase "S'authentifier" as UC_AUTH
+
+    ' ── Cas d'utilisation Visiteur ──
+    usecase "Consulter les offres\nd'emploi" as UC_OFFRES
+    usecase "Déposer candidature\n(Upload CV)" as UC_DEPOSER
+
+    ' ── Cas d'utilisation Candidat ──
+    usecase "Passer le Test Gaming" as UC_GAMING
+    usecase "Gérer son profil B2C" as UC_PROFIL
+    usecase "Suivre l'avancement\ndu dossier" as UC_SUIVI
+    usecase "Interagir avec le\nChatbot NLP" as UC_CHAT
+
+    ' ── Cas d'utilisation Recruteur ──
+    usecase "Publier les offres\nd'emploi" as UC_PUBLIER
+    usecase "Générer description\noffre par IA" as UC_GENDESC
+    usecase "Générer questions\nGaming IA" as UC_GENQUEST
+    usecase "Planifier les tests\ngaming" as UC_PLANIF
+
+    ' ── Cas d'utilisation Manager ──
+    usecase "Saisir feedback\névaluateur" as UC_FEEDBACK
+    usecase "Valider / Refuser\nun candidat" as UC_VALIDER
+
+    ' ── Cas d'utilisation Responsable RH ──
+    usecase "Consulter Dashboards\n& KPIs" as UC_KPI
+    usecase "Gérer Onboarding\n& Contrats" as UC_ONBOARD
+
+    ' ── Cas d'utilisation IA ──
+    usecase "Scorer le CV\n(Analyse NLP)" as UC_SCORER
+    usecase "Calculer Match Score" as UC_MATCH
+}
+
+' ════════════════════════════════════════
+'  SYSTÈME IA (côté droit — composant,
+'  pas un acteur humain)
+' ════════════════════════════════════════
+component "Système IA" as IA <<System>>
+
+' ════════════════════════════════════════
+'         ASSOCIATIONS VISITEUR
+'  (héritées par Candidat)
+' ════════════════════════════════════════
+V -- UC_OFFRES
+V -- UC_DEPOSER
+
+' ════════════════════════════════════════
+'       ASSOCIATIONS CANDIDAT
+'  (UC_OFFRES et UC_DEPOSER sont hérités)
+' ════════════════════════════════════════
+C -- UC_GAMING
+C -- UC_PROFIL
+C -- UC_SUIVI
+C -- UC_CHAT
+
+' ════════════════════════════════════════
+'       ASSOCIATIONS RECRUTEUR
+' ════════════════════════════════════════
+R -- UC_PUBLIER
+R -- UC_GENDESC
+R -- UC_GENQUEST
+R -- UC_PLANIF
+
+' ════════════════════════════════════════
+'       ASSOCIATIONS MANAGER
+' ════════════════════════════════════════
+M -- UC_FEEDBACK
+M -- UC_VALIDER
+
+' ════════════════════════════════════════
+'     ASSOCIATIONS RESPONSABLE RH
+' ════════════════════════════════════════
+RRH -- UC_KPI
+RRH -- UC_ONBOARD
+
+' ════════════════════════════════════════
+'     ASSOCIATIONS SYSTÈME IA
+' ════════════════════════════════════════
+IA -- UC_SCORER
+IA -- UC_MATCH
+IA -- UC_GENQUEST
+
+' ════════════════════════════════════════
+'     DÉPENDANCES <<include>>
+' ════════════════════════════════════════
+UC_GAMING ..> UC_AUTH : <<include>>
+UC_PROFIL ..> UC_AUTH : <<include>>
+UC_SUIVI ..> UC_AUTH  : <<include>>
+UC_CHAT ..> UC_AUTH   : <<include>>
+
+UC_DEPOSER ..> UC_SCORER : <<include>>
+
+' Recruteur → Authentification
+UC_PUBLIER ..> UC_AUTH  : <<include>>
+UC_GENDESC ..> UC_AUTH  : <<include>>
+UC_GENQUEST ..> UC_AUTH : <<include>>
+UC_PLANIF ..> UC_AUTH  : <<include>>
+
+' Manager → Authentification
+UC_FEEDBACK ..> UC_AUTH : <<include>>
+UC_VALIDER ..> UC_AUTH : <<include>>
+
+' Responsable RH → Authentification
+UC_KPI ..> UC_AUTH     : <<include>>
+UC_ONBOARD ..> UC_AUTH : <<include>>
+
+' ════════════════════════════════════════
+'     DÉPENDANCE <<extend>>
+' ════════════════════════════════════════
+UC_VALIDER <.. UC_MATCH : <<extend>>
+
+@enduml

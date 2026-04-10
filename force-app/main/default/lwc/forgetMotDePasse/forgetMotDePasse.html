@@ -1,0 +1,78 @@
+<template>
+    <div class="page-wrapper">
+        <div class="reset-card">
+            <div class="reset-content">
+
+                <!-- Colonne formulaire -->
+                <div class="form-col">
+                    <div class="brand-badge">Portail RH Talan</div>
+
+                    <!-- ÉTAT: Formulaire -->
+                    <template if:false={success}>
+                        <div class="form-header">
+                            <div class="icon-circle">
+                                <span class="icon-lock">&#128274;</span>
+                            </div>
+                            <h2>Mot de passe oublié ?</h2>
+                            <p class="form-sub">Entrez votre email et nous vous enverrons un nouveau mot de passe temporaire.</p>
+                        </div>
+
+                        <form onsubmit={handleSubmit}>
+                            <template if:true={errorMessage}>
+                                <div class="alert-error">
+                                    <span>&#9888;</span> {errorMessage}
+                                </div>
+                            </template>
+
+                            <div class="field-group">
+                                <label class="field-label">Adresse email</label>
+                                <input
+                                    type="email"
+                                    class="field-input"
+                                    placeholder="votre@email.com"
+                                    value={email}
+                                    onchange={handleEmailChange}
+                                    required
+                                />
+                            </div>
+
+                            <button class="btn-submit" type="submit" disabled={isLoading}>
+                                <template if:true={isLoading}>
+                                    <span class="btn-spinner"></span> Envoi en cours...
+                                </template>
+                                <template if:false={isLoading}>
+                                    Envoyer le mot de passe
+                                </template>
+                            </button>
+                        </form>
+
+                        <div class="back-link">
+                            <a href={loginUrl}>&larr; Retour à la connexion</a>
+                        </div>
+                    </template>
+
+                    <!-- ÉTAT: Succès -->
+                    <template if:true={success}>
+                        <div class="success-state">
+                            <div class="success-icon">&#10003;</div>
+                            <h2>Email envoyé !</h2>
+                            <p>Un nouveau mot de passe temporaire a été envoyé à <strong>{email}</strong>.<br/>Vérifiez votre boîte mail et connectez-vous avec ce mot de passe.</p>
+                            <a href={loginUrl} class="btn-submit btn-link">Se connecter maintenant &rarr;</a>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Colonne image -->
+                <div class="image-col">
+                    <div class="image-wrapper">
+                        <img src="/sfsites/c/resource/imageLogin" alt="HR Talent" class="hero-img" />
+                        <div class="image-overlay">
+                            <p class="overlay-text">«Votre talent mérite d&rsquo;être reconnu»</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</template>

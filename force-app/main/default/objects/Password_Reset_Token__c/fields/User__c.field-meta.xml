@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>User__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Référence vers le User portail concerné par le token</description>
+    <label>User</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Password Reset Tokens</relationshipLabel>
+    <relationshipName>Password_Reset_Tokens</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

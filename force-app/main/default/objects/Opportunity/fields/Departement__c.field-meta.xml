@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Departement__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Département Talan auquel le poste est rattaché</description>
+    <externalId>false</externalId>
+    <label>Département</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Data &amp; AI</fullName><default>false</default><label>Data &amp; AI</label></value>
+            <value><fullName>Digital &amp; Cloud</fullName><default>false</default><label>Digital &amp; Cloud</label></value>
+            <value><fullName>Consulting</fullName><default>false</default><label>Consulting</label></value>
+            <value><fullName>Cybersécurité</fullName><default>false</default><label>Cybersécurité</label></value>
+            <value><fullName>ERP &amp; CRM</fullName><default>false</default><label>ERP &amp; CRM</label></value>
+            <value><fullName>Stratégie &amp; Management</fullName><default>false</default><label>Stratégie &amp; Management</label></value>
+            <value><fullName>Innovation &amp; R&amp;D</fullName><default>false</default><label>Innovation &amp; R&amp;D</label></value>
+            <value><fullName>Fonctions Support</fullName><default>false</default><label>Fonctions Support</label></value>
+            <value><fullName>Talent &amp; RH</fullName><default>false</default><label>Talent &amp; RH</label></value>
+            <value><fullName>Salesforce</fullName><default>false</default><label>Salesforce</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

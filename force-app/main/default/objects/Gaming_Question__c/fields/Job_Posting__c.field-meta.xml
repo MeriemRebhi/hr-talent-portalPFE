@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Job_Posting__c</fullName>
+    <description>Offre d emploi (Job_Posting) à laquelle cette question est liée.</description>
+    <label>Job Posting</label>
+    <referenceTo>Opportunity</referenceTo>
+    <relationshipLabel>Gaming Questions</relationshipLabel>
+    <relationshipName>Gaming_Questions</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>

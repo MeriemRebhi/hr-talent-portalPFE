@@ -1,0 +1,343 @@
+@startuml
+title Diagramme de classes — HR Talent Portal (Salesforce)
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+
+' ══════════════════════════════════════════
+'             ÉNUMÉRATIONS
+' ══════════════════════════════════════════
+
+enum LeadStatut <<enumeration>> {
+    Candidature_IA_Parsing_CV
+    Candidature_Validee_Email_Envoye
+    Candidature_Refusee
+}
+
+enum LeadRating <<enumeration>> {
+    Hot    "score ≥ 80"
+    Warm   "score > 15"
+    Cold   "score ≤ 15"
+}
+
+enum OpportunityStageName <<enumeration>> {
+    Prospecting   "(Job Posting)"
+    Gaming
+    Technique     "(Entretien Technique)"
+    Architecture  "(Entretien Architecture)"
+    RH_Fit        "(Entretien RH)"
+    Closed_Won
+    Closed_Lost
+}
+
+enum OpportunityRecordType <<enumeration>> {
+    Job_Posting
+    Application
+}
+
+enum Departement <<enumeration>> {
+    Data_AI
+    Digital_Cloud
+    Consulting
+    Cybersecurite
+    ERP_CRM
+    Strategie_Management
+}
+
+enum TypeContrat <<enumeration>> {
+    CDI
+    CDD
+    Stage
+    Freelance
+    Alternance
+}
+
+enum QuestionType <<enumeration>> {
+    mcq    "(QCM 4 options)"
+    puzzle "(Logique/Réflexion)"
+    order  "(Classement 5 options)"
+}
+
+enum Difficulte <<enumeration>> {
+    easy
+    medium
+    hard
+}
+
+enum GamingTestDuration <<enumeration>> {
+    30_min
+    60_min
+    90_min
+    120_min
+}
+
+enum RecommandationIA <<enumeration>> {
+    Fortement_recommande  "score ≥ 70"
+    A_evaluer_en_entretien "score ≥ 50"
+    Profil_risque          "score ≥ 30"
+    Non_recommande         "score < 30"
+}
+
+enum Severite <<enumeration>> {
+    INFO
+    WARNING
+    CRITICAL
+}
+
+enum AuditAction <<enumeration>> {
+    TOKEN_CREATED
+    TOKEN_FAILED
+    TOKEN_EXPIRED
+    PASSWORD_SET
+    ACCOUNT_CREATED
+}
+
+' ══════════════════════════════════════════
+'         OBJETS STANDARDS SALESFORCE
+' ══════════════════════════════════════════
+
+class Account <<Standard Object>> {
+    + Id : ID
+    + Name : String
+    + Industry : String
+    + Phone : String
+    --
+    Créé automatiquement lors
+    de la conversion du Lead
+}
+
+class Contact <<Standard Object>> {
+    + Id : ID
+    + FirstName : String
+    + LastName : String
+    + Email : Email
+    + Phone : String
+    + AccountId : Lookup(Account)
+    --
+    Créé via conversion du Lead.
+    Lié au User portail B2C.
+}
+
+class User <<Standard Object>> {
+    + Id : ID
+    + Username : String
+    + Email : Email
+    + FirstName : String
+    + LastName : String
+    + ContactId : Lookup(Contact)
+    + CommunityNickname : String
+    + IsActive : Boolean
+    --
+    Profil : Customer Community
+    Login User
+}
+
+class Lead <<Standard Object>> {
+    + Id : ID
+    + FirstName : String
+    + LastName : String
+    + Email : Email
+    + Phone : String
+    + Company : String
+    + Status : LeadStatut
+    + LeadSource : String = "Talent Portal"
+    + Description : LongTextArea
+    + Rating : LeadRating
+    + IsConverted : Boolean
+    + ConvertedOpportunityId : Lookup(Opportunity)
+    + OwnerId : Lookup(User)
+    __Champs personnalisés IA__
+    + Score_Matching__c : Number(3)
+    + AI_Points_Forts__c : LongTextArea(4000)
+    + AI_Points_Faibles__c : LongTextArea(4000)
+    + AI_Recommendation__c : LongTextArea(32000)
+    __Champs personnalisés adresse__
+    + Adresse_exacte__c : Text
+    + Code_postale__c : Text
+}
+
+class "Opportunity\n(Job Posting / Candidature)" as Opportunity <<Standard Object>> {
+    + Id : ID
+    + Name : String
+    + StageName : OpportunityStageName
+    + CloseDate : Date
+    + AccountId : Lookup(Account)
+    + RecordTypeId : OpportunityRecordType
+    + Description : LongTextArea
+    + IsClosed : Boolean
+    __Champs offre d'emploi__
+    + Description_Poste__c : LongTextArea(4000)
+    + Departement__c : Departement
+    + Localisation__c : Text(255)
+    + Salaire_Propos__c : Currency(10,2)
+    + Type_de_Contrat__c : TypeContrat
+    + Is_Candidature__c : Checkbox
+    __Champs scoring IA__
+    + Score_Matching__c : Number(3)
+    __Champs test gaming__
+    + Gaming_Test_Status__c : Text(50)
+    + Gaming_Test_Score__c : Number(5,1)
+    + Gaming_Test_DateTime__c : DateTime
+    + Gaming_Test_Duration__c : GamingTestDuration
+    + Gaming_Meet_Link__c : Url
+}
+
+' ══════════════════════════════════════════
+'         OBJETS PERSONNALISÉS
+' ══════════════════════════════════════════
+
+class Gaming_Question__c <<Custom Object>> {
+    + Name : AutoNumber (GQ-{00000})
+    + Question_Text__c : LongTextArea(2000)
+    + Question_Type__c : QuestionType
+    + Difficulty__c : Difficulte
+    + Correct_Answer__c : Text(255)
+    + Option_A__c : LongTextArea(500)
+    + Option_B__c : LongTextArea(500)
+    + Option_C__c : LongTextArea(500)
+    + Option_D__c : LongTextArea(500)
+    + Option_E__c : LongTextArea(500)
+    + Time_Limit__c : Number(3) = 25
+    + Job_Posting__c : Lookup(Opportunity)
+    --
+    Questions générées par
+    Groq LLaMA 3.3 70B
+}
+
+class Password_Reset_Token__c <<Custom Object>> {
+    + Name : AutoNumber (PRT-{0000})
+    + Token_Hash__c : Text(64) <<unique>>
+    + Email__c : Email
+    + Expiration__c : DateTime
+    + Is_Used__c : Checkbox = false
+    + Attempts__c : Number(2) = 0
+    + User__c : Lookup(User)
+    --
+    Token SHA-256, usage unique,
+    expiration 24h, max 3 tentatives
+}
+
+class Security_Audit_Log__c <<Custom Object>> {
+    + Name : AutoNumber (SEC-{00000})
+    + Action__c : AuditAction
+    + Email__c : Email
+    + Severity__c : Severite
+    + Timestamp__c : DateTime
+    + Details__c : LongTextArea(1000)
+}
+
+class AI_Configuration__c <<Custom Settings>> {
+    + Groq_API_Key__c : Text(255)
+    --
+    Paramètre hiérarchique.
+    Clé API Groq LLaMA 3.3 70B
+    (3 intégrations IA)
+}
+
+' ══════════════════════════════════════════
+'      OBJETS DOCUMENTS & RECORD TYPE
+' ══════════════════════════════════════════
+
+class ContentVersion <<Standard Object>> {
+    + Id : ID
+    + Title : String
+    + PathOnClient : String
+    + VersionData : Blob
+    + ContentDocumentId : ID
+    --
+    Stocke le fichier CV uploadé
+    (chunked upload ≤ 10 Mo)
+}
+
+class ContentDocumentLink <<Standard Object>> {
+    + Id : ID
+    + ContentDocumentId : ID
+    + LinkedEntityId : ID
+    + ShareType : String
+    --
+    Rattache le CV (ContentVersion)
+    au Lead candidat
+}
+
+class RecordType <<Standard Object>> {
+    + Id : ID
+    + DeveloperName : String
+    + Name : String
+    + SobjectType : String
+    --
+    Job_Posting | Application
+}
+
+' ══════════════════════════════════════════
+'              RELATIONS
+' ══════════════════════════════════════════
+
+' --- Account / Contact / User ---
+Account "1" -- "0..*" Contact : possède >
+Account "1" -- "0..*" Opportunity : possède >
+Contact "1" -- "0..1" User : associé à >
+
+' --- Lead → conversion ---
+Lead "1" ..> "0..1" Contact : <<conversion>>
+Lead "1" ..> "0..1" Account : <<conversion>>
+Lead "1" ..> "0..1" Opportunity : <<conversion>>\nConvertedOpportunityId
+
+' --- Opportunity ---
+Opportunity "1" -- "0..*" Gaming_Question__c : Job_Posting__c >
+RecordType "1" -- "0..*" Opportunity : RecordTypeId >
+
+' --- Documents CV ---
+ContentVersion "1" -- "1" ContentDocumentLink
+ContentDocumentLink "0..*" -- "1" Lead : LinkedEntityId >
+
+' --- Sécurité ---
+User "1" -- "0..*" Password_Reset_Token__c : User__c >
+Password_Reset_Token__c ..> Security_Audit_Log__c : génère des logs >
+
+' --- Liens aux énumérations ---
+Lead .. LeadStatut
+Lead .. LeadRating
+Opportunity .. OpportunityStageName
+Opportunity .. OpportunityRecordType
+Opportunity .. Departement
+Opportunity .. TypeContrat
+Opportunity .. GamingTestDuration
+Gaming_Question__c .. QuestionType
+Gaming_Question__c .. Difficulte
+Security_Audit_Log__c .. Severite
+Security_Audit_Log__c .. AuditAction
+
+' ══════════════════════════════════════════
+'              NOTES
+' ══════════════════════════════════════════
+
+note bottom of Lead
+  Le Lead représente un candidat
+  avant conversion. Après conversion,
+  il génère un Contact + Account
+  + Opportunity (Candidature).
+  
+  Le scoring IA calcule la
+  RecommandationIA associée.
+end note
+
+note bottom of Opportunity
+  Dual usage via RecordType :
+  ── Job_Posting : offre publiée par le recruteur
+  ── Application : candidature liée au candidat
+  
+  Pipeline Entretiens :
+  Gaming → Technique → Architecture
+  → RH Fit → Closed Won / Closed Lost
+end note
+
+note bottom of Gaming_Question__c
+  Générées dynamiquement par
+  l'IA Groq (LLaMA 3.3 70B)
+  selon le poste (Job_Posting__c)
+end note
+
+@enduml

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Développement — HR Talent Portal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --success: #059669;
+            --success-light: #ecfdf5;
+            --warning: #d97706;
+            --warning-light: #fffbeb;
+            --danger: #dc2626;
+            --danger-light: #fef2f2;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--gray-900);
+            line-height: 1.7;
+            background: #fff;
+            font-size: 11pt;
+        }
+
+        @media print {
+            body { font-size: 10pt; }
+            .page-break { page-break-before: always; }
+            .no-print { display: none; }
+            .cover { height: 100vh; }
+        }
+
+        /* ── COVER PAGE ── */
+        .cover {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            padding: 60px 40px;
+            position: relative;
+        }
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .cover-logo {
+            width: 80px; height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            position: relative; z-index: 1;
+        }
+        .cover h1 {
+            font-size: 32pt;
+            font-weight: 800;
+            margin-bottom: 10px;
+            position: relative; z-index: 1;
+        }
+        .cover h2 {
+            font-size: 16pt;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            position: relative; z-index: 1;
+        }
+        .cover-meta {
+            position: relative; z-index: 1;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .cover-meta p {
+            font-size: 11pt;
+            opacity: 0.9;
+            margin: 6px 0;
+        }
+        .cover-meta strong { font-weight: 600; }
+
+        /* ── CONTENT ── */
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 50px;
+        }
+
+        h2 {
+            font-size: 18pt;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 40px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        h2 .num {
+            background: var(--primary);
+            color: white;
+            width: 28px; height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 12pt;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        h3 {
+            font-size: 13pt;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin: 20px 0 10px;
+        }
+
+        p { margin: 8px 0; color: var(--gray-700); }
+
+        /* ── TABLE OF CONTENTS ── */
+        .toc {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 24px 30px;
+            margin: 20px 0 30px;
+        }
+        .toc h3 { margin-top: 0; color: var(--gray-900); }
+        .toc ol { padding-left: 20px; }
+        .toc li {
+            padding: 6px 0;
+            color: var(--gray-700);
+            font-size: 10.5pt;
+        }
+
+        /* ── CARDS ── */
+        .task-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 14px 0;
+            border-left: 4px solid var(--primary);
+        }
+        .task-card.success { border-left-color: var(--success); }
+        .task-card.warning { border-left-color: var(--warning); }
+        .task-card.danger { border-left-color: var(--danger); }
+
+        .task-card h4 {
+            font-size: 11pt;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: var(--warning-light); color: var(--warning); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-primary { background: var(--primary-light); color: var(--primary); }
+
+        /* ── CODE ── */
+        code {
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 9pt;
+            color: #e11d48;
+        }
+        pre {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 16px 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 8.5pt;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* ── LISTS ── */
+        ul, ol { padding-left: 22px; margin: 8px 0; }
+        li { margin: 4px 0; color: var(--gray-700); }
+
+        /* ── TECH STACK TABLE ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 9.5pt;
+        }
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr:hover td { background: var(--gray-50); }
+
+        /* ── ARCHITECTURE DIAGRAM ── */
+        .arch-box {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 9pt;
+            line-height: 2;
+            white-space: pre;
+        }
+
+        /* ── SUMMARY BOX ── */
+        .summary-box {
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+            border: 1px solid #667eea40;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .summary-box h3 { color: var(--primary); margin-top: 0; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+        .stat-num {
+            font-size: 24pt;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 8.5pt;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray-500);
+            font-size: 9pt;
+            border-top: 1px solid var(--gray-200);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- COVER PAGE                                   -->
+<!-- ════════════════════════════════════════════ -->
+<div class="cover">
+    <div class="cover-logo">HR</div>
+    <h1>HR Talent Portal</h1>
+    <h2>Rapport des Développements Réalisés</h2>
+    <div class="cover-meta">
+        <p><strong>Projet :</strong> Portail RH de Recrutement Intelligent — Talan Tunisie</p>
+        <p><strong>Technologie :</strong> Salesforce (Apex, LWC, Experience Cloud) + IA (Groq / LLaMA)</p>
+        <p><strong>Développé par :</strong> Meriem Rebhi</p>
+        <p><strong>Date :</strong> 7 Avril 2026</p>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONTENT                                      -->
+<!-- ════════════════════════════════════════════ -->
+<div class="content">
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc">
+        <h3>📋 Table des matières</h3>
+        <ol>
+            <li>Contexte du Projet</li>
+            <li>Stack Technique</li>
+            <li>Architecture de la Solution</li>
+            <li>Corrections &amp; Résolutions de Bugs
+                <ol type="a">
+                    <li>Correction du format DateTime</li>
+                    <li>Correction de l'envoi d'emails aux candidats</li>
+                    <li>Nettoyage des enregistrements parasites</li>
+                    <li>Correction des valeurs picklist Département</li>
+                    <li>Correction de l'affichage de la description IA</li>
+                </ol>
+            </li>
+            <li>Nouvelle Fonctionnalité : Génération IA des Descriptions d'Offres</li>
+            <li>Fichiers Modifiés</li>
+            <li>Déploiements</li>
+            <li>Récapitulatif &amp; Statistiques</li>
+        </ol>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <h2><span class="num">1</span> Contexte du Projet</h2>
+
+    <p>
+        Le <strong>HR Talent Portal</strong> est une plateforme de recrutement intelligente développée sur
+        <strong>Salesforce</strong> pour <strong>Talan Tunisie</strong>. Elle permet de gérer tout le cycle de
+        recrutement : réception des candidatures via Experience Cloud, scoring automatique des CV par IA,
+        planification de tests gaming, passage automatisé des étapes, et publication d'offres d'emploi.
+    </p>
+    <p>
+        Le tableau de bord recruteur (<code>recruteurDashboard</code>) est le composant central LWC qui fournit
+        une interface moderne pour le suivi des candidatures et la gestion des offres.
+    </p>
+
+    <!-- ══════════════════════════════════════ -->
+    <h2><span class="num">2</span> Stack Technique</h2>
+
+    <table>
+        <thead>
+            <tr><th>Couche</th><th>Technologie</th><th>Détails</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Backend</td>
+                <td>Salesforce Apex</td>
+                <td><code>InternalDashboardController.cls</code> (885 lignes), <code>CVScoringService.cls</code></td>
+            </tr>
+            <tr>
+                <td>Frontend</td>
+                <td>Lightning Web Components (LWC)</td>
+                <td><code>recruteurDashboard</code> — HTML, JS, CSS</td>
+            </tr>
+            <tr>
+                <td>Portail</td>
+                <td>Salesforce Experience Cloud</td>
+                <td>Portail candidat avec dépôt CV et test gaming</td>
+            </tr>
+            <tr>
+                <td>Intelligence Artificielle</td>
+                <td>Groq API + Meta LLaMA 3.3 70B</td>
+                <td>Scoring CV &amp; Génération de descriptions d'offres</td>
+            </tr>
+            <tr>
+                <td>Modèle de données</td>
+                <td>Salesforce Objects</td>
+                <td>Opportunity (Candidatures + Offres via RecordTypes), Lead, Contact</td>
+            </tr>
+            <tr>
+                <td>Configuration IA</td>
+                <td>Custom Setting</td>
+                <td><code>AI_Configuration__c.Groq_API_Key__c</code></td>
+            </tr>
+            <tr>
+                <td>Déploiement</td>
+                <td>Salesforce CLI (sf)</td>
+                <td><code>sf project deploy start --source-dir force-app</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ══════════════════════════════════════ -->
+    <h2><span class="num">3</span> Architecture de la Solution</h2>
+
+    <div class="arch-box">
+┌─────────────────────────────────────────────────────────┐
+│                   Experience Cloud                       │
+│        (Portail Candidat — Dépôt CV, Test Gaming)       │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│              Lightning Web Component                     │
+│          recruteurDashboard (HTML + JS + CSS)            │
+│    ┌──────────┐  ┌──────────┐  ┌───────────────────┐   │
+│    │Candidats │  │ Offres   │  │ Modals (Planning,  │   │
+│    │  Table   │  │  Grid    │  │  Batch, Création,  │   │
+│    │+ Filtres │  │+ Actions │  │  Détail candidat)  │   │
+│    └──────────┘  └──────────┘  └───────────────────┘   │
+└──────────────────────┬──────────────────────────────────┘
+                       │ @AuraEnabled
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│              Apex Controller                             │
+│         InternalDashboardController.cls                  │
+│  ┌────────────────┐  ┌─────────────────────────────┐   │
+│  │ CRUD Opps/Leads│  │ Groq API Integration        │   │
+│  │ Email Sending  │  │ • generateJobDescription()  │   │
+│  │ Stage Updates  │  │ • CVScoringService (scoring) │   │
+│  └────────────────┘  └──────────┬──────────────────┘   │
+└──────────────────────────────────┼──────────────────────┘
+                                   │ HTTPS POST
+                                   ▼
+                    ┌──────────────────────────┐
+                    │       Groq Cloud API      │
+                    │  LLaMA 3.3 70B Versatile  │
+                    │  (Inférence ultra-rapide)  │
+                    └──────────────────────────┘
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <div class="page-break"></div>
+    <h2><span class="num">4</span> Corrections &amp; Résolutions de Bugs</h2>
+
+    <!-- 4a -->
+    <h3>4.a — Correction du format DateTime</h3>
+    <div class="task-card success">
+        <h4>
+            <span class="badge badge-success">Résolu</span>
+            Erreur de sérialisation DateTime Salesforce
+        </h4>
+        <p><strong>Problème :</strong> Lors de la planification d'un test gaming, Salesforce renvoyait une erreur
+        de sérialisation car le LWC envoyait un string <code>datetime-local</code> (ex: <code>2026-04-10T14:30</code>)
+        vers un paramètre Apex de type <code>DateTime</code>.</p>
+        <p><strong>Solution :</strong></p>
+        <ul>
+            <li>Changement du type des paramètres Apex de <code>DateTime</code> à <code>String</code></li>
+            <li>Parsing côté serveur avec <code>DateTime.valueOf(testDateTime.replace('T', ' ') + ':00')</code></li>
+            <li>Appliqué aux méthodes <code>scheduleGamingTest()</code> et <code>scheduleBatchGamingTests()</code></li>
+        </ul>
+        <p><strong>Fichiers modifiés :</strong> <code>InternalDashboardController.cls</code></p>
+    </div>
+
+    <!-- 4b -->
+    <h3>4.b — Correction de l'envoi d'emails aux candidats</h3>
+    <div class="task-card success">
+        <h4>
+            <span class="badge badge-success">Résolu</span>
+            Emails d'invitation non envoyés
+        </h4>
+        <p><strong>Problème :</strong> Le code référençait <code>lead.Email</code> directement, mais après conversion
+        du Lead en Opportunity, la variable <code>lead</code> n'existait plus dans le contexte. Aucun email n'était envoyé.</p>
+        <p><strong>Solution :</strong> Implémentation d'un système de <strong>fallback à 3 niveaux</strong> pour retrouver
+        l'email du candidat :</p>
+        <ol>
+            <li><strong>Niveau 1 — Lead :</strong> <code>SELECT Email FROM Lead WHERE ConvertedOpportunityId = :oppId</code></li>
+            <li><strong>Niveau 2 — OpportunityContactRole :</strong> <code>SELECT Contact.Email FROM OpportunityContactRole</code></li>
+            <li><strong>Niveau 3 — Contact :</strong> <code>SELECT Email FROM Contact WHERE AccountId = :opp.AccountId</code></li>
+        </ol>
+        <p><strong>Méthodes corrigées (3) :</strong></p>
+        <ul>
+            <li><code>scheduleGamingTest()</code> — planification individuelle</li>
+            <li><code>scheduleBatchGamingTests()</code> — planification en lot (avec Maps pré-chargées)</li>
+            <li><code>updateOpportunityStage()</code> — changement d'étape avec notification</li>
+        </ul>
+        <pre><code>// Fallback email — exemple simplifié
+String candidatEmail = null;
+
+// Niveau 1 : Lead converti
+List&lt;Lead&gt; leads = [SELECT Email FROM Lead WHERE ConvertedOpportunityId = :oppId LIMIT 1];
+if (!leads.isEmpty()) candidatEmail = leads[0].Email;
+
+// Niveau 2 : OpportunityContactRole
+if (candidatEmail == null) {
+    List&lt;OpportunityContactRole&gt; ocrs = [SELECT Contact.Email
+        FROM OpportunityContactRole WHERE OpportunityId = :oppId LIMIT 1];
+    if (!ocrs.isEmpty()) candidatEmail = ocrs[0].Contact.Email;
+}
+
+// Niveau 3 : Contact via Account
+if (candidatEmail == null) {
+    List&lt;Contact&gt; contacts = [SELECT Email FROM Contact
+        WHERE AccountId = :opp.AccountId LIMIT 1];
+    if (!contacts.isEmpty()) candidatEmail = contacts[0].Email;
+}</code></pre>
+    </div>
+
+    <!-- 4c -->
+    <h3>4.c — Nettoyage des enregistrements parasites</h3>
+    <div class="task-card success">
+        <h4>
+            <span class="badge badge-success">Résolu</span>
+            Opportunités parasites dans l'onglet Offres d'emploi
+        </h4>
+        <p><strong>Problème :</strong> Deux enregistrements « kemil - Candidature (20%) » et « fatma - Candidature (40%) »
+        apparaissaient dans l'onglet Offres d'emploi car ils avaient le RecordType <code>Job_Posting</code> au lieu de <code>Application</code>.</p>
+        <p><strong>Diagnostic :</strong></p>
+        <ul>
+            <li>RecordType <code>Application</code> (Id: <code>012fj000004TGblAAG</code>) — actif mais <strong>non disponible</strong> pour le profil administrateur</li>
+            <li>Impossible de réassigner le RecordType par script Apex</li>
+        </ul>
+        <p><strong>Solution :</strong> Suppression des 2 enregistrements parasites. 5 offres d'emploi valides restantes.</p>
+    </div>
+
+    <!-- 4d -->
+    <h3>4.d — Correction des valeurs picklist Département</h3>
+    <div class="task-card success">
+        <h4>
+            <span class="badge badge-success">Résolu</span>
+            INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST sur Departement__c
+        </h4>
+        <p><strong>Problème :</strong> Les valeurs du <code>&lt;select&gt;</code> HTML (IT, Data, Cloud, Cyber, RH)
+        ne correspondaient pas aux valeurs définies dans le champ picklist restreint <code>Departement__c</code> sur Salesforce.</p>
+        <p><strong>Solution :</strong> Alignement des options HTML avec les 10 valeurs Salesforce :</p>
+        <table>
+            <thead><tr><th>Avant (incorrect)</th><th>Après (correct)</th></tr></thead>
+            <tbody>
+                <tr><td>IT</td><td>Data &amp; AI</td></tr>
+                <tr><td>Data</td><td>Digital &amp; Cloud</td></tr>
+                <tr><td>Cloud</td><td>Consulting</td></tr>
+                <tr><td>Cyber</td><td>Cybersécurité</td></tr>
+                <tr><td>RH</td><td>ERP &amp; CRM</td></tr>
+                <tr><td>—</td><td>Stratégie &amp; Management</td></tr>
+                <tr><td>—</td><td>Innovation &amp; R&amp;D</td></tr>
+                <tr><td>—</td><td>Fonctions Support</td></tr>
+                <tr><td>—</td><td>Talent &amp; RH</td></tr>
+                <tr><td>—</td><td>Salesforce</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 4e -->
+    <h3>4.e — Correction de l'affichage de la description IA</h3>
+    <div class="task-card success">
+        <h4>
+            <span class="badge badge-success">Résolu</span>
+            Description générée par l'IA non visible dans le textarea
+        </h4>
+        <p><strong>Problème :</strong> Après clic sur « Générer avec l'IA », la description était bien générée et sauvegardée
+        en base, mais le <code>&lt;textarea&gt;</code> restait vide visuellement dans le modal.</p>
+        <p><strong>Cause :</strong> Dans LWC, un <code>&lt;textarea&gt;</code> natif ne se remet pas à jour via le binding
+        <code>value={offerDescription}</code> après que l'utilisateur a interagi avec le champ. Le DOM property
+        locale prend le dessus sur la propriété tracked.</p>
+        <p><strong>Solution :</strong></p>
+        <ul>
+            <li>Ajout d'une mise à jour directe du DOM après le retour de l'API :</li>
+        </ul>
+        <pre><code>.then(result => {
+    this.offerDescription = result;
+    this.isGeneratingDesc = false;
+    // Force textarea DOM update
+    const ta = this.template.querySelector('.form-textarea');
+    if (ta) { ta.value = result; }
+    this.showToast('Description générée !', 'success');
+})</code></pre>
+        <ul>
+            <li>Augmentation du nombre de lignes du textarea de 4 à 8 pour mieux afficher les descriptions longues</li>
+        </ul>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <div class="page-break"></div>
+    <h2><span class="num">5</span> Nouvelle Fonctionnalité : Génération IA des Descriptions d'Offres</h2>
+
+    <div class="summary-box">
+        <h3>🤖 Génération automatique de descriptions d'offres via Groq API</h3>
+        <p>Le recruteur peut saisir une description brouillon (même avec des fautes ou incomplète), puis cliquer
+        sur <strong>« Générer avec l'IA »</strong> pour obtenir une description professionnelle, structurée et corrigée.</p>
+    </div>
+
+    <h3>5.1 — Backend Apex : <code>generateJobDescription()</code></h3>
+    <p>Nouvelle méthode <code>@AuraEnabled</code> ajoutée à <code>InternalDashboardController.cls</code> :</p>
+
+    <table>
+        <thead><tr><th>Paramètre</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>title</code></td><td>String</td><td>Titre du poste</td></tr>
+            <tr><td><code>department</code></td><td>String</td><td>Département (ex: Data &amp; AI)</td></tr>
+            <tr><td><code>location</code></td><td>String</td><td>Localisation (ex: Tunis)</td></tr>
+            <tr><td><code>contractType</code></td><td>String</td><td>Type de contrat (CDI, CDD...)</td></tr>
+            <tr><td><code>salary</code></td><td>Decimal</td><td>Salaire (optionnel)</td></tr>
+            <tr><td><code>rawDescription</code></td><td>String</td><td>Description brouillon du recruteur</td></tr>
+        </tbody>
+    </table>
+
+    <h3>5.2 — Configuration de l'appel API</h3>
+    <table>
+        <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+        <tbody>
+            <tr><td>Endpoint</td><td><code>https://api.groq.com/openai/v1/chat/completions</code></td></tr>
+            <tr><td>Méthode</td><td>POST</td></tr>
+            <tr><td>Modèle</td><td><code>llama-3.3-70b-versatile</code> (Meta LLaMA 3.3 — 70 milliards de paramètres)</td></tr>
+            <tr><td>Temperature</td><td>0.7 (créativité modérée)</td></tr>
+            <tr><td>Max tokens</td><td>1000</td></tr>
+            <tr><td>Timeout</td><td>30 secondes</td></tr>
+            <tr><td>Clé API</td><td>Stockée dans <code>AI_Configuration__c.Groq_API_Key__c</code></td></tr>
+        </tbody>
+    </table>
+
+    <h3>5.3 — Prompt système</h3>
+    <div class="task-card">
+        <p>Le system prompt instruit le modèle LLaMA à :</p>
+        <ul>
+            <li>Agir comme <strong>expert en rédaction RH pour Talan Tunisie</strong></li>
+            <li>Structurer la description en <strong>4 sections</strong> :
+                <ol>
+                    <li>Paragraphe d'introduction (poste + Talan)</li>
+                    <li>Missions principales (liste à puces avec •)</li>
+                    <li>Profil recherché (compétences, expérience)</li>
+                    <li>Avantages (environnement Talan)</li>
+                </ol>
+            </li>
+            <li><strong>Corriger</strong> toutes les fautes d'orthographe et grammaire</li>
+            <li>Garder un ton <strong>professionnel mais dynamique</strong></li>
+            <li>Répondre en <strong>texte brut</strong> uniquement (pas de HTML ni Markdown)</li>
+        </ul>
+    </div>
+
+    <h3>5.4 — Frontend LWC</h3>
+
+    <p><strong>HTML :</strong> Bouton « Générer avec l'IA » avec spinner de chargement, placé sous le textarea de description</p>
+    <p><strong>JavaScript :</strong></p>
+    <ul>
+        <li>Import de <code>generateJobDescription</code> depuis Apex</li>
+        <li>Variable tracked <code>isGeneratingDesc</code> pour l'état de chargement</li>
+        <li>Handler <code>generateAIDescription()</code> avec validation (titre requis)</li>
+        <li>Mise à jour DOM directe du textarea après réception</li>
+    </ul>
+    <p><strong>CSS :</strong> Bouton avec dégradé violet (<code>linear-gradient(135deg, #667eea, #764ba2)</code>), effet hover avec élévation</p>
+
+    <!-- ══════════════════════════════════════ -->
+    <div class="page-break"></div>
+    <h2><span class="num">6</span> Fichiers Modifiés</h2>
+
+    <table>
+        <thead><tr><th>Fichier</th><th>Modifications</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><code>InternalDashboardController.cls</code></td>
+                <td>
+                    • Params DateTime → String + parsing serveur<br>
+                    • Fallback email 3 niveaux (×3 méthodes)<br>
+                    • Nouvelle méthode <code>generateJobDescription()</code>
+                </td>
+            </tr>
+            <tr>
+                <td><code>recruteurDashboard.js</code></td>
+                <td>
+                    • Envoi datetime-local brut<br>
+                    • Import <code>generateJobDescription</code><br>
+                    • Handler <code>generateAIDescription()</code><br>
+                    • Tracked var <code>isGeneratingDesc</code><br>
+                    • Mise à jour DOM directe du textarea
+                </td>
+            </tr>
+            <tr>
+                <td><code>recruteurDashboard.html</code></td>
+                <td>
+                    • Valeurs picklist Département corrigées (10 valeurs)<br>
+                    • Bouton IA avec spinner / icône<br>
+                    • Textarea rows: 4 → 8
+                </td>
+            </tr>
+            <tr>
+                <td><code>recruteurDashboard.css</code></td>
+                <td>
+                    • Style <code>.btn-ai-generate</code> (dégradé violet, hover)
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ══════════════════════════════════════ -->
+    <h2><span class="num">7</span> Déploiements</h2>
+
+    <table>
+        <thead><tr><th>#</th><th>Résultat</th><th>Composants</th><th>Contenu</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td><span class="badge badge-success">Succès</span></td><td>63/63</td><td>Fix DateTime + premier deploy</td></tr>
+            <tr><td>2</td><td><span class="badge badge-success">Succès</span></td><td>63/63</td><td>Fix Email fallback 3 niveaux</td></tr>
+            <tr><td>3</td><td><span class="badge badge-success">Succès</span></td><td>63/63</td><td>Fix picklist Département</td></tr>
+            <tr><td>4</td><td><span class="badge badge-danger">Échec</span></td><td>—</td><td>Génération IA (accolade manquante)</td></tr>
+            <tr><td>5</td><td><span class="badge badge-success">Succès</span></td><td>65/65</td><td>Génération IA (corrigée)</td></tr>
+            <tr><td>6</td><td><span class="badge badge-success">Succès</span></td><td>63/63</td><td>Fix affichage textarea IA</td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>Org cible :</strong> <code>meriem.rebhi.d6f3e18c6a1f@agentforce.com</code></p>
+    <p><strong>Commande :</strong> <code>sf project deploy start --source-dir force-app --target-org meriem.rebhi.d6f3e18c6a1f@agentforce.com --wait 15</code></p>
+
+    <!-- ══════════════════════════════════════ -->
+    <h2><span class="num">8</span> Récapitulatif &amp; Statistiques</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-num">5</div>
+            <div class="stat-label">Bugs corrigés</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">1</div>
+            <div class="stat-label">Feature ajoutée</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">6</div>
+            <div class="stat-label">Déploiements</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Fichiers modifiés</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">3</div>
+            <div class="stat-label">Méthodes Apex corrigées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">1</div>
+            <div class="stat-label">Intégration IA (Groq)</div>
+        </div>
+    </div>
+
+    <h3>Résumé des tâches</h3>
+    <table>
+        <thead><tr><th>Tâche</th><th>Statut</th><th>Impact</th></tr></thead>
+        <tbody>
+            <tr><td>Fix DateTime sérialisation</td><td><span class="badge badge-success">✅ Fait</span></td><td>Planification gaming fonctionne</td></tr>
+            <tr><td>Fix Email fallback (×3 méthodes)</td><td><span class="badge badge-success">✅ Fait</span></td><td>Candidats reçoivent les invitations</td></tr>
+            <tr><td>Suppression enregistrements parasites</td><td><span class="badge badge-success">✅ Fait</span></td><td>Onglet Offres propre</td></tr>
+            <tr><td>Fix picklist Département</td><td><span class="badge badge-success">✅ Fait</span></td><td>Création d'offres sans erreur</td></tr>
+            <tr><td>Génération IA description offre</td><td><span class="badge badge-success">✅ Fait</span></td><td>Descriptions pro automatiques</td></tr>
+            <tr><td>Fix affichage textarea IA</td><td><span class="badge badge-success">✅ Fait</span></td><td>Recruteur voit/modifie la description</td></tr>
+        </tbody>
+    </table>
+
+    <div class="summary-box" style="margin-top: 30px;">
+        <h3>💡 Points d'attention restants</h3>
+        <ul>
+            <li><strong>Email Deliverability :</strong> Vérifier que le paramètre dans Setup → Email → Deliverability est sur « All Email » (les orgs dev sont souvent sur « System Email Only »)</li>
+            <li><strong>RecordType Application :</strong> Le RT <code>Application</code> n'est pas disponible pour le profil admin — peut poser problème si on veut réassigner des records</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>HR Talent Portal — Talan Tunisie — Rapport généré le 7 Avril 2026</p>
+        <p style="margin-top: 4px; font-size: 8pt; opacity: 0.7;">Projet PFE — Développement Salesforce avec Intelligence Artificielle</p>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+<template>
+    <!-- Loading Spinner -->
+    <div class="loading-overlay" lwc:if={isLoading}>
+        <div class="spinner">
+            <div class="spinner-circle"></div>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <template if:true={errorMessage}>
+        <div class="alert alert-error">
+            ⚠️ {errorMessage}
+        </div>
+    </template>
+
+    <!-- Job Details -->
+    <template if:true={job}>
+        <div class="detail-container">
+            <!-- Header with Back Button -->
+            <div class="detail-header">
+                <button class="btn-back" onclick={handleGoBack}>← Retour</button>
+                <h1 class="job-title">{job.Title}</h1>
+                <span class="job-company">{job.Company}</span>
+            </div>
+
+            <!-- Main Content -->
+            <div class="detail-content">
+                <!-- Left Column -->
+                <div class="detail-main">
+                    <!-- Key Information -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-icon">📍</span>
+                            <div>
+                                <p class="info-label">Localisation</p>
+                                <p class="info-value">{job.Location}</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">💼</span>
+                            <div>
+                                <p class="info-label">Type d'emploi</p>
+                                <p class="info-value">{job.EmploymentType}</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">💰</span>
+                            <div>
+                                <p class="info-label">Salaire</p>
+                                <p class="info-value">{job.SalaryRange}</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">📅</span>
+                            <div>
+                                <p class="info-label">Date de publication</p>
+                                <p class="info-value">{job.PublishedDate}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="section">
+                        <h2 class="section-title">📝 Description du poste</h2>
+                        <p class="section-content">{job.Description}</p>
+                    </div>
+
+                    <!-- Requirements -->
+                    <div class="section">
+                        <h2 class="section-title">✓ Compétences requises</h2>
+                        <ul class="skills-list">
+                            <li>Compétence 1</li>
+                            <li>Compétence 2</li>
+                            <li>Compétence 3</li>
+                        </ul>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="section">
+                        <h2 class="section-title">🎁 Avantages</h2>
+                        <ul class="benefits-list">
+                            <li>Salaire compétitif</li>
+                            <li>Télétravail possible</li>
+                            <li>Formation continue</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column - Sidebar -->
+                <aside class="detail-sidebar">
+                    <!-- Apply Button -->
+                    <button class="btn-apply" onclick={handleApply}>
+                        ➜ Postuler maintenant
+                    </button>
+
+                    <!-- Company Info -->
+                    <div class="sidebar-card">
+                        <h3 class="card-title">📊 Informations Entreprise</h3>
+                        <p class="card-text">
+                            {job.Company} est une entreprise leader dans son domaine, 
+                            offrant des opportunités exceptionnelles de carrière.
+                        </p>
+                    </div>
+
+                    <!-- Share -->
+                    <div class="sidebar-card">
+                        <h3 class="card-title">📤 Partager</h3>
+                        <div class="share-buttons">
+                            <button class="btn-share">LinkedIn</button>
+                            <button class="btn-share">Twitter</button>
+                            <button class="btn-share">Email</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </template>
+</template>

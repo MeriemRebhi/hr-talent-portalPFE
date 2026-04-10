@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Probl&#233;matique — Talan HR Portal</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f1f5f9;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 36px 20px;
+  }
+  .page-title { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .page-sub   { font-size: 12px; color: #94a3b8; margin-bottom: 24px; }
+  svg { max-width: 900px; width: 100%; filter: drop-shadow(0 4px 24px rgba(0,0,0,0.10)); }
+  @media print {
+    body { background:#fff; padding:0; }
+    .page-title,.page-sub { display:none; }
+    svg { filter:none; max-width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Probl&#233;matique du projet</div>
+<div class="page-sub">HR Talent Portal — Talan Tunisie &nbsp;|&nbsp; PFE 2025-2026</div>
+
+<svg viewBox="0 0 860 530" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.08"/></filter>
+    <filter id="shLg"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.12"/></filter>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0,10 3.5,0 7" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="860" height="530" rx="16" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="860" height="56" rx="16" fill="#0f172a"/>
+  <rect x="0" y="36" width="860" height="20" fill="#0f172a"/>
+  <text x="36" y="34" font-size="20" font-weight="900" fill="#f8fafc" font-family="Segoe UI,Arial,sans-serif" letter-spacing="-0.5">talan<tspan fill="#34d399">.</tspan></text>
+  <text x="112" y="32" font-size="13" fill="#94a3b8" font-family="Segoe UI,Arial,sans-serif">Probl&#233;matique — Recrutement &amp; Intelligence Artificielle</text>
+  <text x="844" y="32" font-size="11" fill="#475569" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">PFE 2025/2026</text>
+
+  <!-- ─── Context box (top center) ─── -->
+  <g filter="url(#sh)">
+    <rect x="230" y="72" width="400" height="42" rx="10" fill="#1e293b"/>
+  </g>
+  <text x="430" y="90" font-size="12" font-weight="700" fill="#94a3b8" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle" letter-spacing="1">CONTEXTE</text>
+  <text x="430" y="106" font-size="11" fill="#cbd5e1" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Surabondance de donn&#233;es brutes &nbsp;&#x2022;&nbsp; Capacit&#233; humaine limit&#233;e &nbsp;&#x2022;&nbsp; Talan ESN</text>
+
+  <!-- Arrows from context to 3 cards -->
+  <line x1="310" y1="114" x2="168" y2="156" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="430" y1="114" x2="430" y2="152" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="550" y1="114" x2="692" y2="156" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ══════════════════════════════════════
+       AXE 1 — Saturation donn&#233;es
+  ══════════════════════════════════════ -->
+  <g filter="url(#sh)">
+    <rect x="18" y="158" width="254" height="230" rx="14" fill="#fff" stroke="#fca5a5" stroke-width="2"/>
+  </g>
+  <!-- Color top band -->
+  <rect x="18" y="158" width="254" height="52" rx="14" fill="#ef4444"/>
+  <rect x="18" y="188" width="254" height="22" fill="#ef4444"/>
+  <!-- Number badge -->
+  <circle cx="50" cy="184" r="16" fill="#fff"/>
+  <text x="50" y="189" font-size="14" font-weight="900" fill="#ef4444" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">1</text>
+  <!-- Title -->
+  <text x="145" y="181" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Saturation par les</text>
+  <text x="145" y="197" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">donn&#233;es non structur&#233;es</text>
+  <!-- Icon -->
+  <text x="145" y="245" font-size="36" text-anchor="middle">&#x1F4C4;</text>
+  <!-- Bullets -->
+  <rect x="32" y="265" width="226" height="20" rx="5" fill="#fef2f2"/>
+  <text x="44" y="279" font-size="11" fill="#b91c1c" font-family="Segoe UI,Arial,sans-serif">&#x25B8; CV en PDF, images, Word multiformats</text>
+  <rect x="32" y="290" width="226" height="20" rx="5" fill="#fef2f2"/>
+  <text x="44" y="304" font-size="11" fill="#b91c1c" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Tri manuel lent &amp; subjectif</text>
+  <rect x="32" y="315" width="226" height="20" rx="5" fill="#fef2f2"/>
+  <text x="44" y="329" font-size="11" fill="#b91c1c" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Time-to-Hire critique &#x2B06;</text>
+  <!-- Impact tag -->
+  <rect x="32" y="348" width="226" height="28" rx="8" fill="#b91c1c"/>
+  <text x="145" y="366" font-size="11" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">&#x26A0; Perte de talents qualifi&#233;s</text>
+
+  <!-- ══════════════════════════════════════
+       AXE 2 — Absence scoring objectif
+  ══════════════════════════════════════ -->
+  <g filter="url(#sh)">
+    <rect x="303" y="158" width="254" height="230" rx="14" fill="#fff" stroke="#fbbf24" stroke-width="2"/>
+  </g>
+  <rect x="303" y="158" width="254" height="52" rx="14" fill="#f59e0b"/>
+  <rect x="303" y="188" width="254" height="22" fill="#f59e0b"/>
+  <circle cx="335" cy="184" r="16" fill="#fff"/>
+  <text x="335" y="189" font-size="14" font-weight="900" fill="#f59e0b" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">2</text>
+  <text x="430" y="181" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Absence de scoring</text>
+  <text x="430" y="197" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">objectif</text>
+  <text x="430" y="245" font-size="36" text-anchor="middle">&#x2696;&#xFE0F;</text>
+  <rect x="317" y="265" width="226" height="20" rx="5" fill="#fffbeb"/>
+  <text x="329" y="279" font-size="11" fill="#92400e" font-family="Segoe UI,Arial,sans-serif">&#x25B8; &#xC9;valuation initiale subjective</text>
+  <rect x="317" y="290" width="226" height="20" rx="5" fill="#fffbeb"/>
+  <text x="329" y="304" font-size="11" fill="#92400e" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Hard Skills non corr&#233;l&#233;s aux besoins</text>
+  <rect x="317" y="315" width="226" height="20" rx="5" fill="#fffbeb"/>
+  <text x="329" y="329" font-size="11" fill="#92400e" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Pas de matching s&#233;mantique automatis&#233;</text>
+  <rect x="317" y="348" width="226" height="28" rx="8" fill="#b45309"/>
+  <text x="430" y="366" font-size="11" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">&#x26A0; D&#233;cisions RH biais&#233;es</text>
+
+  <!-- ══════════════════════════════════════
+       AXE 3 — Rupture UX candidat
+  ══════════════════════════════════════ -->
+  <g filter="url(#sh)">
+    <rect x="588" y="158" width="254" height="230" rx="14" fill="#fff" stroke="#a78bfa" stroke-width="2"/>
+  </g>
+  <rect x="588" y="158" width="254" height="52" rx="14" fill="#7c3aed"/>
+  <rect x="588" y="188" width="254" height="22" fill="#7c3aed"/>
+  <circle cx="620" cy="184" r="16" fill="#fff"/>
+  <text x="620" y="189" font-size="14" font-weight="900" fill="#7c3aed" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">3</text>
+  <text x="715" y="181" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Rupture de l&apos;exp&#233;rience</text>
+  <text x="715" y="197" font-size="12.5" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">candidat (UX)</text>
+  <text x="715" y="245" font-size="36" text-anchor="middle">&#x1F465;</text>
+  <rect x="602" y="265" width="226" height="20" rx="5" fill="#f5f3ff"/>
+  <text x="614" y="279" font-size="11" fill="#4c1d95" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Aucun portail candidat d&#233;di&#233;</text>
+  <rect x="602" y="290" width="226" height="20" rx="5" fill="#f5f3ff"/>
+  <text x="614" y="304" font-size="11" fill="#4c1d95" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Pas de suivi de candidature en temps r&#233;el</text>
+  <rect x="602" y="315" width="226" height="20" rx="5" fill="#f5f3ff"/>
+  <text x="614" y="329" font-size="11" fill="#4c1d95" font-family="Segoe UI,Arial,sans-serif">&#x25B8; Employer branding affaibli</text>
+  <rect x="602" y="348" width="226" height="28" rx="8" fill="#5b21b6"/>
+  <text x="715" y="366" font-size="11" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">&#x26A0; Fuite des talents vers la concurrence</text>
+
+  <!-- Arrows down to impact box -->
+  <line x1="145" y1="388" x2="145" y2="418" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="430" y1="388" x2="430" y2="418" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="715" y1="388" x2="715" y2="418" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── Impact global box ── -->
+  <g filter="url(#shLg)">
+    <rect x="30" y="420" width="800" height="68" rx="14" fill="#0f172a"/>
+  </g>
+  <text x="430" y="446" font-size="12" font-weight="700" fill="#94a3b8" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle" letter-spacing="1">IMPACT GLOBAL SUR TALAN</text>
+  <text x="430" y="466" font-size="12.5" font-weight="600" fill="#f1f5f9" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">&#x23F1; Allongement du Time-to-Hire &nbsp;&#x2502;&nbsp; &#x1F4C9; Perte de comp&#233;titivit&#233; RH &nbsp;&#x2502;&nbsp; &#x1F914; D&#233;cisions non data-driven</text>
+
+  <!-- Footer -->
+  <rect x="0" y="510" width="860" height="20" rx="16" fill="#0f172a"/>
+  <text x="430" y="524" font-size="10" fill="#64748b" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">&#xA9; 2025-2026 HR Talent Portal — Talan Tunisie — PFE Salesforce Experience Cloud + IA</text>
+</svg>
+
+<br>
+<p style="font-size:11px; color:#94a3b8; margin-top:14px; text-align:center;">
+  Pour exporter : Ctrl+P &#x2192; Enregistrer en PDF
+</p>
+
+</body>
+</html>

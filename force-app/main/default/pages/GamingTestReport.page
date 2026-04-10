@@ -1,0 +1,359 @@
+<apex:page controller="GamingTestReportController" renderAs="pdf" 
+    applyBodyTag="false" applyHtmlTag="false" showHeader="false" sidebar="false">
+<html>
+<head>
+<style type="text/css">
+    @page {
+        size: A4;
+        margin: 40px 50px;
+    }
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #1e293b;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+    }
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .company-name {
+        font-size: 22px;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .company-sub {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    .report-badge {
+        text-align: right;
+    }
+    .report-title {
+        font-size: 14px;
+        font-weight: bold;
+        color: #1e293b;
+    }
+    .report-date {
+        font-size: 10px;
+        color: #94a3b8;
+    }
+    .report-ref {
+        font-size: 9px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    /* Status Banner */
+    .status-banner {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    .status-passed {
+        background-color: #dcfce7;
+        border: 2px solid #22c55e;
+    }
+    .status-failed {
+        background-color: #fef2f2;
+        border: 2px solid #ef4444;
+    }
+    .status-text {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .status-passed .status-text { color: #15803d; }
+    .status-failed .status-text { color: #dc2626; }
+    .status-sub {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* Section */
+    .section {
+        margin-bottom: 20px;
+    }
+    .section-title {
+        font-size: 13px;
+        font-weight: bold;
+        color: #667eea;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .info-grid td {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        font-size: 11px;
+    }
+    .info-label {
+        background-color: #f8fafc;
+        font-weight: bold;
+        color: #475569;
+        width: 35%;
+    }
+    .info-value {
+        color: #1e293b;
+    }
+
+    /* Score Display */
+    .score-box {
+        text-align: center;
+        padding: 20px;
+        background-color: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+    .score-big {
+        font-size: 48px;
+        font-weight: bold;
+    }
+    .score-passed { color: #22c55e; }
+    .score-failed { color: #ef4444; }
+    .score-label {
+        font-size: 11px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+    .stats-grid td {
+        width: 25%;
+        text-align: center;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    .stat-val {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1e293b;
+    }
+    .stat-lbl {
+        font-size: 10px;
+        color: #94a3b8;
+        display: block;
+        margin-top: 4px;
+    }
+
+    /* Recommendation */
+    .reco-box {
+        padding: 14px 18px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .reco-passed {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        color: #15803d;
+    }
+    .reco-failed {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
+    }
+
+    /* Portal Access */
+    .portal-box {
+        padding: 16px 20px;
+        background-color: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .portal-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #4338ca;
+        margin-bottom: 6px;
+    }
+    .portal-link {
+        font-size: 11px;
+        color: #667eea;
+        word-break: break-all;
+    }
+    .portal-note {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    /* Next Steps */
+    .steps-list {
+        padding-left: 20px;
+        font-size: 11px;
+        color: #475569;
+    }
+    .steps-list li {
+        margin-bottom: 6px;
+    }
+
+    /* Footer */
+    .footer {
+        border-top: 2px solid #e2e8f0;
+        padding-top: 12px;
+        margin-top: 30px;
+        text-align: center;
+        font-size: 9px;
+        color: #94a3b8;
+    }
+    .footer-legal {
+        margin-top: 6px;
+        font-size: 8px;
+    }
+</style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <table width="100%"><tr>
+            <td>
+                <div class="company-name">TALAN Tunisie</div>
+                <div class="company-sub">HR Talent Portal — Rapport de Test Gaming</div>
+            </td>
+            <td class="report-badge">
+                <div class="report-title">RAPPORT ATS</div>
+                <div class="report-date">{!reportDate}</div>
+                <div class="report-ref">Réf: {!reportRef}</div>
+            </td>
+        </tr></table>
+    </div>
+
+    <!-- STATUS BANNER -->
+    <div class="status-banner {!IF(passed, 'status-passed', 'status-failed')}">
+        <div class="status-text">
+            {!IF(passed, '✓ TEST RÉUSSI — CANDIDATURE RETENUE', '✗ TEST NON RÉUSSI — CANDIDATURE NON RETENUE')}
+        </div>
+        <div class="status-sub">Évaluation Gaming — {!reportDate}</div>
+    </div>
+
+    <!-- CANDIDATE INFO -->
+    <div class="section">
+        <div class="section-title">Informations du candidat</div>
+        <table class="info-grid">
+            <tr>
+                <td class="info-label">Nom complet</td>
+                <td class="info-value">{!candidateName}</td>
+                <td class="info-label">Email</td>
+                <td class="info-value">{!candidateEmail}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Poste visé</td>
+                <td class="info-value">{!jobTitle}</td>
+                <td class="info-label">Étape actuelle</td>
+                <td class="info-value">{!currentStage}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Réf. Candidature</td>
+                <td class="info-value">{!oppId}</td>
+                <td class="info-label">Date du test</td>
+                <td class="info-value">{!testDate}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- SCORE -->
+    <div class="section">
+        <div class="section-title">Résultats du test</div>
+        <div class="score-box">
+            <div class="score-big {!IF(passed, 'score-passed', 'score-failed')}">{!scoreDisplay}%</div>
+            <div class="score-label">Score Gaming Test</div>
+        </div>
+        <table class="stats-grid">
+            <tr>
+                <td>
+                    <div class="stat-val">{!correctCount}/{!totalQuestions}</div>
+                    <span class="stat-lbl">Bonnes réponses</span>
+                </td>
+                <td>
+                    <div class="stat-val">{!timeFormatted}</div>
+                    <span class="stat-lbl">Temps total</span>
+                </td>
+                <td>
+                    <div class="stat-val">{!IF(passed, 'Réussi', 'Échoué')}</div>
+                    <span class="stat-lbl">Résultat</span>
+                </td>
+                <td>
+                    <div class="stat-val">{!currentStage}</div>
+                    <span class="stat-lbl">Nouveau stage</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- RECOMMENDATION -->
+    <div class="section">
+        <div class="section-title">Recommandation</div>
+        <div class="reco-box {!IF(passed, 'reco-passed', 'reco-failed')}">
+            {!recommendation}
+        </div>
+    </div>
+
+    <!-- PORTAL ACCESS -->
+    <div class="section">
+        <div class="section-title">Accès au portail candidat</div>
+        <div class="portal-box">
+            <div class="portal-title">Votre espace candidat HR Talent Portal</div>
+            <div class="portal-link">{!portalUrl}</div>
+            <div class="portal-note">Connectez-vous avec vos identifiants pour suivre l'avancement de votre candidature en temps réel.</div>
+        </div>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <div class="section">
+        <div class="section-title">Prochaines étapes</div>
+        <apex:outputPanel rendered="{!passed}">
+            <ol class="steps-list">
+                <li>Votre candidature a été avancée au stage <strong>{!currentStage}</strong>.</li>
+                <li>Le recruteur vous contactera pour planifier la prochaine évaluation.</li>
+                <li>Vous pouvez suivre votre progression sur le portail candidat.</li>
+                <li>Préparez-vous pour l'entretien technique qui suivra.</li>
+            </ol>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!passed}">
+            <ol class="steps-list">
+                <li>Votre score n'a pas atteint le seuil requis pour cette étape.</li>
+                <li>Le recruteur examinera votre dossier complet (CV + score IA).</li>
+                <li>Vous serez notifié de la décision finale par email.</li>
+                <li>N'hésitez pas à postuler à d'autres offres sur le portail.</li>
+            </ol>
+        </apex:outputPanel>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div>TALAN Tunisie — HR Talent Portal — Rapport généré automatiquement le {!reportDate}</div>
+        <div class="footer-legal">Ce document est confidentiel et destiné uniquement au candidat mentionné ci-dessus. Toute reproduction ou diffusion est strictement interdite.</div>
+    </div>
+
+</body>
+</html>
+</apex:page>

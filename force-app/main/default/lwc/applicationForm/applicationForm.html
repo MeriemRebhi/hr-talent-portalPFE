@@ -1,0 +1,210 @@
+<template>
+    <template if:true={isOpen}>
+        <!-- ══ Modale de Succès ══ -->
+        <template if:true={showSuccessToast}>
+            <div class="success-overlay" onclick={handleSuccessClose}>
+                <div class="success-modal" onclick={stopPropagation}>
+                    <!-- Cercle animé -->
+                    <div class="success-circle">
+                        <svg class="success-checkmark" viewBox="0 0 52 52">
+                            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                    </div>
+                    <!-- Titre -->
+                    <h2 class="success-title">Candidature envoy&#233;e !</h2>
+                    <p class="success-subtitle">Merci <strong>{firstName}</strong> &#x1F64C;</p>
+                    <p class="success-text">Votre dossier a &#233;t&#233; transmis &#224; nos &#233;quipes RH. Notre syst&#232;me IA analyse votre CV et vous recevrez une r&#233;ponse par email sous peu.</p>
+                    <!-- Info chips -->
+                    <div class="success-chips">
+                        <span class="chip chip-green">&#x2713; CV re&#231;u</span>
+                        <span class="chip chip-blue">&#128736; Analyse IA en cours</span>
+                        <span class="chip chip-purple">&#x2709; Email &#224; venir</span>
+                    </div>
+                    <!-- Bouton fermer -->
+                    <button class="success-close-btn" onclick={handleSuccessClose}>Fermer</button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Modal Backdrop -->
+        <div class="modal-backdrop" onclick={handleBackdropClick}>
+            <!-- Form Modal -->
+            <div class="form-container" onclick={stopPropagation}>
+                <!-- Header -->
+                <div class="form-header">
+                    <div class="header-content">
+                        <h1 class="form-title">Envoyez votre candidature</h1>
+                        <p class="form-subtitle">Remplissez les informations ci-dessous pour postuler</p>
+                        <button class="form-close-btn" onclick={handleClose}>✕</button>
+                    </div>
+                </div>
+
+                <!-- Form Content -->
+                <form class="form-content" onsubmit={handleSubmit}>
+                    <!-- Personal Info Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">Informations personnelles</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Prénom <span class="required">*</span></label>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    value={firstName}
+                                    onchange={handleFirstName}
+                                    placeholder="Ex: Jean"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nom <span class="required">*</span></label>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    value={lastName}
+                                    onchange={handleLastName}
+                                    placeholder="Ex: Dupont"
+                                    required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Email <span class="required">*</span></label>
+                            <input
+                                type="email"
+                                class="form-input"
+                                value={email}
+                                onchange={handleEmail}
+                                placeholder="exemple@email.com"
+                                required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Adresse exacte</label>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    value={adresse}
+                                    onchange={handleAdresse}
+                                    placeholder="Ex: 12 rue de Paris, 75001 Paris">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Code postale</label>
+                                <input
+                                    type="text"
+                                    class="form-input"
+                                    value={codePostale}
+                                    onchange={handleCodePostale}
+                                    placeholder="Ex: 75001">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Téléphone</label>
+                            <input
+                                type="tel"
+                                class="form-input"
+                                value={phone}
+                                onchange={handlePhone}
+                                placeholder="+33 6 XX XX XX XX">
+                        </div>
+                    </div>
+
+                    <!-- CV Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">Votre CV</h3>
+                        <div class="upload-box">
+                            <label class="form-label">Télécharger votre CV</label>
+                            <div class="upload-area" onclick={handleFileClick}>
+                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <p class="upload-text">Cliquez pour télécharger votre CV</p>
+                                <p class="upload-hint">PDF, DOC ou DOCX • Max 5 MB</p>
+                                <input
+                                    type="file"
+                                    class="file-input"
+                                    accept=".pdf,.doc,.docx"
+                                    onchange={handleFileChange}
+                                    style="display: none;">
+                            </div>
+                            <template if:true={uploadedFile}>
+                                <div class="file-preview">
+                                    <span class="file-icon">📄</span>
+                                    <span class="file-name">{uploadedFile}</span>
+                                    <button type="button" class="remove-file" onclick={removeFile}>✕</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Message Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">Profil candidat</h3>
+                        <div class="form-group">
+                            <label class="form-label">Décrivez vos compétences, expériences et outils</label>
+                            <textarea
+                                class="form-textarea"
+                                onchange={handleMessage}
+                                placeholder="Ex: 2 ans en DevOps, AWS, Docker, CI/CD, Terraform..."
+                                rows="4">{message}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox -->
+                    <div class="form-group form-checkbox">
+                        <input
+                            type="checkbox"
+                            id="agree"
+                            checked={agreeTerms}
+                            onchange={handleAgreeTerms}
+                            required>
+                        <label for="agree" class="checkbox-label">
+                            J'accepte les <span class="link">conditions d'utilisation</span>
+                        </label>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="form-footer">
+                        <button type="button" class="btn btn-secondary" onclick={handleClose}>
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary" disabled={isSubmitting}>
+                            <template if:true={isSubmitting}>
+                                ⏳ Envoi en cours...
+                            </template>
+                            <template if:false={isSubmitting}>
+                                Envoyer ma candidature
+                            </template>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Success Message -->
+                <template if:true={successMessage}>
+                    <div class="success-alert pro-success">
+                        <div class="alert-icon">✓</div>
+                        <div class="alert-content">
+                            <h4>Merci pour votre candidature !</h4>
+                            <p>Votre dossier a bien été transmis à nos équipes. Nous vous contacterons rapidement si votre profil correspond à nos besoins.</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Error Message -->
+                <template if:true={errorMessage}>
+                    <div class="error-alert">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-content">
+                            <h4>Erreur</h4>
+                            <p>{errorMessage}</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

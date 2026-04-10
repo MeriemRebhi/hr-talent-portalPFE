@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Gaming_Test_Score__c</fullName>
+    <description>Score obtenu au test Gaming (0-100)</description>
+    <externalId>false</externalId>
+    <label>Score Test Gaming</label>
+    <precision>5</precision>
+    <required>false</required>
+    <scale>1</scale>
+    <type>Number</type>
+</CustomField>

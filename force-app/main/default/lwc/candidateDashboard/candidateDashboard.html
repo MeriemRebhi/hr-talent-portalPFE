@@ -1,0 +1,708 @@
+<template>
+    <!-- Loading -->
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Chargement de votre espace...</p>
+        </div>
+    </template>
+
+    <!-- Guest / Non connecté -->
+    <template if:true={isGuest}>
+        <div class="guest-preview">
+            <!-- Hero -->
+            <div class="guest-hero">
+                <div class="guest-hero-badge">Portail RH Talan</div>
+                <h1 class="guest-hero-title">Votre Espace Candidat</h1>
+                <p class="guest-hero-sub">Suivez vos candidatures, consultez vos scores IA et gérez votre profil en un seul endroit.</p>
+                <button class="guest-login-btn" onclick={goToLogin}>
+                    <span>Se connecter</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+                <p class="guest-hero-hint">Vous n'avez pas encore de compte ? Postulez à une offre pour en créer un automatiquement.</p>
+            </div>
+
+            <!-- Feature cards -->
+            <div class="guest-features">
+                <div class="guest-feat-card">
+                    <div class="feat-icon">📊</div>
+                    <h3>Tableau de bord</h3>
+                    <p>Visualisez l'état de toutes vos candidatures en temps réel avec des indicateurs clairs.</p>
+                </div>
+                <div class="guest-feat-card">
+                    <div class="feat-icon">🤖</div>
+                    <h3>Score IA</h3>
+                    <p>Consultez votre score de matching généré par notre IA Groq LLaMA pour chaque poste.</p>
+                </div>
+                <div class="guest-feat-card">
+                    <div class="feat-icon">📄</div>
+                    <h3>Gestion CV</h3>
+                    <p>Retrouvez votre CV déposé et suivez son analyse automatique.</p>
+                </div>
+                <div class="guest-feat-card">
+                    <div class="feat-icon">👤</div>
+                    <h3>Mon Profil</h3>
+                    <p>Mettez à jour vos informations personnelles et suivez votre parcours candidat.</p>
+                </div>
+            </div>
+
+            <!-- Preview dashboard (blurred) -->
+            <div class="guest-blur-section">
+                <div class="blur-overlay">
+                    <div class="blur-cta">
+                        <span class="blur-lock">🔐</span>
+                        <p>Connectez-vous pour accéder à votre espace</p>
+                        <button class="guest-login-btn-sm" onclick={goToLogin}>Se connecter</button>
+                    </div>
+                </div>
+                <div class="blur-content">
+                    <div class="fake-stats">
+                        <div class="fake-stat-card"><div class="fake-icon">📋</div><div class="fake-val">—</div><div class="fake-lbl">Candidatures</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">✅</div><div class="fake-val">—</div><div class="fake-lbl">En cours</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">🤖</div><div class="fake-val">—%</div><div class="fake-lbl">Meilleur score IA</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">📄</div><div class="fake-val">—</div><div class="fake-lbl">CV déposé</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Dashboard principal -->
+    <template if:false={isGuest}>
+        <template if:false={isLoading}>
+            <div class="app-shell">
+
+                <!-- NAVBAR -->
+                <nav class="dash-navbar">
+                    <div class="nav-logo" onclick={goToHome}>
+                        <div class="nav-logo-mark">T</div>
+                        <div class="nav-logo-info">
+                            <span class="nav-brand-name">Talent Portal</span>
+                            <span class="nav-brand-sub">by Talan Tunisie</span>
+                        </div>
+                    </div>
+                    <div class="nav-links">
+                        <button class="nav-link-btn" onclick={goToHome}>🏠 Accueil</button>
+                        <button class="nav-link-btn" onclick={goToOffers}>🏢 Offres</button>
+                        <button class="nav-link-btn active-nav" onclick={goToProfileTab}>📋 Mon espace</button>
+                    </div>
+                    <div class="nav-right">
+                        <button class="btn-primary nav-cta" onclick={goToOffers}>+ Postuler</button>
+                        <div class="profile-menu-wrapper">
+                            <button class={profileBtnClass} onclick={toggleProfileMenu}>
+                                <div class="avatar-ring">
+                                    <div class="avatar-dynamic">{initials}</div>
+                                    <span class="online-dot"></span>
+                                </div>
+                                <div class="avatar-info-mini">
+                                    <span class="avatar-name-mini">{capitalizedFirstName}</span>
+                                    <span class="avatar-role-mini">Candidat</span>
+                                </div>
+                                <svg class="avatar-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <template if:true={isProfileMenuOpen}>
+                                <div class="profile-dropdown">
+                                    <div class="pd-head">
+                                        <div class="pd-avatar-lg">{initials}</div>
+                                        <div class="pd-head-info">
+                                            <span class="pd-head-name">{fullName}</span>
+                                            <span class="pd-head-email">{profile.email}</span>
+                                        </div>
+                                    </div>
+                                    <div class="pd-actions">
+                                        <button class="pd-action-btn" onclick={goToProfileTab}>
+                                            <span class="pd-action-icon">👤</span>
+                                            <span>Mon profil</span>
+                                        </button>
+                                        <button class="pd-action-btn" onclick={goToOffers}>
+                                            <span class="pd-action-icon">🔍</span>
+                                            <span>Voir les offres</span>
+                                        </button>
+                                    </div>
+                                    <div class="pd-separator"></div>
+                                    <button class="pd-logout-btn" onclick={handleLogout}>
+                                        <span class="pd-action-icon">↪</span>
+                                        <span>Se déconnecter</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- CORPS -->
+                <div class="app-body">
+
+                    <!-- SIDEBAR -->
+                    <aside class="sidebar">
+                        <div class="sb-user">
+                            <div class="sb-avatar">{initials}</div>
+                            <div class="sb-user-info">
+                                <span class="sb-name">{fullName}</span>
+                                <span class="sb-role">Candidat</span>
+                            </div>
+                        </div>
+
+                        <div class="sb-section">
+                            <div class="sb-section-label">📋 Mes candidatures</div>
+                            <template if:true={hasCandidatures}>
+                                <div class="sb-cand-list">
+                                    <template for:each={candidatures} for:item="c">
+                                        <button key={c.id} class="sb-cand-item" data-id={c.id} onclick={viewCandidatureFromSidebar}>
+                                            <div class="sb-cand-name">{c.jobTitle}</div>
+                                            <div class="sb-cand-meta">
+                                                <span class="sb-cand-date">⏰ {c.closeDateFormatted}</span>
+                                                <span class={c.badgeClass}>{c.stageLabel}</span>
+                                            </div>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                            <template if:false={hasCandidatures}>
+                                <p class="sb-empty">Aucune candidature pour le moment.</p>
+                            </template>
+                        </div>
+
+                        <div class="sb-footer">
+                            <button class="sb-logout-btn" onclick={handleLogout}>
+                                <span>↪</span>
+                                <span>Se déconnecter</span>
+                            </button>
+                        </div>
+                    </aside>
+
+                    <!-- CONTENU PRINCIPAL -->
+                    <main class="main-content">
+                        <div class="main-welcome">
+                            <h1 class="welcome-title">Bonjour, {capitalizedFirstName} 👋</h1>
+                            <p class="welcome-sub">Bienvenue sur votre espace candidat</p>
+                        </div>
+
+                        <!-- PROGRESSION GLOBALE -->
+                        <template if:true={hasCandidatures}>
+                            <div class="global-pipeline">
+                                <span class="gp-label">PROGRESSION</span>
+                                <div class="pipeline-track">
+                                    <div class={globalStep1Class}><div class="step-dot">1</div><span>Gaming</span></div>
+                                    <div class="pipeline-line-h"></div>
+                                    <div class={globalStep2Class}><div class="step-dot">2</div><span>Technique</span></div>
+                                    <div class="pipeline-line-h"></div>
+                                    <div class={globalStep3Class}><div class="step-dot">3</div><span>Architecture</span></div>
+                                    <div class="pipeline-line-h"></div>
+                                    <div class={globalStep4Class}><div class="step-dot">4</div><span>RH Fit</span></div>
+                                    <div class="pipeline-line-h"></div>
+                                    <div class={globalStep5Class}><div class="step-dot">5</div><span>Closed</span></div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- STATS -->
+                        <div class="stats-row">
+                            <div class="stat-card stat-card-blue">
+                                <div class="stat-icon-wrap stat-bg-blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                </div>
+                                <div class="stat-value">{totalCandidatures}</div>
+                                <div class="stat-label">Candidatures</div>
+                            </div>
+                            <div class="stat-card stat-card-green">
+                                <div class="stat-icon-wrap stat-bg-green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="stat-value">{activeCount}</div>
+                                <div class="stat-label">En cours</div>
+                            </div>
+                            <div class="stat-card stat-card-purple">
+                                <div class="stat-icon-wrap stat-bg-purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                </div>
+                                <div class="stat-value">
+                                    <template if:true={bestScore}>{bestScore}%</template>
+                                    <template if:false={bestScore}>—</template>
+                                </div>
+                                <div class="stat-label">Meilleur score IA</div>
+                            </div>
+                            <div class="stat-card stat-card-orange">
+                                <div class="stat-icon-wrap stat-bg-orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                </div>
+                                <div class="stat-value">
+                                    <template if:true={cv}>1</template>
+                                    <template if:false={cv}>0</template>
+                                </div>
+                                <div class="stat-label">CV déposé</div>
+                            </div>
+                        </div>
+
+                        <!-- TABS -->
+                        <div class="tabs">
+                            <button class={overviewTabClass} data-tab="overview" onclick={handleTab}>Vue d'ensemble</button>
+                            <button class={candidaturesTabClass} data-tab="candidatures" onclick={handleTab}>Mes candidatures</button>
+                            <button class={mapTabClass} data-tab="map" onclick={handleTab}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                Carte mondiale
+                            </button>
+                            <button class={profileTabClass} data-tab="profile" onclick={handleTab}>Mon profil</button>
+                        </div>
+
+                        <!-- TAB: VUE D'ENSEMBLE -->
+                        <template if:true={isOverview}>
+                            <div class="tab-content">
+                                <div class="overview-grid">
+                                    <div class="panel">
+                                        <div class="panel-header">
+                                            <h3>📋 Dernières candidatures</h3>
+                                        </div>
+                                        <template if:true={hasCandidatures}>
+                                            <div class="candidature-list">
+                                                <template for:each={candidatures} for:item="c">
+                                                    <div key={c.id} class="cand-row" data-id={c.id} onclick={viewCandidature}>
+                                                        <div class="cand-info">
+                                                            <div class="cand-name-row">
+                                                                <template if:true={c.gamingScheduled}><span class="gaming-glow-dot"></span></template>
+                                                                <span class="cand-name">{c.jobTitle}</span>
+                                                            </div>
+                                                            <div class="cand-chips">
+                                                                <template if:true={c.department}><span class="chip chip-dept">🏢 {c.department}</span></template>
+                                                                <template if:true={c.location}><span class="chip chip-loc">📍 {c.location}</span></template>
+                                                                <template if:true={c.contractType}><span class="chip chip-ct">📝 {c.contractType}</span></template>
+                                                                <span class="chip chip-date">📅 {c.formattedDate}</span>
+                                                                <span class="chip chip-close">⏰ Clôture: {c.closeDateFormatted}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="cand-right">
+                                                            <template if:true={c.gamingScheduled}>
+                                                                <span class="gaming-glow-badge">
+                                                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1" fill="currentColor"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/></svg>
+                                                                    Test planifié
+                                                                </span>
+                                                            </template>
+                                                            <template if:true={c.hasScore}>
+                                                                <span class={c.scoreClass}>{c.score}%</span>
+                                                            </template>
+                                                            <span class={c.badgeClass}>{c.stageLabel}</span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template if:false={hasCandidatures}>
+                                            <div class="empty-panel">
+                                                <p>Aucune candidature pour le moment.</p>
+                                                <button class="btn-secondary" onclick={goToOffers}>Explorer les offres</button>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="side-panels">
+                                        <div class="panel panel-sm">
+                                            <div class="panel-header">
+                                                <h3>📄 Mon CV</h3>
+                                                <label class="btn-mini-upload">
+                                                    <template if:true={cv}>🔄 Remplacer</template>
+                                                    <template if:false={cv}>⬆ Uploader</template>
+                                                    <input type="file" accept=".pdf,.doc,.docx" onchange={handleCvFileChange} class="cv-hidden-input" />
+                                                </label>
+                                            </div>
+                                            <template if:true={isUploadingCv}>
+                                                <div class="cv-upload-progress">
+                                                    <div class="cv-progress-bar"></div>
+                                                    <span>Upload en cours...</span>
+                                                </div>
+                                            </template>
+                                            <template if:true={cv}>
+                                                <div class="cv-info">
+                                                    <div class="cv-icon">📎</div>
+                                                    <div class="cv-details">
+                                                        <span class="cv-name">{cv.title}.{cv.extension}</span>
+                                                        <span class="cv-meta">{cvSizeFormatted} • Déposé le {cvDateFormatted}</span>
+                                                    </div>
+                                                    <button class="btn-view-cv-sm" onclick={viewCv} title="Voir le CV">👁</button>
+                                                </div>
+                                            </template>
+                                            <template if:false={cv}>
+                                                <div class="empty-panel">
+                                                    <p>Aucun CV déposé.</p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="panel panel-sm">
+                                            <div class="panel-header">
+                                                <h3>👤 Profil</h3>
+                                            </div>
+                                            <div class="profile-quick">
+                                                <div class="pq-row">
+                                                    <span class="pq-label">📧</span>
+                                                    <span class="pq-value">{profile.email}</span>
+                                                </div>
+                                                <template if:true={profile.phone}>
+                                                    <div class="pq-row">
+                                                        <span class="pq-label">📞</span>
+                                                        <span class="pq-value">{profile.phone}</span>
+                                                    </div>
+                                                </template>
+                                                <div class="pq-row">
+                                                    <span class="pq-label">📅</span>
+                                                    <span class="pq-value">Depuis {memberSinceFormatted}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- TAB: CANDIDATURES -->
+                        <template if:true={isCandidatures}>
+                            <div class="tab-content tab-content-full">
+                                <template if:true={selectedCandidature}>
+                                    <div class="detail-panel detail-panel-full">
+                                        <button class="btn-back" onclick={closeCandidatureDetail}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                                            Retour aux candidatures
+                                        </button>
+
+                                        <!-- Detail Header -->
+                                        <div class="detail-hero">
+                                            <div class="detail-hero-left">
+                                                <h2>{selectedCandidature.name}</h2>
+                                                <div class="detail-hero-chips">
+                                                    <span class={selectedCandidature.badgeClass}>{selectedCandidature.stageLabel}</span>
+                                                    <template if:true={selectedCandidature.department}><span class="chip chip-dept">🏢 {selectedCandidature.department}</span></template>
+                                                    <template if:true={selectedCandidature.location}><span class="chip chip-loc">📍 {selectedCandidature.location}</span></template>
+                                                    <template if:true={selectedCandidature.contractType}><span class="chip chip-ct">📝 {selectedCandidature.contractType}</span></template>
+                                                </div>
+                                            </div>
+                                            <template if:true={selectedCandidature.hasScore}>
+                                                <div class="detail-hero-score">
+                                                    <span class="dhs-value">{selectedCandidature.score}%</span>
+                                                    <span class="dhs-label">Score IA</span>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Pipeline -->
+                                        <div class="pipeline-section">
+                                            <h3>Progression</h3>
+                                            <div class="pipeline-track">
+                                                <div class={pipelineStep1Class}><div class="step-dot">1</div><span>Gaming</span></div>
+                                                <div class="pipeline-line-h"></div>
+                                                <div class={pipelineStep2Class}><div class="step-dot">2</div><span>Technique</span></div>
+                                                <div class="pipeline-line-h"></div>
+                                                <div class={pipelineStep3Class}><div class="step-dot">3</div><span>Architecture</span></div>
+                                                <div class="pipeline-line-h"></div>
+                                                <div class={pipelineStep4bClass}><div class="step-dot">4</div><span>RH Fit</span></div>
+                                                <div class="pipeline-line-h"></div>
+                                                <div class={pipelineStep5bClass}><div class="step-dot">5</div><span>Closed</span></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Detail Grid -->
+                                        <div class="detail-cards-row">
+                                            <div class="detail-info-card">
+                                                <div class="dic-icon">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                                </div>
+                                                <span class="dic-label">Date de candidature</span>
+                                                <span class="dic-value">{selectedCandidature.formattedDate}</span>
+                                            </div>
+                                            <div class="detail-info-card">
+                                                <div class="dic-icon dic-icon-red">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                </div>
+                                                <span class="dic-label">Date de clôture</span>
+                                                <span class="dic-value">{selectedCandidature.closeDateFormatted}</span>
+                                            </div>
+                                            <template if:true={selectedCandidature.department}>
+                                                <div class="detail-info-card">
+                                                    <div class="dic-icon dic-icon-blue">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                                                    </div>
+                                                    <span class="dic-label">Département</span>
+                                                    <span class="dic-value">{selectedCandidature.department}</span>
+                                                </div>
+                                            </template>
+                                            <template if:true={selectedCandidature.location}>
+                                                <div class="detail-info-card">
+                                                    <div class="dic-icon dic-icon-purple">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                    </div>
+                                                    <span class="dic-label">Localisation</span>
+                                                    <span class="dic-value">{selectedCandidature.location}</span>
+                                                </div>
+                                            </template>
+                                            <template if:true={selectedCandidature.contractType}>
+                                                <div class="detail-info-card">
+                                                    <div class="dic-icon dic-icon-orange">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                    </div>
+                                                    <span class="dic-label">Type de contrat</span>
+                                                    <span class="dic-value">{selectedCandidature.contractType}</span>
+                                                </div>
+                                            </template>
+                                            <template if:true={selectedCandidature.hasScore}>
+                                                <div class="detail-info-card dic-score-card">
+                                                    <div class="dic-icon dic-icon-ai">
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                                    </div>
+                                                    <span class="dic-label">Score IA</span>
+                                                    <span class={selectedCandidature.scoreClass}>{selectedCandidature.score}% — {selectedCandidature.scoreLabel}</span>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Gaming Card -->
+                                        <template if:true={selectedCandidature.gamingScheduled}>
+                                            <div class="gaming-card">
+                                                <div class="gaming-card-header">
+                                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3" /><circle cx="8" cy="12" r="1" fill="currentColor" /><circle cx="16" cy="11" r="1" fill="currentColor" /><circle cx="18" cy="13" r="1" fill="currentColor" /><circle cx="14" cy="13" r="1" fill="currentColor" /><line x1="6" y1="10" x2="10" y2="10" /><line x1="8" y1="8" x2="8" y2="12" /></svg>
+                                                    <span class="gaming-card-title">Test Gaming planifié</span>
+                                                </div>
+                                                <div class="gaming-card-body">
+                                                    <div class="gaming-card-row">
+                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                                        <div>
+                                                            <span class="gaming-row-label">Date et heure</span>
+                                                            <span class="gaming-row-value">{selectedCandidature.gamingDateFmt}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="gaming-card-row">
+                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                                        <div>
+                                                            <span class="gaming-row-label">Durée</span>
+                                                            <span class="gaming-row-value">{selectedCandidature.gamingDurationLabel}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="gaming-card-row">
+                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+                                                        <div>
+                                                            <span class="gaming-row-label">Format</span>
+                                                            <span class="gaming-row-value">Visioconférence (Jitsi Meet)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gaming-card-footer">
+                                                    <a href={selectedCandidature.gamingMeetLink} target="_blank" class="gaming-join-btn">
+                                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3" /><rect x="1" y="5" width="14" height="14" rx="2" /></svg>
+                                                        Rejoindre le test
+                                                    </a>
+                                                    <p class="gaming-card-note">Rejoignez 5 min avant — aucune installation requise</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={selectedCandidature}>
+
+                                    <!-- FILTERS BAR -->
+                                    <div class="filters-bar">
+                                        <div class="filter-search-wrap">
+                                            <svg class="filter-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                            <input type="text" class="filter-search" placeholder="Rechercher par poste..." value={filterSearch} onchange={handleFilterSearch} />
+                                        </div>
+                                        <div class="filter-group">
+                                            <select class="filter-select" onchange={handleFilterStage}>
+                                                <option value="">Toutes les étapes</option>
+                                                <option value="Gaming">Screening IA</option>
+                                                <option value="Technique">Entretien Technique</option>
+                                                <option value="Architecture">Entretien Architecture</option>
+                                                <option value="RH Fit">Entretien RH</option>
+                                                <option value="Closed">Finalisée</option>
+                                            </select>
+                                            <select class="filter-select" onchange={handleFilterScore}>
+                                                <option value="">Tous les scores</option>
+                                                <option value="high">≥ 60% — Bon/Excellent</option>
+                                                <option value="medium">40-59% — Moyen</option>
+                                                <option value="low">&lt; 40% — Insuffisant</option>
+                                            </select>
+                                            <select class="filter-select" onchange={handleFilterSort}>
+                                                <option value="recent">Plus récentes</option>
+                                                <option value="oldest">Plus anciennes</option>
+                                                <option value="score-desc">Score ↓</option>
+                                                <option value="score-asc">Score ↑</option>
+                                                <option value="alpha">A → Z</option>
+                                            </select>
+                                        </div>
+                                        <template if:true={hasActiveFilters}>
+                                            <button class="filter-clear-btn" onclick={clearFilters}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                Réinitialiser
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <!-- Results count -->
+                                    <div class="filter-results-count">
+                                        <span>{filteredCount} candidature(s) affichée(s)</span>
+                                    </div>
+
+                                    <template if:true={hasFilteredCandidatures}>
+                                        <div class="cand-cards">
+                                            <template for:each={filteredCandidatures} for:item="c">
+                                                <div key={c.id} class="cand-card" data-id={c.id} onclick={viewCandidature}>
+                                                    <div class="cc-top">
+                                                        <div class="cc-top-left">
+                                                            <h3>{c.name}</h3>
+                                                            <template if:true={c.gamingScheduled}>
+                                                                <span class="gaming-glow-badge gaming-glow-sm">
+                                                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1" fill="currentColor"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/></svg>
+                                                                    Test planifié
+                                                                </span>
+                                                            </template>
+                                                        </div>
+                                                        <span class={c.badgeClass}>{c.stageLabel}</span>
+                                                    </div>
+                                                    <div class="cc-meta">
+                                                        <template if:true={c.department}><span>🏢 {c.department}</span></template>
+                                                        <template if:true={c.location}><span>📍 {c.location}</span></template>
+                                                        <template if:true={c.contractType}><span>📝 {c.contractType}</span></template>
+                                                        <span>📅 {c.formattedDate}</span>
+                                                        <span>⏰ Clôture : {c.closeDateFormatted}</span>
+                                                    </div>
+                                                    <template if:true={c.hasScore}>
+                                                        <div class="cc-score">
+                                                            <div class="score-bar-bg"><div class={c.scoreBarClass}></div></div>
+                                                            <span class={c.scoreClass}>{c.score}%</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template if:false={hasFilteredCandidatures}>
+                                        <template if:true={hasCandidatures}>
+                                            <div class="empty-state">
+                                                <div class="empty-icon">🔍</div>
+                                                <h3>Aucun résultat</h3>
+                                                <p>Aucune candidature ne correspond à vos filtres.</p>
+                                                <button class="btn-secondary" onclick={clearFilters}>Réinitialiser les filtres</button>
+                                            </div>
+                                        </template>
+                                        <template if:false={hasCandidatures}>
+                                            <div class="empty-state">
+                                                <div class="empty-icon">📋</div>
+                                                <h3>Aucune candidature</h3>
+                                                <p>Explorez les offres disponibles et postulez !</p>
+                                                <button class="btn-primary" onclick={goToOffers}>Voir les offres</button>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- TAB: CARTE -->
+                        <template if:true={isMap}>
+                            <div class="map-tab-wrap">
+                                <iframe
+                                    class="map-iframe"
+                                    src={mapUrl}
+                                    frameborder="0"
+                                    title="Carte mondiale des offres Talan"
+                                    onload={handleMapLoad}>
+                                </iframe>
+                            </div>
+                        </template>
+
+                        <!-- TAB: PROFIL -->
+                        <template if:true={isProfile}>
+                            <div class="tab-content">
+                                <div class="profile-panel">
+                                    <div class="profile-card">
+                                        <div class="pc-header">
+                                            <div class="avatar avatar-lg">{initials}</div>
+                                            <div>
+                                                <h2>{fullName}</h2>
+                                                <p class="pc-sub">Candidat • Membre depuis {memberSinceFormatted}</p>
+                                            </div>
+                                            <template if:false={isEditingProfile}>
+                                                <button class="btn-edit" onclick={startEditProfile}>✏ Modifier</button>
+                                            </template>
+                                        </div>
+                                        <template if:false={isEditingProfile}>
+                                            <div class="profile-details">
+                                                <div class="pd-row"><span class="pd-icon">📧</span><div><span class="pd-label">Email</span><span class="pd-value">{profile.email}</span></div></div>
+                                                <div class="pd-row"><span class="pd-icon">📞</span><div><span class="pd-label">Téléphone</span><span class="pd-value">{profile.phone}</span></div></div>
+                                                <div class="pd-row"><span class="pd-icon">📍</span><div><span class="pd-label">Adresse</span><span class="pd-value">{profile.address} {profile.city} {profile.postalCode}</span></div></div>
+                                            </div>
+                                        </template>
+                                        <template if:true={isEditingProfile}>
+                                            <div class="edit-form">
+                                                <div class="form-row"><label>Téléphone</label><input type="tel" value={editPhone} onchange={handleEditPhone} /></div>
+                                                <div class="form-row"><label>Adresse</label><input type="text" value={editAddress} onchange={handleEditAddress} /></div>
+                                                <div class="form-row-2">
+                                                    <div class="form-row"><label>Ville</label><input type="text" value={editCity} onchange={handleEditCity} /></div>
+                                                    <div class="form-row"><label>Code postal</label><input type="text" value={editPostalCode} onchange={handleEditPostalCode} /></div>
+                                                </div>
+                                                <div class="form-actions">
+                                                    <button class="btn-secondary" onclick={cancelEditProfile}>Annuler</button>
+                                                    <button class="btn-primary" onclick={saveProfile} disabled={isSaving}>{saveButtonLabel}</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- CV Section -->
+                                    <div class="profile-card cv-upload-card">
+                                        <div class="cv-card-header">
+                                            <h3 class="pc-title">📄 Mon CV</h3>
+                                            <label class="btn-upload-cv">
+                                                <span class="upload-btn-icon">☁</span>
+                                                <template if:true={cv}>Remplacer le CV</template>
+                                                <template if:false={cv}>Uploader mon CV</template>
+                                                <input type="file" accept=".pdf,.doc,.docx" onchange={handleCvFileChange} class="cv-hidden-input" />
+                                            </label>
+                                        </div>
+                                        <template if:true={isUploadingCv}>
+                                            <div class="cv-uploading-banner"><div class="cv-spinner-sm"></div><span>Upload en cours...</span></div>
+                                        </template>
+                                        <template if:true={cvUploadSuccess}>
+                                            <div class="cv-success-banner"><span>CV mis à jour avec succès !</span></div>
+                                        </template>
+                                        <template if:true={cvUploadError}>
+                                            <div class="cv-error-banner">{cvUploadError}</div>
+                                        </template>
+                                        <template if:true={cv}>
+                                            <div class="cv-file-display">
+                                                <div class="cv-file-thumb"><span class="cv-ext-badge">{cv.extension}</span></div>
+                                                <div class="cv-file-info">
+                                                    <span class="cv-file-name">{cv.title}.{cv.extension}</span>
+                                                    <span class="cv-file-meta">{cvSizeFormatted} • Déposé le {cvDateFormatted}</span>
+                                                </div>
+                                                <div class="cv-file-actions">
+                                                    <button class="btn-view-cv" onclick={viewCv}><span>👁</span> Voir</button>
+                                                    <button class="btn-dl-cv" onclick={downloadCv}><span>⬇</span> Télécharger</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template if:false={cv}>
+                                            <div class="cv-empty-zone">
+                                                <div class="cv-empty-icon">⬆</div>
+                                                <p class="cv-empty-title">Aucun CV déposé</p>
+                                                <p class="cv-empty-hint">Formats acceptés : PDF, Word (.doc, .docx) — Max 5 MB</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Error -->
+                        <template if:true={errorMessage}>
+                            <div class="error-bar">{errorMessage}</div>
+                        </template>
+                    </main>
+                </div>
+            </div>
+        </template>
+    </template>
+
+    <!-- ═══════════════════════════════════════════
+         AGENTFORCE CHATBOT — Bulle flottante bas droite
+         S'affiche uniquement pour les candidats connectés
+    ═══════════════════════════════════════════ -->
+    <template if:false={isGuest}>
+        <c-agentforce-chat email={profile.email}></c-agentforce-chat>
+    </template>
+
+</template>

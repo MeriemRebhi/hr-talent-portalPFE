@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramme de Gantt — PFE HR Talent Portal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter','Segoe UI',system-ui,sans-serif; background:#f4f6f9; color:#1a1a1a; padding:32px; }
+        .page { background:#fff; border-radius:16px; box-shadow:0 4px 24px rgba(0,0,0,.08); padding:40px 44px; max-width:1260px; margin:0 auto; }
+
+        /* ── Header ── */
+        .chart-header { margin-bottom:28px; border-bottom:2px solid #e8ecf2; padding-bottom:16px; }
+        .chart-header h1 { font-size:21px; font-weight:800; color:#1a3a5c; }
+        .chart-header p { font-size:12px; color:#8a96a8; margin-top:4px; }
+
+        /* ── Toolbar ── */
+        .toolbar { display:flex; gap:10px; justify-content:flex-end; margin-bottom:16px; }
+        .toolbar button { padding:8px 16px; border-radius:8px; border:1.5px solid #1a3a5c; background:#fff; font-weight:600; font-size:12px; color:#1a3a5c; cursor:pointer; transition:all .2s; font-family:inherit; }
+        .toolbar button:hover { background:#f0f4f8; }
+        .toolbar .btn-green { border-color:#2F7D59; color:#2F7D59; }
+        .toolbar .btn-green:hover { background:#E8F5E9; }
+
+        /* ── Table ── */
+        .gantt-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        .gantt-table th, .gantt-table td { border:1px solid #e8ecf2; }
+        .col-task   { width:270px; }
+        .col-start  { width:95px; }
+        .col-end    { width:95px; }
+        .col-status { width:78px; }
+        .col-chart  { width:auto; }
+
+        .gantt-table thead th {
+            background:#f7f9fc; padding:10px 10px; font-size:10px; font-weight:700;
+            text-transform:uppercase; letter-spacing:.06em; color:#8a96a8; text-align:center;
+        }
+        .gantt-table thead th.left { text-align:left; padding-left:16px; }
+
+        /* Months */
+        .month-headers { display:flex; height:100%; }
+        .month-h { flex:1; text-align:center; font-size:10px; font-weight:700; color:#4a5a72; padding:4px 0; border-right:1px solid #e8ecf2; }
+        .month-h:last-child { border-right:none; }
+
+        /* ── Section ── */
+        .section-row td { background:#f7f9fc; padding:8px 12px; font-size:11px; font-weight:800; color:#1a3a5c; text-transform:uppercase; letter-spacing:.04em; }
+        .section-row .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+
+        /* ── Task ── */
+        .task-row td { padding:0; vertical-align:middle; }
+        .task-row:hover td { background:#fafbfd; }
+        .task-name { padding:8px 10px 8px 20px; font-size:11.5px; color:#4a5a72; font-weight:500; display:inline-block; }
+        .task-name[contenteditable=true]:focus { outline:2px solid #3b82f6; outline-offset:-2px; border-radius:3px; background:#eff6ff; }
+
+        .date-input { border:none; background:transparent; font-family:inherit; font-size:11px; color:#4a5a72; font-weight:600; text-align:center; padding:8px 2px; width:100%; cursor:pointer; }
+        .date-input:focus { outline:2px solid #3b82f6; outline-offset:-2px; border-radius:3px; background:#eff6ff; }
+
+        /* ── Status ── */
+        .status-sel { border:none; background:transparent; font-family:inherit; font-size:10px; font-weight:700; text-align:center; padding:6px 2px; width:100%; cursor:pointer; border-radius:4px; }
+        .status-sel:focus { outline:2px solid #3b82f6; }
+        .status-sel.done   { background:#dcfce7; color:#166534; }
+        .status-sel.active { background:#fef3c7; color:#92400e; }
+        .status-sel.todo   { background:#f1f5f9; color:#64748b; }
+
+        /* ── Chart cell ── */
+        .chart-cell { position:relative; height:36px; overflow:hidden; }
+        .chart-cell .grid-overlay { position:absolute; top:0; left:0; right:0; bottom:0; display:flex; pointer-events:none; z-index:1; }
+        .chart-cell .grid-overlay .g { flex:1; border-right:1px solid #f0f2f6; }
+        .chart-cell .grid-overlay .g:nth-child(4n) { border-right-color:#e4e8ee; }
+        .chart-cell .grid-overlay .g:last-child { border-right:none; }
+
+        .bar { position:absolute; top:8px; height:20px; border-radius:6px; z-index:2; transition:transform .2s,box-shadow .2s; cursor:default; }
+        .bar:hover { transform:scaleY(1.25); box-shadow:0 4px 12px rgba(0,0,0,.15); z-index:10; }
+
+        .bar-formation { background:linear-gradient(135deg,#a78bfa,#8b5cf6); }
+        .bar-sprint1   { background:linear-gradient(135deg,#60a5fa,#3b82f6); }
+        .bar-sprint2   { background:linear-gradient(135deg,#34d399,#10b981); }
+        .bar-sprint3   { background:linear-gradient(135deg,#fbbf24,#f59e0b); }
+        .bar-sprint4   { background:linear-gradient(135deg,#f472b6,#ec4899); }
+        .bar-doc       { background:repeating-linear-gradient(135deg,rgba(251,146,60,.85),rgba(251,146,60,.85) 4px,rgba(249,115,22,.85) 4px,rgba(249,115,22,.85) 8px); }
+
+        /* ── Add / Delete ── */
+        .add-task-btn { background:none; border:none; color:#3b82f6; font-size:11px; font-weight:700; cursor:pointer; padding:4px 12px 4px 20px; font-family:inherit; }
+        .add-task-btn:hover { text-decoration:underline; }
+        .del-btn { background:none; border:none; color:#ddd; font-size:13px; cursor:pointer; padding:0 4px; transition:color .15s; vertical-align:middle; }
+        .del-btn:hover { color:#e53935; }
+
+        /* ── Milestones ── */
+        .milestones { margin-top:24px; padding-top:16px; border-top:2px solid #e8ecf2; }
+        .milestones h3 { font-size:11px; font-weight:700; color:#8a96a8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; }
+        .milestones-row { display:flex; flex-wrap:wrap; gap:16px; }
+        .milestone { display:flex; align-items:center; gap:7px; font-size:11px; color:#4a5a72; font-weight:500; }
+        .diamond { width:12px; height:12px; background:#e53e3e; transform:rotate(45deg); border-radius:2px; flex-shrink:0; }
+        .milestone .d { font-weight:700; color:#1a3a5c; }
+
+        /* ── Legend ── */
+        .legend { margin-top:20px; padding-top:16px; border-top:2px solid #e8ecf2; }
+        .legend h3 { font-size:11px; font-weight:700; color:#8a96a8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; }
+        .legend-items { display:flex; flex-wrap:wrap; gap:18px; }
+        .legend-item { display:flex; align-items:center; gap:7px; font-size:11px; color:#4a5a72; font-weight:500; }
+        .legend-color { width:24px; height:10px; border-radius:4px; flex-shrink:0; }
+
+        .note { text-align:center; color:#b0b8c8; font-size:11px; margin-top:20px; }
+
+        @media print {
+            body { padding:10px; background:#fff; }
+            .page { box-shadow:none; padding:20px; }
+            .toolbar,.del-btn,.add-task-btn,.note { display:none !important; }
+            .bar:hover { transform:none; box-shadow:none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <button class="btn-green" onclick="renderAll()">🔄 Rafraîchir barres</button>
+    <button onclick="window.print()">🖨️ Imprimer / PDF</button>
+</div>
+
+<div class="page">
+    <div class="chart-header">
+        <h1>Diagramme de Gantt — Planning détaillé du projet</h1>
+        <p>PFE 2026 • HR Talent Portal • Talan Tunisie — Période du stage : Février → 1ère semaine Juin (4 mois)</p>
+    </div>
+
+    <table class="gantt-table">
+        <colgroup>
+            <col class="col-task"><col class="col-start"><col class="col-end"><col class="col-status"><col class="col-chart">
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="left">Tâche</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Statut</th>
+                <th>
+                    <div class="month-headers">
+                        <div class="month-h">Février</div>
+                        <div class="month-h">Mars</div>
+                        <div class="month-h">Avril</div>
+                        <div class="month-h">Mai</div>
+                        <div class="month-h">Juin</div>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="ganttBody"></tbody>
+    </table>
+
+    <div class="milestones">
+        <h3>Jalons clés</h3>
+        <div class="milestones-row">
+            <div class="milestone"><div class="diamond"></div><span class="d">01 Fév</span> Début stage</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">01 Mar</span> Début Sprint 1</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">15 Mar</span> Début Sprint 2</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">12 Avr</span> Début Sprint 3</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">10 Mai</span> Début Sprint 4</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">24 Mai</span> Fin Sprints</div>
+            <div class="milestone"><div class="diamond"></div><span class="d">07 Jun</span> Fin stage</div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Légende</h3>
+        <div class="legend-items">
+            <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#a78bfa,#8b5cf6)"></div>Formation</div>
+            <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#60a5fa,#3b82f6)"></div>Sprint 1</div>
+            <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#34d399,#10b981)"></div>Sprint 2</div>
+            <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)"></div>Sprint 3</div>
+            <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#f472b6,#ec4899)"></div>Sprint 4</div>
+            <div class="legend-item"><div class="legend-color" style="background:repeating-linear-gradient(135deg,rgba(251,146,60,.85),rgba(251,146,60,.85) 4px,rgba(249,115,22,.85) 4px,rgba(249,115,22,.85) 8px)"></div>Documentation</div>
+            <div class="legend-item"><div class="diamond" style="width:10px;height:10px;"></div>Jalon clé</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">💡 Cliquez sur une tâche, date ou statut pour modifier • Cliquez "Rafraîchir barres" après changement de dates • Ctrl+P pour PDF (orientation Paysage)</p>
+
+<script>
+// ═══════ TIMELINE ═══════
+const P_START = new Date(2026, 1, 1);   // 1 Fév 2026
+const P_END   = new Date(2026, 5, 7);   // 7 Jun 2026 (fin stage)
+const TOTAL   = (P_END - P_START) / 864e5;
+const WEEKS   = 18;
+
+// ═══════ DATA ═══════
+const data = [
+    {
+        section: 'FORMATION (sem. 1 – 4)',
+        color: '#8b5cf6', bar: 'bar-formation',
+        tasks: [
+            { name: 'Formation Salesforce (Admin, Dev)', start: '2026-02-01', end: '2026-02-15', status: 'done' },
+            { name: 'Découverte Experience Cloud, Flow, LWC & Agentforce', start: '2026-02-15', end: '2026-03-01', status: 'done' },
+        ]
+    },
+    {
+        section: 'SPRINT 1 — Gestion des utilisateurs & Gestion des offres (sem. 5 – 6)',
+        color: '#3b82f6', bar: 'bar-sprint1',
+        tasks: [
+            { name: 'Gestion des utilisateurs et droits d\'accès', start: '2026-03-01', end: '2026-03-08', status: 'done' },
+            { name: 'Gestion des offres d\'emploi (CRUD)', start: '2026-03-05', end: '2026-03-12', status: 'done' },
+            { name: 'AI Agent — Génération description offre', start: '2026-03-08', end: '2026-03-15', status: 'done' },
+        ]
+    },
+    {
+        section: 'SPRINT 2 — Gestion de la 1ère phase de recrutement / Pistes (sem. 7 – 10)',
+        color: '#10b981', bar: 'bar-sprint2',
+        tasks: [
+            { name: 'Formulaire de candidature & soumission CV', start: '2026-03-15', end: '2026-03-24', status: 'done' },
+            { name: 'Gestion des pistes / leads', start: '2026-03-22', end: '2026-03-31', status: 'done' },
+            { name: 'AI Agent — Parsing CV automatique', start: '2026-03-28', end: '2026-04-06', status: 'done' },
+            { name: 'AI Agent — Matching CV ↔ Offre (scoring)', start: '2026-04-02', end: '2026-04-10', status: 'done' },
+            { name: 'Suivi des candidatures (espace candidat)', start: '2026-04-06', end: '2026-04-12', status: 'done' },
+        ]
+    },
+    {
+        section: 'SPRINT 3 — Gestion de la 2ème phase de recrutement / Opportunités (sem. 11 – 14)',
+        color: '#f59e0b', bar: 'bar-sprint3',
+        tasks: [
+            { name: 'Gestion des candidats phase 2 (CRUD Opportunités)', start: '2026-04-12', end: '2026-04-22', status: 'active' },
+            { name: 'Planification des entretiens', start: '2026-04-18', end: '2026-04-28', status: 'todo' },
+            { name: 'Gestion & consultation des entretiens', start: '2026-04-26', end: '2026-05-04', status: 'todo' },
+            { name: 'Approbation / Rejet par le Manager', start: '2026-05-02', end: '2026-05-08', status: 'todo' },
+            { name: 'Gestion des contrats', start: '2026-05-04', end: '2026-05-10', status: 'todo' },
+        ]
+    },
+    {
+        section: 'SPRINT 4 — Pilotage, Reporting, Tableau de bord & Chatbot (sem. 15 – 16)',
+        color: '#ec4899', bar: 'bar-sprint4',
+        tasks: [
+            { name: 'Chatbot candidat (Agentforce)', start: '2026-05-10', end: '2026-05-18', status: 'todo' },
+            { name: 'Configuration chatbot par RH', start: '2026-05-14', end: '2026-05-20', status: 'todo' },
+            { name: 'Tableaux de bord & KPIs recrutement', start: '2026-05-18', end: '2026-05-24', status: 'todo' },
+        ]
+    },
+    {
+        section: 'DOCUMENTATION & CLÔTURE (sem. 7 – 18)',
+        color: '#f97316', bar: 'bar-doc',
+        tasks: [
+            { name: 'Rédaction du rapport de stage', start: '2026-03-15', end: '2026-06-01', status: 'active' },
+            { name: 'Préparation de la soutenance', start: '2026-06-01', end: '2026-06-07', status: 'todo' },
+        ]
+    },
+];
+
+// ═══════ RENDER ═══════
+const body = document.getElementById('ganttBody');
+const gridHTML = Array.from({length: WEEKS}, () => '<div class="g"></div>').join('');
+
+function pct(dateStr) {
+    return Math.max(0, Math.min(100, (new Date(dateStr) - P_START) / 864e5 / TOTAL * 100));
+}
+
+function sClass(s) { return s === 'done' ? 'done' : s === 'active' ? 'active' : 'todo'; }
+
+function renderAll() {
+    body.innerHTML = '';
+    data.forEach((sec, si) => {
+        // Section header
+        const sr = document.createElement('tr');
+        sr.className = 'section-row';
+        sr.innerHTML = `
+            <td colspan="4"><span class="dot" style="background:${sec.color}"></span>${sec.section}</td>
+            <td class="chart-cell"><div class="grid-overlay">${gridHTML}</div></td>`;
+        body.appendChild(sr);
+
+        // Tasks
+        sec.tasks.forEach((t, ti) => {
+            const l = pct(t.start), r = pct(t.end), w = r - l;
+            const tr = document.createElement('tr');
+            tr.className = 'task-row';
+            tr.innerHTML = `
+                <td>
+                    <span class="del-btn" title="Supprimer" onclick="delTask(${si},${ti})">✕</span>
+                    <span class="task-name" contenteditable="true" onblur="data[${si}].tasks[${ti}].name=this.textContent.trim()">${t.name}</span>
+                </td>
+                <td><input type="date" class="date-input" value="${t.start}" onchange="data[${si}].tasks[${ti}].start=this.value;renderAll()"></td>
+                <td><input type="date" class="date-input" value="${t.end}" onchange="data[${si}].tasks[${ti}].end=this.value;renderAll()"></td>
+                <td><select class="status-sel ${sClass(t.status)}" onchange="data[${si}].tasks[${ti}].status=this.value;this.className='status-sel '+sClass(this.value)">
+                    <option value="done"${t.status==='done'?' selected':''}>Terminé</option>
+                    <option value="active"${t.status==='active'?' selected':''}>En cours</option>
+                    <option value="todo"${t.status==='todo'?' selected':''}>À faire</option>
+                </select></td>
+                <td class="chart-cell">
+                    <div class="grid-overlay">${gridHTML}</div>
+                    <div class="bar ${sec.bar}" style="left:${l}%;width:${w}%;" title="${t.name} (${t.start} → ${t.end})"></div>
+                </td>`;
+            body.appendChild(tr);
+        });
+
+        // Add row
+        const ar = document.createElement('tr');
+        ar.innerHTML = `<td colspan="5"><button class="add-task-btn" onclick="addTask(${si})">+ Ajouter une tâche</button></td>`;
+        body.appendChild(ar);
+    });
+}
+
+function delTask(si, ti) {
+    if (confirm('Supprimer cette tâche ?')) { data[si].tasks.splice(ti, 1); renderAll(); }
+}
+
+function addTask(si) {
+    const tasks = data[si].tasks;
+    const last = tasks.length ? tasks[tasks.length - 1] : null;
+    const s = last ? last.end : '2026-03-01';
+    const eDate = new Date(s); eDate.setDate(eDate.getDate() + 10);
+    tasks.push({ name: 'Nouvelle tâche', start: s, end: eDate.toISOString().slice(0, 10), status: 'todo' });
+    renderAll();
+}
+
+function sClass(s) { return s === 'done' ? 'done' : s === 'active' ? 'active' : 'todo'; }
+
+renderAll();
+</script>
+
+</body>
+</html>

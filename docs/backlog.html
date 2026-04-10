@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backlog - HR Talent Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1a4d2e;
+        }
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+        .toolbar button {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add {
+            background: #2F7D59;
+            color: #fff;
+        }
+        .btn-add:hover { background: #1a4d2e; }
+        .btn-export {
+            background: #fff;
+            border: 1.5px solid #2F7D59 !important;
+            color: #2F7D59;
+        }
+        .btn-export:hover { background: #E8F5E9; }
+        .btn-delete {
+            background: #fff;
+            border: 1.5px solid #e53935 !important;
+            color: #e53935;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .btn-delete:hover { background: #FFEBEE; }
+
+        /* Sprint section */
+        .sprint-section {
+            margin-bottom: 32px;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #D5E8DC;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .sprint-header {
+            background: linear-gradient(135deg, #2F7D59 0%, #27623A 100%);
+            color: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sprint-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .sprint-header span {
+            font-size: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 999px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            background: #f5f9f7;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #2F7D59;
+            border-bottom: 2px solid #D5E8DC;
+        }
+        tbody td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+        }
+        tbody tr:hover { background: #f9fcfa; }
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #2F7D59;
+            outline-offset: -2px;
+            border-radius: 4px;
+            background: #E8F5E9;
+        }
+
+        /* Priority badges */
+        .priority {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .priority-high { background: #FFEBEE; color: #c62828; }
+        .priority-medium { background: #FFF3E0; color: #e65100; }
+        .priority-low { background: #E8F5E9; color: #2e7d32; }
+
+        /* Status badges */
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .status-todo { background: #f0f0f0; color: #666; }
+        .status-progress { background: #E3F2FD; color: #1565c0; }
+        .status-done { background: #E8F5E9; color: #2e7d32; }
+
+        select.inline-select {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .col-id { width: 50px; }
+        .col-us { width: 42%; }
+        .col-role { width: 14%; }
+        .col-priority { width: 10%; }
+        .col-status { width: 10%; }
+        .col-points { width: 7%; }
+        .col-actions { width: 5%; text-align: center; }
+
+        .note {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 24px;
+        }
+
+        @media print {
+            body { padding: 20px; background: #fff; }
+            .toolbar, .btn-delete, .note { display: none; }
+            .sprint-section { box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📋 Product Backlog — HR Talent Portal</h1>
+    <p>Cliquez sur n'importe quelle cellule pour la modifier • Projet PFE Talan</p>
+</div>
+
+<div class="toolbar">
+    <button class="btn-export" onclick="exportCSV()">📥 Exporter CSV</button>
+    <button class="btn-export" onclick="window.print()">🖨️ Imprimer</button>
+</div>
+
+<!-- ═══════ SPRINT 1 ═══════ -->
+<div class="sprint-section">
+    <div class="sprint-header">
+        <h2>Sprint 1 — Gestion des utilisateurs & Gestion des offres</h2>
+        <span>3 User Stories</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th class="col-id">#</th>
+                <th class="col-us">User Story</th>
+                <th class="col-role">Rôle</th>
+                <th class="col-priority">Priorité</th>
+                <th class="col-status">Statut</th>
+                <th class="col-points">Points</th>
+                <th class="col-actions"></th>
+            </tr>
+        </thead>
+        <tbody id="sprint1">
+            <tr>
+                <td>US-01</td>
+                <td contenteditable="true">En tant que responsable RH, je veux gérer les utilisateurs et les droits d'accès afin de contrôler qui peut accéder à la plateforme.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-02</td>
+                <td contenteditable="true">En tant que manager, je veux gérer les offres d'emploi (créer, modifier, publier, clôturer) afin de pourvoir les postes vacants.</td>
+                <td contenteditable="true">Manager</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-03</td>
+                <td contenteditable="true">En tant que responsable RH, je configure un AI Agent qui génère automatiquement la description de l'offre d'emploi à partir du titre et des critères du poste.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">13</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="padding:10px 16px;text-align:right;">
+        <button class="btn-add" onclick="addRow('sprint1','US-')">+ Ajouter une User Story</button>
+    </div>
+</div>
+
+<!-- ═══════ SPRINT 2 ═══════ -->
+<div class="sprint-section">
+    <div class="sprint-header">
+        <h2>Sprint 2 — Gestion de la 1ère phase de recrutement (Pistes / Leads)</h2>
+        <span>5 User Stories</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th class="col-id">#</th>
+                <th class="col-us">User Story</th>
+                <th class="col-role">Rôle</th>
+                <th class="col-priority">Priorité</th>
+                <th class="col-status">Statut</th>
+                <th class="col-points">Points</th>
+                <th class="col-actions"></th>
+            </tr>
+        </thead>
+        <tbody id="sprint2">
+            <tr>
+                <td>US-04</td>
+                <td contenteditable="true">En tant que candidat, je peux postuler à une offre d'emploi en soumettant mon CV et mes informations personnelles.</td>
+                <td contenteditable="true">Candidat</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-05</td>
+                <td contenteditable="true">En tant que responsable RH, je peux gérer les candidats à la première phase de la procédure de recrutement (gestion des pistes/leads).</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-06</td>
+                <td contenteditable="true">En tant que responsable RH, je configure un AI Agent afin de faire le parsing automatique du CV (extraction des compétences, expériences, formation).</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">13</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-07</td>
+                <td contenteditable="true">En tant que responsable RH, je configure un AI Agent afin de faire le matching automatique entre le CV du candidat et l'offre d'emploi (score de compatibilité).</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">13</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-08</td>
+                <td contenteditable="true">En tant que candidat, je peux suivre l'état de progression de mes candidatures (en cours, acceptée, refusée) depuis mon espace personnel.</td>
+                <td contenteditable="true">Candidat</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo">À faire</option><option value="status-progress">En cours</option><option value="status-done" selected>Terminé</option></select></td>
+                <td contenteditable="true">5</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="padding:10px 16px;text-align:right;">
+        <button class="btn-add" onclick="addRow('sprint2','US-')">+ Ajouter une User Story</button>
+    </div>
+</div>
+
+<!-- ═══════ SPRINT 3 ═══════ -->
+<div class="sprint-section">
+    <div class="sprint-header">
+        <h2>Sprint 3 — Gestion de la 2ème phase de recrutement (Opportunités)</h2>
+        <span>6 User Stories</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th class="col-id">#</th>
+                <th class="col-us">User Story</th>
+                <th class="col-role">Rôle</th>
+                <th class="col-priority">Priorité</th>
+                <th class="col-status">Statut</th>
+                <th class="col-points">Points</th>
+                <th class="col-actions"></th>
+            </tr>
+        </thead>
+        <tbody id="sprint3">
+            <tr>
+                <td>US-09</td>
+                <td contenteditable="true">En tant que recruteur, je peux gérer les entretiens (créer, modifier, annuler) afin d'organiser le processus d'évaluation des candidats.</td>
+                <td contenteditable="true">Recruteur</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-10</td>
+                <td contenteditable="true">En tant que recruteur, je peux consulter les détails d'un entretien (date, heure, type, feedback, score) afin de suivre l'avancement des évaluations.</td>
+                <td contenteditable="true">Recruteur</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">5</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-11</td>
+                <td contenteditable="true">En tant que responsable RH, je veux gérer les candidats de la deuxième phase de recrutement (CRUD opportunités) afin de suivre leur progression dans le pipeline.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-12</td>
+                <td contenteditable="true">En tant que responsable RH, je veux planifier les entretiens (date, heure, type d'entretien) afin de coordonner les sessions d'évaluation avec les recruteurs.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-13</td>
+                <td contenteditable="true">En tant que manager, je peux approuver ou rejeter les candidats de la deuxième phase selon les résultats des entretiens afin de valider les recrutements.</td>
+                <td contenteditable="true">Manager</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">5</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-14</td>
+                <td contenteditable="true">En tant que responsable RH, je peux gérer les contrats (créer, signer, archiver) afin de finaliser la procédure de recrutement.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high" selected>Haute</option><option value="priority-medium">Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="padding:10px 16px;text-align:right;">
+        <button class="btn-add" onclick="addRow('sprint3','US-')">+ Ajouter une User Story</button>
+    </div>
+</div>
+
+<!-- ═══════ SPRINT 4 ═══════ -->
+<div class="sprint-section">
+    <div class="sprint-header">
+        <h2>Sprint 4 — Pilotage, Reporting, Tableau de bord & Chatbot</h2>
+        <span>3 User Stories</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th class="col-id">#</th>
+                <th class="col-us">User Story</th>
+                <th class="col-role">Rôle</th>
+                <th class="col-priority">Priorité</th>
+                <th class="col-status">Statut</th>
+                <th class="col-points">Points</th>
+                <th class="col-actions"></th>
+            </tr>
+        </thead>
+        <tbody id="sprint4">
+            <tr>
+                <td>US-15</td>
+                <td contenteditable="true">En tant que candidat, je veux poser des questions à l'aide d'un Chatbot intégré à la plateforme pour obtenir des réponses immédiates.</td>
+                <td contenteditable="true">Candidat</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-16</td>
+                <td contenteditable="true">En tant que responsable RH, je veux configurer un Chatbot (Agentforce) pour répondre automatiquement aux questions fréquentes des candidats.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">13</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+            <tr>
+                <td>US-17</td>
+                <td contenteditable="true">En tant que responsable RH, je veux accéder à des tableaux de bord et rapports (dashboards) pour piloter le processus de recrutement et suivre les KPIs.</td>
+                <td contenteditable="true">Responsable RH</td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+                <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+                <td contenteditable="true">8</td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="padding:10px 16px;text-align:right;">
+        <button class="btn-add" onclick="addRow('sprint4','US-')">+ Ajouter une User Story</button>
+    </div>
+</div>
+
+<p class="note">💡 Cliquez sur une cellule pour la modifier • Les modifications sont en temps réel • Sprint 3 à définir</p>
+
+<script>
+    function deleteRow(btn) {
+        if (confirm('Supprimer cette User Story ?')) {
+            btn.closest('tr').remove();
+        }
+    }
+
+    function addRow(sprintId, prefix) {
+        const tbody = document.getElementById(sprintId);
+        const count = document.querySelectorAll('tbody tr').length + 1;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${prefix}${String(count).padStart(2,'0')}</td>
+            <td contenteditable="true">En tant que [rôle], je veux [action] afin de [bénéfice].</td>
+            <td contenteditable="true">—</td>
+            <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="priority-high">Haute</option><option value="priority-medium" selected>Moyenne</option><option value="priority-low">Basse</option></select></td>
+            <td><select class="inline-select" onchange="this.className='inline-select '+this.value"><option value="status-todo" selected>À faire</option><option value="status-progress">En cours</option><option value="status-done">Terminé</option></select></td>
+            <td contenteditable="true">—</td>
+            <td><button class="btn-delete" onclick="deleteRow(this)">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function exportCSV() {
+        let csv = 'Sprint,ID,User Story,Rôle,Priorité,Statut,Points\n';
+        document.querySelectorAll('.sprint-section').forEach((section, si) => {
+            const sprintName = section.querySelector('.sprint-header h2').textContent.trim();
+            section.querySelectorAll('tbody tr').forEach(tr => {
+                const cells = tr.querySelectorAll('td');
+                if (cells.length >= 6) {
+                    const id = cells[0].textContent.trim();
+                    const us = '"' + cells[1].textContent.trim().replace(/"/g, '""') + '"';
+                    const role = cells[2].textContent.trim();
+                    const priority = cells[3].querySelector('select')?.selectedOptions[0]?.text || '';
+                    const status = cells[4].querySelector('select')?.selectedOptions[0]?.text || '';
+                    const points = cells[5].textContent.trim();
+                    csv += `"${sprintName}",${id},${us},${role},${priority},${status},${points}\n`;
+                }
+            });
+        });
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'backlog_hr_talent_portal.csv';
+        a.click();
+    }
+</script>
+
+</body>
+</html>
