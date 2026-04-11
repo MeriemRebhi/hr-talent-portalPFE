@@ -83,6 +83,7 @@ public without sharing class TechnicalInterviewController {
         result.put('isScheduled', ti.Interview_DateTime__c != null);
         result.put('hasProblems', qCount >= 4);
         result.put('meetLink', ti.Meet_Link__c);
+        result.put('duration', ti.Duration__c);
         result.put('gamingScore', null);
         result.put('matchingScore', opp.Score_Matching__c);
         return result;

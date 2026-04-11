@@ -13,15 +13,62 @@ public with sharing class InternalDashboardController {
     public static Map<String, Object> getRecruteurData() {
         Map<String, Object> result = new Map<String, Object>();
 
-        List<Opportunity> opps = [
-            SELECT Id, Name, StageName, CloseDate, AccountId, Account.Name,
-                   Description, CreatedDate, RecordType.DeveloperName,
-                   Score_Matching__c
-            FROM Opportunity
-            WHERE RecordType.DeveloperName = 'Application'
-            ORDER BY CreatedDate DESC
-            LIMIT 100
+        Id currentUserId = UserInfo.getUserId();
+
+        // Find Job Postings owned by the current recruiter
+        List<Opportunity> myJobs = [
+            SELECT Id FROM Opportunity
+            WHERE RecordType.DeveloperName = 'Job_Posting'
+            AND OwnerId = :currentUserId
         ];
+        Set<Id> myJobIds = new Set<Id>();
+        for (Opportunity j : myJobs) myJobIds.add(j.Id);
+
+        // Find Leads that reference these Job Postings (via JOB_ID in Description)
+        Set<Id> myOppIds = new Set<Id>();
+        if (!myJobIds.isEmpty()) {
+            for (Lead l : [
+                SELECT ConvertedOpportunityId, Description
+                FROM Lead
+                WHERE IsConverted = true AND ConvertedOpportunityId != null
+                LIMIT 500
+            ]) {
+                if (l.Description == null) continue;
+                for (Id jId : myJobIds) {
+                    if (l.Description.contains('JOB_ID:' + jId)) {
+                        myOppIds.add(l.ConvertedOpportunityId);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Also include Application opps directly owned by this user
+        for (Opportunity o : [
+            SELECT Id FROM Opportunity
+            WHERE RecordType.DeveloperName = 'Application'
+            AND OwnerId = :currentUserId
+            LIMIT 200
+        ]) {
+            myOppIds.add(o.Id);
+        }
+
+        // Query only filtered opportunities
+        List<Opportunity> opps;
+        if (myOppIds.isEmpty()) {
+            opps = new List<Opportunity>();
+        } else {
+            opps = [
+                SELECT Id, Name, StageName, CloseDate, AccountId, Account.Name,
+                       Description, CreatedDate, RecordType.DeveloperName,
+                       Score_Matching__c
+                FROM Opportunity
+                WHERE RecordType.DeveloperName = 'Application'
+                AND Id IN :myOppIds
+                ORDER BY CreatedDate DESC
+                LIMIT 100
+            ];
+        }
 
         // Collect opp IDs for Technical_Interview__c lookup
         Set<Id> oppIds = new Set<Id>();
@@ -505,13 +552,59 @@ public with sharing class InternalDashboardController {
         // Candidats en attente de validation (RH Fit = dernière étape avant décision)
         List<Opportunity> rhFitOpps = [
             SELECT Id, Name, StageName, CloseDate, Account.Name,
-                   Description, CreatedDate
+                   Description, CreatedDate, Score_Matching__c
             FROM Opportunity
             WHERE RecordType.DeveloperName = 'Application'
             AND StageName IN ('RH Fit', 'Architecture', 'Technique')
             ORDER BY CloseDate ASC
             LIMIT 50
         ];
+
+        // Enrich with Technical_Interview__c data + Lead info
+        Set<Id> oppIds = new Set<Id>();
+        for (Opportunity o : rhFitOpps) oppIds.add(o.Id);
+
+        Map<Id, Technical_Interview__c> tiByOpp = new Map<Id, Technical_Interview__c>();
+        for (Technical_Interview__c ti : [
+            SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
+                   Meet_Link__c, Score__c, Status__c, Composite_Score__c
+            FROM Technical_Interview__c
+            WHERE Opportunity__c IN :oppIds
+        ]) {
+            tiByOpp.put(ti.Opportunity__c, ti);
+        }
+
+        Map<Id, Lead> oppLeadMap = new Map<Id, Lead>();
+        for (Lead l : [
+            SELECT Id, ConvertedOpportunityId, FirstName, LastName, Email,
+                   Score_Matching__c, AI_Recommendation__c, AI_Points_Forts__c
+            FROM Lead
+            WHERE ConvertedOpportunityId IN :oppIds
+        ]) {
+            oppLeadMap.put(l.ConvertedOpportunityId, l);
+        }
+
+        List<Map<String, Object>> rows = new List<Map<String, Object>>();
+        for (Opportunity o : rhFitOpps) {
+            Lead l = oppLeadMap.get(o.Id);
+            Technical_Interview__c ti = tiByOpp.get(o.Id);
+            Map<String, Object> row = new Map<String, Object>();
+            row.put('Id',            o.Id);
+            row.put('Name',          o.Name);
+            row.put('StageName',     o.StageName);
+            row.put('CloseDate',     o.CloseDate);
+            row.put('accountName',   o.Account != null ? o.Account.Name : '—');
+            row.put('candidateName', l != null ? ((l.FirstName != null ? l.FirstName : '') + ' ' + (l.LastName != null ? l.LastName : '')).trim() : o.Name);
+            row.put('leadEmail',     l != null ? l.Email : '');
+            row.put('scoreCV',       l != null ? l.Score_Matching__c : o.Score_Matching__c);
+            row.put('aiForts',       l != null ? l.AI_Points_Forts__c : '');
+            row.put('aiReco',        l != null ? l.AI_Recommendation__c : '');
+            row.put('techScore',     ti != null ? ti.Score__c : null);
+            row.put('techComposite', ti != null ? ti.Composite_Score__c : null);
+            row.put('techStatus',    ti != null ? ti.Status__c : null);
+            row.put('techDateTime',  ti != null ? ti.Interview_DateTime__c : null);
+            rows.add(row);
+        }
 
         // Candidats acceptés (Closed Won)
         Integer acceptes = [
@@ -533,7 +626,7 @@ public with sharing class InternalDashboardController {
             WHERE RecordType.DeveloperName = 'Application'
         ];
 
-        result.put('enAttente', rhFitOpps);
+        result.put('enAttente', rows);
         result.put('totalAcceptes', acceptes);
         result.put('totalRefuses', refuses);
         result.put('totalCandidats', total);
@@ -705,12 +798,15 @@ public with sharing class InternalDashboardController {
     public static List<Map<String, Object>> getJobPostings() {
         List<Map<String, Object>> result = new List<Map<String, Object>>();
 
+        Id currentUserId = UserInfo.getUserId();
+
         List<Opportunity> jobs = [
             SELECT Id, Name, StageName, CloseDate, CreatedDate,
                    Localisation__c, Type_de_Contrat__c, Salaire_Propos__c,
                    Description_Poste__c, Departement__c, IsClosed
             FROM Opportunity
             WHERE RecordType.DeveloperName = 'Job_Posting'
+            AND OwnerId = :currentUserId
             ORDER BY CreatedDate DESC
             LIMIT 50
         ];
@@ -911,7 +1007,8 @@ public with sharing class InternalDashboardController {
     public static void scheduleTechnicalInterview(
         Id oppId,
         String interviewDateTime,
-        String duration
+        String duration,
+        String meetUrl
     ) {
         try {
             DateTime parsedDt = DateTime.valueOf(interviewDateTime.replace('T', ' ').length() == 16
@@ -923,7 +1020,8 @@ public with sharing class InternalDashboardController {
                 FROM Opportunity WHERE Id = :oppId LIMIT 1
             ];
 
-            String meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique?id=' + oppId;
+            String exerciseLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique1?id=' + oppId;
+            String videoLink = String.isNotBlank(meetUrl) ? meetUrl.trim() : null;
 
             // Upsert Technical_Interview__c record
             List<Technical_Interview__c> tiList = [
@@ -934,7 +1032,7 @@ public with sharing class InternalDashboardController {
                 : tiList[0];
             ti.Interview_DateTime__c = parsedDt;
             ti.Duration__c           = duration;
-            ti.Meet_Link__c          = meetLink;
+            ti.Meet_Link__c          = videoLink != null ? videoLink : exerciseLink;
             ti.Status__c             = 'Scheduled';
             upsert ti;
 
@@ -944,7 +1042,7 @@ public with sharing class InternalDashboardController {
             String nom = '';
 
             List<Lead> leads = [
-                SELECT Id, FirstName, LastName, Email
+                SELECT Id, FirstName, LastName, Email, Description
                 FROM Lead WHERE ConvertedOpportunityId = :oppId LIMIT 1
             ];
             if (!leads.isEmpty() && String.isNotBlank(leads[0].Email)) {
@@ -978,14 +1076,28 @@ public with sharing class InternalDashboardController {
                 }
             }
 
-            if (String.isNotBlank(candidatEmail)) {
-                String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
-                String dureeLabel = duration == '30'  ? '30 minutes'
-                                  : duration == '45'  ? '45 minutes'
-                                  : duration == '60'  ? '1 heure'
-                                  : duration == '90'  ? '1h30'
-                                  : duration + ' min';
+            String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+            String dureeLabel = duration == '30'  ? '30 minutes'
+                              : duration == '45'  ? '45 minutes'
+                              : duration == '60'  ? '1 heure'
+                              : duration == '90'  ? '1h30'
+                              : duration + ' min';
 
+            // ── Build Meet section (only if video link provided)
+            String meetSection = '';
+            if (videoLink != null) {
+                meetSection = '<div style="text-align:center;margin:0 0 20px;">'
+                    + '<a href="' + videoLink + '" '
+                    + 'style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;'
+                    + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
+                    + '🎥 Rejoindre la visioconférence'
+                    + '</a>'
+                    + '<p style="font-size:12px;color:#718096;margin:8px 0 0;">Un recruteur vous attend en visio pendant l\'entretien.</p>'
+                    + '</div>';
+            }
+
+            // ── Email to candidate ──
+            if (String.isNotBlank(candidatEmail)) {
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new List<String>{ candidatEmail });
                 mail.setSubject('💻 Invitation — Entretien Technique HR Talent Portal · Talan Tunisie');
@@ -1002,6 +1114,7 @@ public with sharing class InternalDashboardController {
                     + 'Nous vous confirmons la planification de votre <strong>entretien technique</strong> '
                     + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>. '
                     + 'Vous devrez résoudre des exercices de programmation et d\'architecture évalués par l\'IA.'
+                    + (videoLink != null ? ' Un recruteur vous accompagnera en <strong>visioconférence</strong>.' : '')
                     + '</p>'
                     + '<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                     + '<table style="width:100%;border-collapse:collapse;">'
@@ -1011,20 +1124,16 @@ public with sharing class InternalDashboardController {
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
                     + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">5 exercices techniques (code, architecture, debug)</td></tr>'
+                    + (videoLink != null ? '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🎥 Visio</td>'
+                        + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Avec recruteur en direct</td></tr>' : '')
                     + '</table>'
                     + '</div>'
+                    + meetSection
                     + '<div style="text-align:center;margin:0 0 28px;">'
-                    + '<a href="' + meetLink + '" '
+                    + '<a href="' + exerciseLink + '" '
                     + 'style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#ffffff;'
                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
-                    + '💻 Accéder à l\'entretien technique'
-                    + '</a>'
-                    + '</div>'
-                    + '<div style="text-align:center;margin:0 0 24px;">'
-                    + '<a href="' + meetLink + '" '
-                    + 'style="display:inline-block;color:#3b82f6;font-size:13px;font-weight:600;text-decoration:none;'
-                    + 'border:1px solid #3b82f6;padding:8px 24px;border-radius:50px;">'
-                    + '🔗 Tester la connexion avant le jour J'
+                    + '💻 Accéder aux exercices techniques'
                     + '</a>'
                     + '</div>'
                     + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
@@ -1037,7 +1146,82 @@ public with sharing class InternalDashboardController {
                     + '</div>'
                     + '</div></div>'
                 );
-                Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
+
+                List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>{ mail };
+
+                // ── Email to manager (copy) ──
+                // Find the Job Posting owner (manager/tech lead) via Lead.Description JOB_ID
+                Id jobPostingId = null;
+                if (!leads.isEmpty() && leads[0].Description != null) {
+                    for (String line : leads[0].Description.split('\n')) {
+                        if (line.startsWith('JOB_ID:')) {
+                            try {
+                                jobPostingId = (Id) line.replace('JOB_ID:', '').trim();
+                            } catch (Exception ex) {}
+                            break;
+                        }
+                    }
+                }
+                if (jobPostingId != null) {
+                    List<Opportunity> jobList = [
+                        SELECT OwnerId, Owner.Email, Owner.FirstName, Owner.LastName, Name
+                        FROM Opportunity WHERE Id = :jobPostingId LIMIT 1
+                    ];
+                    if (!jobList.isEmpty() && String.isNotBlank(jobList[0].Owner.Email)) {
+                        Opportunity job = jobList[0];
+                        String mgrEmail = job.Owner.Email;
+                        // Don't send to manager if same as current user (the recruiter)
+                        if (mgrEmail != UserInfo.getUserEmail()) {
+                            Messaging.SingleEmailMessage mgrMail = new Messaging.SingleEmailMessage();
+                            mgrMail.setToAddresses(new List<String>{ mgrEmail });
+                            mgrMail.setSubject('📋 Entretien technique planifié — ' + prenom + ' ' + nom + ' · ' + job.Name);
+                            mgrMail.setHtmlBody(
+                                '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
+                                + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
+                                + '<div style="background:linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%);padding:40px 40px 32px;">'
+                                + '<h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">📋 Entretien Technique — Notification Manager</h1>'
+                                + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                                + '</div>'
+                                + '<div style="padding:36px 40px;">'
+                                + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>'
+                                + (job.Owner.FirstName != null ? job.Owner.FirstName : '') + '</strong>,</p>'
+                                + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
+                                + 'Un entretien technique a été planifié pour le candidat <strong>' + prenom + ' ' + nom + '</strong> '
+                                + 'pour le poste <strong>' + job.Name + '</strong>. '
+                                + 'Vous pouvez rejoindre la visioconférence pour observer l\'entretien.'
+                                + '</p>'
+                                + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
+                                + '<table style="width:100%;border-collapse:collapse;">'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">👤 Candidat</td>'
+                                + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + prenom + ' ' + nom + '</td></tr>'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date</td>'
+                                + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                                + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
+                                + '</table>'
+                                + '</div>'
+                                + (videoLink != null ?
+                                    '<div style="text-align:center;margin:0 0 20px;">'
+                                    + '<a href="' + videoLink + '" '
+                                    + 'style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;'
+                                    + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
+                                    + '🎥 Rejoindre la visioconférence'
+                                    + '</a></div>' : '')
+                                + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
+                                + 'Les résultats seront disponibles dans votre dashboard après l\'entretien.'
+                                + '</p>'
+                                + '</div>'
+                                + '<div style="background:#f5f3ff;border-top:1px solid #ddd6fe;padding:20px 40px;text-align:center;">'
+                                + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie</p>'
+                                + '</div>'
+                                + '</div></div>'
+                            );
+                            emails.add(mgrMail);
+                        }
+                    }
+                }
+
+                Messaging.sendEmail(emails);
             }
         } catch (Exception e) {
             throw new AuraHandledException('Erreur planification entretien technique : ' + e.getMessage());

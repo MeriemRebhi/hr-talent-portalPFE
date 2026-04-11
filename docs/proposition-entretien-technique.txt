@@ -1,0 +1,198 @@
+
+═══════════════════════════════════════════════════════════════════════
+  PROPOSITION TECHNIQUE — Module Entretien Technique IA
+  Projet : HR Talent Portal — Talan Tunisie
+  Date   : 11/04/2026
+  Auteur : Meriem Rebhi (Stagiaire PFE)
+═══════════════════════════════════════════════════════════════════════
+
+
+1. CONTEXTE
+───────────
+Le module "Entretien Technique" permet d'évaluer les compétences
+techniques des candidats via des exercices de programmation générés
+et corrigés par l'IA (Groq LLaMA 3.3 70B).
+
+La partie exercices IA est fonctionnelle et déployée.
+Ce document propose l'architecture complète intégrant :
+  • La visioconférence (Meet)
+  • L'attribution recruteur/département
+  • La notification des parties prenantes
+  • Le rapport post-entretien (transcription — point 9 du cahier des charges)
+
+
+2. FLUX PROPOSÉ
+───────────────
+
+  ┌─ PHASE 1 : PLANIFICATION ────────────────────────────────────┐
+  │                                                               │
+  │  Le recruteur, depuis son dashboard Salesforce :              │
+  │   1. Sélectionne un candidat (étape "Technique")             │
+  │   2. Choisit la date et l'heure de l'entretien               │
+  │   3. Choisit la durée (30 / 45 / 60 / 90 min)               │
+  │   4. Colle un lien de visioconférence (Google Meet ou Zoom)  │
+  │   5. Valide → le système envoie les emails automatiquement   │
+  │                                                               │
+  └───────────────────────────────────────────────────────────────┘
+
+  ┌─ PHASE 2 : NOTIFICATIONS ────────────────────────────────────┐
+  │                                                               │
+  │  Email au CANDIDAT :                                          │
+  │   • Date, heure et durée de l'entretien                      │
+  │   • Lien visioconférence (Google Meet / Zoom)                │
+  │   • Lien d'accès à la page d'exercices techniques            │
+  │   • Consignes (types d'exercices, barème)                    │
+  │                                                               │
+  │  Email au MANAGER (copie informative) :                       │
+  │   • Nom du candidat + poste                                  │
+  │   • Date et heure                                            │
+  │   • Lien visioconférence (pour observer l'entretien)         │
+  │                                                               │
+  └───────────────────────────────────────────────────────────────┘
+
+  ┌─ PHASE 3 : DÉROULEMENT DE L'ENTRETIEN ──────────────────────┐
+  │                                                               │
+  │  Le candidat ouvre 2 onglets :                                │
+  │                                                               │
+  │  Onglet 1 — Visioconférence :                                │
+  │   • Le recruteur accueille le candidat (caméra + micro)      │
+  │   • Le manager peut rejoindre en tant qu'observateur         │
+  │   • Échange humain : présentation, mise en confiance         │
+  │                                                               │
+  │  Onglet 2 — Page d'exercices (Experience Cloud) :            │
+  │   • 5 exercices techniques (code, architecture, debug)       │
+  │   • Générés par l'IA selon le poste                          │
+  │   • Timer individuel par exercice                            │
+  │   • Évaluation IA en temps réel                              │
+  │   • Score automatique à la soumission                        │
+  │                                                               │
+  │  Durant l'entretien, le recruteur et le manager observent    │
+  │  le candidat réfléchir et coder via la visioconférence.      │
+  │                                                               │
+  └───────────────────────────────────────────────────────────────┘
+
+  ┌─ PHASE 4 : RÉSULTATS & RAPPORT ─────────────────────────────┐
+  │                                                               │
+  │  Score composite calculé automatiquement :                    │
+  │   • 50% — Score technique (exercices IA)                     │
+  │   • 25% — Score gaming (test ludique)                        │
+  │   • 25% — Score CV (matching IA)                             │
+  │                                                               │
+  │  Rapport post-entretien (point 9) contenant :                │
+  │   • Informations candidat + poste                            │
+  │   • Détail par exercice : question, réponse, score, feedback │
+  │   • Temps passé par exercice                                 │
+  │   • Score composite + recommandation IA                      │
+  │                                                               │
+  │  Décision :                                                   │
+  │   ≥ 70%  → Avancé au stage Architecture                     │
+  │   50-69% → Soumis au manager pour décision                   │
+  │   < 50%  → Entretien échoué                                  │
+  │                                                               │
+  └───────────────────────────────────────────────────────────────┘
+
+
+3. ARCHITECTURE TECHNIQUE
+─────────────────────────
+
+  Composant                    Technologie
+  ─────────────────────────    ──────────────────────────
+  Dashboard recruteur          LWC (Salesforce)
+  Dashboard manager            LWC (Salesforce)
+  Page entretien candidat      LWC (Experience Cloud)
+  Génération des questions     Groq API — LLaMA 3.3 70B
+  Évaluation des réponses      Groq API — LLaMA 3.3 70B
+  Visioconférence              Google Meet / Zoom (externe)
+  Emails automatiques          Apex Messaging
+  Données entretien            Technical_Interview__c (objet custom)
+  Rapport post-entretien       Apex + LWC (dashboard manager)
+
+
+4. LIEN MEET : APPROCHE MANUELLE
+─────────────────────────────────
+
+Justification du choix "lien manuel" (vs auto-génération) :
+
+  • Aucune dépendance à Google Workspace (licence payante)
+  • Compatible avec TOUS les outils : Google Meet, Zoom, Teams, Webex
+  • C'est l'approche standard des ATS professionnels :
+    Lever, Greenhouse, BambooHR, Workday
+  • Le recruteur crée sa réunion en 10 secondes (meet.google.com)
+  • Simple, fiable, maintenable
+
+Note : Si le recruteur ne renseigne pas de lien Meet, l'entretien
+se déroule en mode autonome (exercices IA uniquement, sans visio).
+
+
+5. QUESTIONS POUR VALIDATION
+─────────────────────────────
+
+Merci de valider les points suivants avant implémentation :
+
+  Q1. ATTRIBUTION PAR DÉPARTEMENT
+      ─────────────────────────────
+      Est-ce que chaque recruteur doit voir uniquement les candidatures
+      liées à ses offres d'emploi (isolation par département) ?
+      Ou bien tous les recruteurs partagent le même dashboard ?
+
+      Option A : Dashboard partagé (tous voient tout) — Plus simple
+      Option B : Par département (chaque recruteur = ses offres) — Plus pro
+
+  Q2. RÔLE DU MANAGER
+      ────────────────
+      Le manager/tech lead doit-il :
+      a) Seulement recevoir le lien Meet pour observer ?
+      b) Avoir un bouton de validation dans son dashboard ?
+      c) Pouvoir ajouter des commentaires/notes ?
+
+  Q3. REPORT D'ENTRETIEN
+      ───────────────────
+      Le candidat doit-il pouvoir demander un report de date ?
+      Si oui :
+      a) Bouton "Demander un report" → email au recruteur
+      b) Le candidat propose un nouveau créneau
+      c) Report interdit (le candidat doit se présenter à la date fixée)
+
+  Q4. RAPPORT POST-ENTRETIEN (Point 9)
+      ──────────────────────────────────
+      Le rapport structuré suivant est-il suffisant ?
+      - Questions posées par l'IA
+      - Réponses écrites du candidat
+      - Scores et feedbacks IA par exercice
+      - Score composite + décision
+
+      Ou faut-il aussi intégrer la transcription vocale (speech-to-text) ?
+      → Si oui, cela sera prévu pour le stage Architecture.
+
+  Q5. EMAIL MANAGER
+      ─────────────
+      Le manager doit-il recevoir un email quand :
+      a) L'entretien est planifié ? (lien Meet pour observer)
+      b) L'entretien est terminé ? (résultats + rapport)
+      c) Les deux ?
+
+  Q6. VISIOCONFÉRENCE OPTIONNELLE
+      ────────────────────────────
+      Confirmez-vous que la visioconférence est optionnelle ?
+      (Si pas de lien Meet → l'entretien se fait 100% IA autonome)
+
+
+6. PLANNING ESTIMÉ
+──────────────────
+
+  Phase                                          Effort
+  ────────────────────────────────────────────    ──────────
+  Champ Meet URL + formulaire recruteur           0.5 jour
+  Emails candidat + manager (avec Meet)           0.5 jour
+  Affichage date/heure + Meet sur page candidat   0.5 jour
+  Rapport post-entretien (dashboard manager)      1 jour
+  Isolation par département (si validé)           1 jour
+  Tests et déploiement                            0.5 jour
+  ────────────────────────────────────────────    ──────────
+  TOTAL ESTIMÉ                                    3-4 jours
+
+
+═══════════════════════════════════════════════════════════════════════
+  En attente de votre validation pour lancer l'implémentation.
+  Meriem Rebhi — PFE Talan Tunisie
+═══════════════════════════════════════════════════════════════════════

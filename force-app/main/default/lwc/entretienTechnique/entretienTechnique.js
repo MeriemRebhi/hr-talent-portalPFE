@@ -19,6 +19,8 @@ export default class EntretienTechnique extends LightningElement {
     @track jobTitle = '';
     @track existingScore = 0;
     @track meetLink = '';
+    @track scheduledDate = null;
+    @track interviewDuration = '';
 
     /* ────────── Problems ────────── */
     @track problems = [];
@@ -39,6 +41,19 @@ export default class EntretienTechnique extends LightningElement {
 
     /* ────────── Error ────────── */
     @track errorMessage = '';
+
+    /* ═══════════ COMPUTED ═══════════ */
+
+    get scheduledDateFormatted() {
+        if (!this.scheduledDate) return '';
+        try {
+            const d = new Date(this.scheduledDate);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch (e) {
+            return '';
+        }
+    }
 
     /* ═══════════ LIFECYCLE ═══════════ */
 
@@ -81,6 +96,15 @@ export default class EntretienTechnique extends LightningElement {
             this.jobPostingId = info.jobPostingId;
             this.existingScore = info.existingScore || 0;
             this.meetLink = info.meetLink || '';
+            this.scheduledDate = info.scheduledDate || null;
+
+            // Format duration
+            const dur = info.duration || '';
+            if (dur === '30') this.interviewDuration = '30 minutes';
+            else if (dur === '45') this.interviewDuration = '45 minutes';
+            else if (dur === '60') this.interviewDuration = '1 heure';
+            else if (dur === '90') this.interviewDuration = '1h30';
+            else this.interviewDuration = dur ? dur + ' min' : '';
 
             if (info.alreadyCompleted) {
                 this.step = 'done';

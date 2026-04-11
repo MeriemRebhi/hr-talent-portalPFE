@@ -154,15 +154,20 @@
                         <option value="90">1h30</option>
                     </select>
                 </div>
+                <div class="form-row">
+                    <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M3 8h12v8H3z" /></svg> Lien visioconférence (Google Meet, Zoom, Teams…)</label>
+                    <input type="url" class="form-input" placeholder="https://meet.google.com/abc-defg-hij" value={techPlanMeetUrl} onchange={onTechMeetUrlChange} />
+                    <p class="form-hint">Optionnel — si renseigné, le candidat et le manager recevront le lien pour rejoindre la visio.</p>
+                </div>
                 <div class="meet-preview">
                     <span class="meet-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg></span>
                     <div>
-                        <p class="meet-label">Lien entretien technique (auto-généré)</p>
+                        <p class="meet-label">Lien page exercices techniques (auto-généré)</p>
                         <p class="meet-link">5 exercices de code évalués par l'IA</p>
                     </div>
                 </div>
                 <div class="modal-note">
-                    <svg class="note-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg> Un email d'invitation sera envoyé automatiquement au candidat.
+                    <svg class="note-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg> Un email d'invitation sera envoyé au candidat et une copie informative au manager.
                 </div>
             </div>
             <div class="modal-footer">

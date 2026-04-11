@@ -79,6 +79,7 @@ export default class RecruteurDashboard extends LightningElement {
     @track techPlanCandidatName = '';
     @track techPlanDateTime = '';
     @track techPlanDuration = '60';
+    @track techPlanMeetUrl = '';
     @track isTechSending = false;
 
     // Batch planning
@@ -447,6 +448,7 @@ export default class RecruteurDashboard extends LightningElement {
         this.techPlanOppId        = event.currentTarget.dataset.id;
         this.techPlanCandidatName = event.currentTarget.dataset.name;
         this.techPlanDuration     = '60';
+        this.techPlanMeetUrl      = '';
         const now = new Date();
         const pad = n => String(n).padStart(2, '0');
         this.techPlanDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -460,6 +462,7 @@ export default class RecruteurDashboard extends LightningElement {
 
     onTechDateTimeChange(event) { this.techPlanDateTime = event.target.value; }
     onTechDurationChange(event) { this.techPlanDuration = event.target.value; }
+    onTechMeetUrlChange(event)  { this.techPlanMeetUrl  = event.target.value; }
 
     get techPlanOppShortId() {
         return this.techPlanOppId ? this.techPlanOppId.substring(0, 15) : '';
@@ -474,13 +477,14 @@ export default class RecruteurDashboard extends LightningElement {
         scheduleTechnicalInterview({
             oppId:            this.techPlanOppId,
             interviewDateTime: this.techPlanDateTime,
-            duration:         this.techPlanDuration
+            duration:         this.techPlanDuration,
+            meetUrl:          this.techPlanMeetUrl
         })
         .then(() => {
             this.showTechPlanModal = false;
             this.isTechSending = false;
             this.showToast('✅ Invitation entretien technique envoyée !', 'success');
-            const meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique?id=' + this.techPlanOppId;
+            const meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique1?id=' + this.techPlanOppId;
             this.allOpps = this.allOpps.map(o => {
                 if (o.Id === this.techPlanOppId) {
                     return this.mapOpp({

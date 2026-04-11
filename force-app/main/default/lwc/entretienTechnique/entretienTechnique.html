@@ -92,6 +92,24 @@
                     </div>
                 </div>
 
+                <template lwc:if={scheduledDateFormatted}>
+                    <div class="schedule-section">
+                        <h3>📅 Votre entretien</h3>
+                        <div class="schedule-details">
+                            <div class="schedule-row">
+                                <span class="schedule-label">Date &amp; Heure</span>
+                                <span class="schedule-value">{scheduledDateFormatted}</span>
+                            </div>
+                            <template lwc:if={interviewDuration}>
+                                <div class="schedule-row">
+                                    <span class="schedule-label">Durée</span>
+                                    <span class="schedule-value">{interviewDuration}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
                 <div class="scoring-section">
                     <h3>📊 Barème</h3>
                     <div class="thresholds">
