@@ -1,0 +1,322 @@
+<template>
+    <!-- ═══════════ LOADING ═══════════ -->
+    <template lwc:if={isLoading}>
+        <div class="shell">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <p class="loading-text">Chargement de l'entretien technique…</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ ERROR ═══════════ -->
+    <template lwc:elseif={hasError}>
+        <div class="shell">
+            <div class="center-card error-card">
+                <div class="icon-circle error">✕</div>
+                <h2>Erreur</h2>
+                <p>{errorMessage}</p>
+                <a href="/home2/s/loginp" class="btn-back">← Retour au portail</a>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ ALREADY COMPLETED ═══════════ -->
+    <template lwc:elseif={alreadyCompleted}>
+        <div class="shell">
+            <div class="center-card done-card">
+                <div class="icon-circle done">✓</div>
+                <h2>Entretien déjà complété</h2>
+                <p>Vous avez déjà passé votre entretien technique. Votre score a été enregistré.</p>
+                <div class="score-display">
+                    <span class="score-big">{existingScore}</span>
+                    <span class="score-unit">/100</span>
+                </div>
+                <a href="/home2/s/loginp" class="btn-back">← Retour au portail</a>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ NO PROBLEMS GENERATED ═══════════ -->
+    <template lwc:elseif={noProblems}>
+        <div class="shell">
+            <div class="center-card wait-card">
+                <div class="icon-circle wait">⏳</div>
+                <h2>Exercices en préparation</h2>
+                <p>Les exercices techniques pour votre poste n'ont pas encore été générés par l'IA. Veuillez réessayer dans quelques minutes.</p>
+                <a href="/home2/s/loginp" class="btn-back">← Retour au portail</a>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ WELCOME ═══════════ -->
+    <template lwc:elseif={isWelcome}>
+        <div class="shell">
+            <div class="welcome-card">
+                <div class="welcome-header">
+                    <div class="avatar">{initials}</div>
+                    <h1>Entretien Technique</h1>
+                    <p class="subtitle">{jobTitle}</p>
+                    <p class="candidate-name">{candidateName}</p>
+                </div>
+
+                <div class="rules-section">
+                    <h3>📋 Déroulement de l'entretien</h3>
+                    <ul class="rules-list">
+                        <li><strong>5 exercices</strong> de programmation et architecture</li>
+                        <li>Chaque exercice a son propre <strong>temps limite</strong></li>
+                        <li>Vos réponses sont évaluées par l'<strong>IA en temps réel</strong></li>
+                        <li>Un <strong>bonus de rapidité</strong> est accordé aux réponses rapides</li>
+                        <li>Vous pouvez naviguer entre les exercices librement</li>
+                    </ul>
+                </div>
+
+                <div class="types-section">
+                    <h3>🔧 Types d'exercices</h3>
+                    <div class="types-grid">
+                        <div class="type-card code-type">
+                            <span class="type-emoji">💻</span>
+                            <span class="type-label">Code</span>
+                            <span class="type-desc">Écrire du code fonctionnel</span>
+                        </div>
+                        <div class="type-card arch-type">
+                            <span class="type-emoji">🏗️</span>
+                            <span class="type-label">Architecture</span>
+                            <span class="type-desc">Conception et design patterns</span>
+                        </div>
+                        <div class="type-card debug-type">
+                            <span class="type-emoji">🐛</span>
+                            <span class="type-label">Debug</span>
+                            <span class="type-desc">Trouver et corriger les bugs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scoring-section">
+                    <h3>📊 Barème</h3>
+                    <div class="thresholds">
+                        <div class="threshold green"><span class="dot green-dot"></span> ≥ 70% → Avancé à l'architecture</div>
+                        <div class="threshold orange"><span class="dot orange-dot"></span> 50-69% → Soumis au manager</div>
+                        <div class="threshold red"><span class="dot red-dot"></span> &lt; 50% → Entretien échoué</div>
+                    </div>
+                </div>
+
+                <template lwc:if={meetLink}>
+                    <div class="meet-section">
+                        <h3>🎥 Rejoindre la visioconférence</h3>
+                        <p class="meet-desc">Un recruteur vous attend en visio pendant l'entretien.</p>
+                        <a href={meetLink} target="_blank" class="btn-meet">
+                            📹 Rejoindre le Meet
+                        </a>
+                    </div>
+                </template>
+
+                <button class="btn-start" onclick={startInterview}>
+                    Commencer l'entretien ➜
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ INTERVIEW — CODING ═══════════ -->
+    <template lwc:elseif={isInterview}>
+        <div class="interview-shell">
+            <!-- TOP BAR -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <span class="brand">Entretien Technique</span>
+                    <span class="separator">|</span>
+                    <span class="problem-counter">Exercice {currentProblemDisplay} / {totalProblems}</span>
+                </div>
+                <div class="topbar-center">
+                    <div class="timer-container">
+                        <svg class="timer-ring" viewBox="0 0 44 44">
+                            <circle class="timer-bg" cx="22" cy="22" r="20" fill="none" stroke-width="3"/>
+                            <circle class="timer-progress" cx="22" cy="22" r="20" fill="none"
+                                    stroke-width="3" style={timerCircleStyle}/>
+                        </svg>
+                        <span class={timerClass}>{timerDisplay}</span>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <span class="live-score">Score: {liveScore}/100</span>
+                </div>
+            </div>
+
+            <!-- PROGRESS INDICATORS -->
+            <div class="progress-nav">
+                <template for:each={problemIndicators} for:item="ind">
+                    <button
+                        key={ind.index}
+                        class={ind.className}
+                        data-index={ind.index}
+                        onclick={navigateToProblem}
+                    >
+                        {ind.displayNumber}
+                    </button>
+                </template>
+            </div>
+
+            <!-- PROBLEM CARD -->
+            <div class="problem-area">
+                <div class="problem-card">
+                    <div class="problem-header">
+                        <span class={currentTypeBadgeClass}>{currentProblemType}</span>
+                        <span class={currentDiffBadgeClass}>{currentProblemDifficulty}</span>
+                        <span class="time-badge">⏱ {currentTimeLimit}s</span>
+                    </div>
+                    <div class="problem-text">
+                        <pre class="problem-content">{currentProblemText}</pre>
+                    </div>
+                </div>
+
+                <!-- CODE EDITOR -->
+                <div class="editor-area">
+                    <div class="editor-header">
+                        <span class="editor-title">💡 Votre réponse</span>
+                        <template lwc:if={currentProblemEvaluated}>
+                            <span class="evaluated-badge">✓ Évalué — {currentProblemScore}/100</span>
+                        </template>
+                    </div>
+                    <textarea
+                        class="code-editor"
+                        value={currentAnswer}
+                        onchange={handleAnswerChange}
+                        placeholder="Écrivez votre solution ici..."
+                        spellcheck="false"
+                        disabled={currentProblemEvaluated}
+                    ></textarea>
+                </div>
+
+                <!-- AI FEEDBACK (if evaluated) -->
+                <template lwc:if={currentProblemEvaluated}>
+                    <div class="feedback-card">
+                        <h4>🤖 Feedback IA</h4>
+                        <p class="feedback-text">{currentProblemFeedback}</p>
+                        <template lwc:if={currentCriteriaResults}>
+                            <div class="criteria-grid">
+                                <template for:each={currentCriteriaResults} for:item="cr">
+                                    <div class="criteria-item" key={cr.criterion}>
+                                        <span class="criteria-name">{cr.criterion}</span>
+                                        <div class="criteria-bar">
+                                            <div class="criteria-fill" style={cr.barStyle}></div>
+                                        </div>
+                                        <span class="criteria-score">{cr.score}/{cr.max}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- ACTION BUTTONS -->
+                <div class="action-bar">
+                    <template lwc:if={canGoBack}>
+                        <button class="btn-nav btn-prev" onclick={prevProblem}>← Précédent</button>
+                    </template>
+
+                    <template lwc:if={canSubmitAnswer}>
+                        <button class="btn-submit-answer" onclick={submitAnswer} disabled={isEvaluating}>
+                            <template lwc:if={isEvaluating}>
+                                <span class="mini-spinner"></span> Évaluation IA…
+                            </template>
+                            <template lwc:else>
+                                Soumettre la réponse 🚀
+                            </template>
+                        </button>
+                    </template>
+
+                    <template lwc:if={canGoNext}>
+                        <button class="btn-nav btn-next" onclick={nextProblem}>Suivant →</button>
+                    </template>
+
+                    <template lwc:if={canFinish}>
+                        <button class="btn-finish" onclick={finishInterview}>
+                            Terminer l'entretien ✓
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ SUBMITTING ═══════════ -->
+    <template lwc:elseif={isSubmitting}>
+        <div class="shell">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <p class="loading-text">Calcul du score composite…</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- ═══════════ RESULTS ═══════════ -->
+    <template lwc:elseif={isResults}>
+        <div class="shell">
+            <div class="results-card">
+                <h1 class="results-title">Résultats de l'entretien</h1>
+                <p class="results-subtitle">{candidateName} — {jobTitle}</p>
+
+                <!-- COMPOSITE SCORE RING -->
+                <div class="score-ring-container">
+                    <svg class="score-ring" viewBox="0 0 150 150">
+                        <circle class="ring-bg" cx="75" cy="75" r="65" fill="none" stroke-width="10"/>
+                        <circle class="ring-fill" cx="75" cy="75" r="65" fill="none"
+                                stroke-width="10" style={resultRingStyle}/>
+                    </svg>
+                    <div class="ring-text">
+                        <span class="ring-score">{compositeScoreDisplay}</span>
+                        <span class="ring-label">Composite</span>
+                    </div>
+                </div>
+
+                <!-- SCORE BREAKDOWN -->
+                <div class="score-grid">
+                    <div class="score-item">
+                        <span class="score-item-value">{technicalScoreDisplay}</span>
+                        <span class="score-item-label">Technique (50%)</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-item-value">{gamingScoreDisplay}</span>
+                        <span class="score-item-label">Gaming (25%)</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-item-value">{matchingScoreDisplay}</span>
+                        <span class="score-item-label">CV Match (25%)</span>
+                    </div>
+                </div>
+
+                <!-- STATS ROW -->
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-value">{answeredCount}/{totalProblems}</span>
+                        <span class="stat-label">Exercices soumis</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">{totalTimeDisplay}</span>
+                        <span class="stat-label">Temps total</span>
+                    </div>
+                </div>
+
+                <!-- PER-PROBLEM REVIEW -->
+                <div class="review-section">
+                    <h3>Détail par exercice</h3>
+                    <template for:each={problemReview} for:item="rev">
+                        <div class="review-row" key={rev.index}>
+                            <div class="review-header">
+                                <span class={rev.typeBadgeClass}>{rev.type}</span>
+                                <span class={rev.diffBadgeClass}>{rev.difficulty}</span>
+                                <span class={rev.scoreClass}>{rev.score}/100</span>
+                            </div>
+                            <template lwc:if={rev.feedback}>
+                                <p class="review-feedback">{rev.feedback}</p>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <a href="/home2/s/loginp" class="btn-back">← Retour au portail</a>
+            </div>
+        </div>
+    </template>
+</template>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Duration__c</fullName>
+    <description>Durée de l entretien technique en minutes</description>
+    <externalId>false</externalId>
+    <label>Duration</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>30</fullName>
+                <default>false</default>
+                <label>30 min</label>
+            </value>
+            <value>
+                <fullName>45</fullName>
+                <default>true</default>
+                <label>45 min</label>
+            </value>
+            <value>
+                <fullName>60</fullName>
+                <default>false</default>
+                <label>60 min</label>
+            </value>
+            <value>
+                <fullName>90</fullName>
+                <default>false</default>
+                <label>90 min</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

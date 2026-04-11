@@ -1518,6 +1518,42 @@
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+/* ── Technical Interview additions ── */
+.btn-plan-tech {
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+.btn-plan-tech:hover {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+.tech-scheduled-tag {
+    font-size: 11px;
+    color: #3b82f6;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(59,130,246,0.1);
+    border-radius: 6px;
+}
+.btn-tech-gen {
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
+.btn-tech-gen:hover {
+    background: #8b5cf6 !important;
+    color: #fff !important;
+}
+.detail-composite {
+    font-size: 11px;
+    color: #6366f1;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 3px 10px;
+    background: rgba(99,102,241,0.1);
+    border-radius: 6px;
+    display: inline-block;
+}
+
 @media (max-width: 768px) {
     .offres-grid { grid-template-columns: 1fr; }
     .offer-form-grid { grid-template-columns: 1fr; }

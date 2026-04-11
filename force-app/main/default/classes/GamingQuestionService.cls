@@ -175,10 +175,10 @@ public without sharing class GamingQuestionService implements Queueable, Databas
             gq.Question_Text__c   = qText;
             gq.Question_Type__c   = qType;
             gq.Difficulty__c      = diff;
-            gq.Time_Limit__c      = timeLim;
             gq.Correct_Answer__c  = correct;
+            gq.Time_Limit__c      = timeLim;
 
-            // Map options to fields
+            // Assign options A–E
             if (optsRaw != null && optsRaw.size() > 0) gq.Option_A__c = String.valueOf(optsRaw[0]);
             if (optsRaw != null && optsRaw.size() > 1) gq.Option_B__c = String.valueOf(optsRaw[1]);
             if (optsRaw != null && optsRaw.size() > 2) gq.Option_C__c = String.valueOf(optsRaw[2]);
@@ -190,6 +190,7 @@ public without sharing class GamingQuestionService implements Queueable, Databas
 
         if (!toInsert.isEmpty()) {
             insert toInsert;
+            System.debug('GamingQuestionService: ' + toInsert.size() + ' questions insérées pour Job ' + jobId);
         }
     }
 
@@ -201,9 +202,12 @@ public without sharing class GamingQuestionService implements Queueable, Databas
         Integer count = [SELECT COUNT() FROM Gaming_Question__c WHERE Job_Posting__c = :jobPostingId];
         Map<String, Object> result = new Map<String, Object>();
         result.put('count', count);
-        result.put('ready', count >= 20); // At least 20 questions = ready
+        result.put('ready', count >= 20);
         return result;
     }
 
+    // ═══════════════════════════════════════
+    //  CUSTOM EXCEPTION
+    // ═══════════════════════════════════════
     public class GamingQuestionException extends Exception {}
 }

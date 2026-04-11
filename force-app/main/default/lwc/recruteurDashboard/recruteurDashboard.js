@@ -4,6 +4,7 @@ import updateOpportunityStage from '@salesforce/apex/InternalDashboardController
 import scheduleGamingTest from '@salesforce/apex/InternalDashboardController.scheduleGamingTest';
 import scheduleBatchGamingTests from '@salesforce/apex/InternalDashboardController.scheduleBatchGamingTests';
 import cancelGamingTest from '@salesforce/apex/InternalDashboardController.cancelGamingTest';
+import scheduleTechnicalInterview from '@salesforce/apex/InternalDashboardController.scheduleTechnicalInterview';
 import getJobPostings from '@salesforce/apex/InternalDashboardController.getJobPostings';
 import createJobPosting from '@salesforce/apex/InternalDashboardController.createJobPosting';
 import toggleJobPosting from '@salesforce/apex/InternalDashboardController.toggleJobPosting';
@@ -11,6 +12,8 @@ import rescoreCandidat from '@salesforce/apex/InternalDashboardController.rescor
 import generateJobDescription from '@salesforce/apex/InternalDashboardController.generateJobDescription';
 import generateGamingQuestionsApex from '@salesforce/apex/GamingQuestionService.generateQuestions';
 import getGenerationStatus from '@salesforce/apex/GamingQuestionService.getGenerationStatus';
+import generateTechQuestionsApex from '@salesforce/apex/TechnicalQuestionService.generateQuestions';
+import getTechGenerationStatus from '@salesforce/apex/TechnicalQuestionService.getGenerationStatus';
 
 const STAGE_ORDER = ['Gaming', 'Technique', 'Architecture', 'RH Fit', 'Closed Won'];
 
@@ -70,6 +73,14 @@ export default class RecruteurDashboard extends LightningElement {
     @track planDuration = '60';
     @track isSending = false;
 
+    // Technical interview planning modal
+    @track showTechPlanModal = false;
+    @track techPlanOppId = '';
+    @track techPlanCandidatName = '';
+    @track techPlanDateTime = '';
+    @track techPlanDuration = '60';
+    @track isTechSending = false;
+
     // Batch planning
     @track selectedMap = {};
     @track showBatchModal = false;
@@ -121,6 +132,13 @@ export default class RecruteurDashboard extends LightningElement {
     get detailGamingScore() { return this.detailOpp.gamingScore != null ? this.detailOpp.gamingScore : ''; }
     get detailGamingLabel() { return this.detailOpp.gamingResultLabel || ''; }
     get detailGamingBadge() { return this.detailOpp.gamingScoreBadge || ''; }
+
+    // Technical interview detail getters
+    get detailHasTech() { return this.detailOpp.hasTechScore; }
+    get detailTechScore() { return this.detailOpp.techScore != null ? this.detailOpp.techScore : ''; }
+    get detailTechLabel() { return this.detailOpp.techResultLabel || ''; }
+    get detailTechBadge() { return this.detailOpp.techScoreBadge || ''; }
+    get detailTechComposite() { return this.detailOpp.techComposite; }
 
     get planOppShortId() {
         return this.planOppId ? this.planOppId.substring(0, 15) : '';
@@ -197,7 +215,31 @@ export default class RecruteurDashboard extends LightningElement {
                              : o.gamingScore >= 40 ? 'Moyen'
                              : o.gamingScore != null ? 'Insuffisant'
                              : '',
-            gamingPending:     o.gamingStatus !== 'Completed' && gamingScheduled
+            gamingPending:     o.gamingStatus !== 'Completed' && gamingScheduled,
+            // Technical interview
+            isTechnique:       stage === 'Technique',
+            techScheduled:     !!o.techDateTime,
+            techDateFmt:       (() => {
+                if (!o.techDateTime) return '';
+                const dt2 = new Date(o.techDateTime);
+                return dt2.toLocaleDateString('fr-FR') + ' à ' + dt2.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            })(),
+            techMeetLink:      o.techMeetLink || '',
+            techScore:         o.techScore != null ? Math.round(o.techScore) : null,
+            hasTechScore:      o.techScore != null && o.techStatus === 'Completed',
+            techScoreLabel:    o.techScore != null ? Math.round(o.techScore) + '/100' : '—',
+            techScoreBadge:    o.techScore >= 70 ? 'gaming-badge gaming-excellent'
+                             : o.techScore >= 50 ? 'gaming-badge gaming-good'
+                             : o.techScore >= 30 ? 'gaming-badge gaming-mid'
+                             : o.techScore != null ? 'gaming-badge gaming-fail'
+                             : 'gaming-badge gaming-na',
+            techResultLabel:   o.techScore >= 70 ? 'Excellent'
+                             : o.techScore >= 50 ? 'Bon'
+                             : o.techScore >= 30 ? 'Moyen'
+                             : o.techScore != null ? 'Insuffisant'
+                             : '',
+            techPending:       o.techStatus !== 'Completed' && !!o.techDateTime,
+            techComposite:     o.techComposite != null ? Math.round(o.techComposite) : null
         };
     }
 
@@ -396,6 +438,65 @@ export default class RecruteurDashboard extends LightningElement {
         })
         .catch(err => {
             this.isSending = false;
+            this.showToast('❌ Erreur : ' + (err.body ? err.body.message : err.message), 'error');
+        });
+    }
+
+    // ── Technical Interview Planning ──
+    openTechPlanModal(event) {
+        this.techPlanOppId        = event.currentTarget.dataset.id;
+        this.techPlanCandidatName = event.currentTarget.dataset.name;
+        this.techPlanDuration     = '60';
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        this.techPlanDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        this.showTechPlanModal = true;
+    }
+
+    closeTechPlanModal() {
+        this.showTechPlanModal = false;
+        this.isTechSending = false;
+    }
+
+    onTechDateTimeChange(event) { this.techPlanDateTime = event.target.value; }
+    onTechDurationChange(event) { this.techPlanDuration = event.target.value; }
+
+    get techPlanOppShortId() {
+        return this.techPlanOppId ? this.techPlanOppId.substring(0, 15) : '';
+    }
+
+    confirmTechSchedule() {
+        if (!this.techPlanDateTime) {
+            this.showToast('⚠️ Veuillez choisir une date et heure.', 'error');
+            return;
+        }
+        this.isTechSending = true;
+        scheduleTechnicalInterview({
+            oppId:            this.techPlanOppId,
+            interviewDateTime: this.techPlanDateTime,
+            duration:         this.techPlanDuration
+        })
+        .then(() => {
+            this.showTechPlanModal = false;
+            this.isTechSending = false;
+            this.showToast('✅ Invitation entretien technique envoyée !', 'success');
+            const meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique?id=' + this.techPlanOppId;
+            this.allOpps = this.allOpps.map(o => {
+                if (o.Id === this.techPlanOppId) {
+                    return this.mapOpp({
+                        ...o,
+                        techDateTime: this.techPlanDateTime,
+                        techDuration: this.techPlanDuration,
+                        techMeetLink: meetLink,
+                        techStatus:   'Scheduled'
+                    });
+                }
+                return o;
+            });
+            this.applyFilter();
+        })
+        .catch(err => {
+            this.isTechSending = false;
             this.showToast('❌ Erreur : ' + (err.body ? err.body.message : err.message), 'error');
         });
     }
@@ -754,6 +855,41 @@ export default class RecruteurDashboard extends LightningElement {
                 })
                 .catch(() => {
                     this._pollGamingStatus(jobId, attempt + 1);
+                });
+        }, 3000);
+    }
+
+    /* ═══════ TECHNICAL QUESTIONS — IA Generation ═══════ */
+    generateTechQuestions(event) {
+        const jobId = event.currentTarget.dataset.id;
+        if (!jobId) return;
+        this.showToast('Génération IA des exercices techniques en cours...', 'info');
+        generateTechQuestionsApex({ jobPostingId: jobId })
+            .then(() => {
+                this._pollTechStatus(jobId, 0);
+            })
+            .catch(err => {
+                this.showToast('Erreur : ' + (err.body ? err.body.message : err.message), 'error');
+            });
+    }
+
+    _pollTechStatus(jobId, attempt) {
+        if (attempt > 20) {
+            this.showToast('Génération en cours en arrière-plan. Rafraîchissez dans quelques instants.', 'info');
+            return;
+        }
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            getTechGenerationStatus({ jobPostingId: jobId })
+                .then(result => {
+                    if (result.ready) {
+                        this.showToast(`${result.count} exercices techniques générés par l\'IA !`, 'success');
+                    } else {
+                        this._pollTechStatus(jobId, attempt + 1);
+                    }
+                })
+                .catch(() => {
+                    this._pollTechStatus(jobId, attempt + 1);
                 });
         }, 3000);
     }

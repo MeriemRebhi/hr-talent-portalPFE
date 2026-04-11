@@ -67,6 +67,19 @@ enum Difficulte <<enumeration>> {
     hard
 }
 
+enum TechnicalProblemType <<enumeration>> {
+    code         "(Programmation)"
+    architecture "(Design/Patterns)"
+    debug        "(Correction bugs)"
+}
+
+enum TechnicalInterviewDuration <<enumeration>> {
+    30_min
+    45_min
+    60_min
+    90_min
+}
+
 enum GamingTestDuration <<enumeration>> {
     30_min
     60_min
@@ -183,6 +196,14 @@ class "Opportunity\n(Job Posting / Candidature)" as Opportunity <<Standard Objec
     + Gaming_Test_DateTime__c : DateTime
     + Gaming_Test_Duration__c : GamingTestDuration
     + Gaming_Meet_Link__c : Url
+    __Champs entretien technique__
+    + Technical_Interview_DateTime__c : DateTime
+    + Technical_Interview_Duration__c : TechnicalInterviewDuration
+    + Technical_Meet_Link__c : Url
+    + Technical_Interview_Score__c : Number(5,1)
+    + Technical_Interview_Status__c : Text(50)
+    + Technical_Composite_Score__c : Number(5,1)
+    + Manager_Validated_Score__c : Number(5,1)
 }
 
 ' ══════════════════════════════════════════
@@ -234,7 +255,25 @@ class AI_Configuration__c <<Custom Settings>> {
     --
     Paramètre hiérarchique.
     Clé API Groq LLaMA 3.3 70B
-    (3 intégrations IA)
+    (4 intégrations IA)
+}
+
+class Technical_Question__c <<Custom Object>> {
+    + Name : AutoNumber (TQ-{00000})
+    + Problem_Text__c : LongTextArea(5000)
+    + Problem_Type__c : TechnicalProblemType
+    + Difficulty__c : Difficulte
+    + Expected_Solution__c : LongTextArea(10000)
+    + Evaluation_Criteria__c : LongTextArea(3000)
+    + Time_Limit__c : Number(4) = 600
+    + Candidate_Answer__c : LongTextArea(10000)
+    + AI_Score__c : Number(5,1)
+    + AI_Feedback__c : LongTextArea(5000)
+    + Job_Posting__c : Lookup(Opportunity)
+    --
+    Exercices techniques générés
+    par Groq LLaMA 3.3 70B.
+    Évaluation automatique IA.
 }
 
 ' ══════════════════════════════════════════
@@ -287,6 +326,7 @@ Lead "1" ..> "0..1" Opportunity : <<conversion>>\nConvertedOpportunityId
 
 ' --- Opportunity ---
 Opportunity "1" -- "0..*" Gaming_Question__c : Job_Posting__c >
+Opportunity "1" -- "0..*" Technical_Question__c : Job_Posting__c >
 RecordType "1" -- "0..*" Opportunity : RecordTypeId >
 
 ' --- Documents CV ---
@@ -307,6 +347,8 @@ Opportunity .. TypeContrat
 Opportunity .. GamingTestDuration
 Gaming_Question__c .. QuestionType
 Gaming_Question__c .. Difficulte
+Technical_Question__c .. TechnicalProblemType
+Technical_Question__c .. Difficulte
 Security_Audit_Log__c .. Severite
 Security_Audit_Log__c .. AuditAction
 
@@ -338,6 +380,14 @@ note bottom of Gaming_Question__c
   Générées dynamiquement par
   l'IA Groq (LLaMA 3.3 70B)
   selon le poste (Job_Posting__c)
+end note
+
+note bottom of Technical_Question__c
+  5 exercices par entretien :
+  2 code + 2 architecture + 1 debug.
+  Score composite : 50% technique
+  + 25% gaming + 25% CV matching.
+  Manager valide le score final.
 end note
 
 @enduml

@@ -16,17 +16,29 @@ public with sharing class InternalDashboardController {
         List<Opportunity> opps = [
             SELECT Id, Name, StageName, CloseDate, AccountId, Account.Name,
                    Description, CreatedDate, RecordType.DeveloperName,
-                   Gaming_Test_DateTime__c, Gaming_Test_Duration__c, Gaming_Meet_Link__c,
-                   Gaming_Test_Score__c, Gaming_Test_Status__c
+                   Score_Matching__c
             FROM Opportunity
             WHERE RecordType.DeveloperName = 'Application'
             ORDER BY CreatedDate DESC
             LIMIT 100
         ];
 
-        // Join Lead (score IA) via ConvertedOpportunityId
+        // Collect opp IDs for Technical_Interview__c lookup
         Set<Id> oppIds = new Set<Id>();
         for (Opportunity o : opps) oppIds.add(o.Id);
+
+        // Query Technical_Interview__c records
+        Map<Id, Technical_Interview__c> tiByOpp = new Map<Id, Technical_Interview__c>();
+        for (Technical_Interview__c ti : [
+            SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
+                   Meet_Link__c, Score__c, Status__c, Composite_Score__c
+            FROM Technical_Interview__c
+            WHERE Opportunity__c IN :oppIds
+        ]) {
+            tiByOpp.put(ti.Opportunity__c, ti);
+        }
+
+        // Join Lead (score IA) via ConvertedOpportunityId
 
         Map<Id, Lead> oppLeadMap = new Map<Id, Lead>();
         for (Lead l : [
@@ -103,11 +115,19 @@ public with sharing class InternalDashboardController {
             row.put('leadPhone',       l != null ? l.Phone       : '');
             row.put('aiForts',         l != null ? l.AI_Points_Forts__c   : '');
             row.put('aiReco',          l != null ? l.AI_Recommendation__c : '');
-            row.put('gamingDateTime',  o.Gaming_Test_DateTime__c);
-            row.put('gamingDuration',  o.Gaming_Test_Duration__c);
-            row.put('gamingMeetLink',  o.Gaming_Meet_Link__c);
-            row.put('gamingScore',     o.Gaming_Test_Score__c);
-            row.put('gamingStatus',    o.Gaming_Test_Status__c);
+            row.put('gamingDateTime',  null);
+            row.put('gamingDuration',  null);
+            row.put('gamingMeetLink',  null);
+            row.put('gamingScore',     null);
+            row.put('gamingStatus',    null);
+            // Technical interview from Technical_Interview__c
+            Technical_Interview__c ti = tiByOpp.get(o.Id);
+            row.put('techDateTime',    ti != null ? ti.Interview_DateTime__c : null);
+            row.put('techDuration',    ti != null ? ti.Duration__c : null);
+            row.put('techMeetLink',    ti != null ? ti.Meet_Link__c : null);
+            row.put('techScore',       ti != null ? ti.Score__c : null);
+            row.put('techStatus',      ti != null ? ti.Status__c : null);
+            row.put('techComposite',   ti != null ? ti.Composite_Score__c : null);
             // Job Posting title
             String jobTitle = '';
             Id jId = oppIdToJobId.get(o.Id);
@@ -880,6 +900,147 @@ public with sharing class InternalDashboardController {
             throw ae;
         } catch (Exception e) {
             throw new AuraHandledException('Erreur génération IA : ' + e.getMessage());
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // ACTION — Planifier l'entretien technique
+    // ══════════════════════════════════════════
+
+    @AuraEnabled
+    public static void scheduleTechnicalInterview(
+        Id oppId,
+        String interviewDateTime,
+        String duration
+    ) {
+        try {
+            DateTime parsedDt = DateTime.valueOf(interviewDateTime.replace('T', ' ').length() == 16
+                ? interviewDateTime.replace('T', ' ') + ':00'
+                : interviewDateTime.replace('T', ' '));
+
+            Opportunity opp = [
+                SELECT Id, Name, StageName, AccountId
+                FROM Opportunity WHERE Id = :oppId LIMIT 1
+            ];
+
+            String meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique?id=' + oppId;
+
+            // Upsert Technical_Interview__c record
+            List<Technical_Interview__c> tiList = [
+                SELECT Id FROM Technical_Interview__c WHERE Opportunity__c = :oppId LIMIT 1
+            ];
+            Technical_Interview__c ti = tiList.isEmpty()
+                ? new Technical_Interview__c(Opportunity__c = oppId)
+                : tiList[0];
+            ti.Interview_DateTime__c = parsedDt;
+            ti.Duration__c           = duration;
+            ti.Meet_Link__c          = meetLink;
+            ti.Status__c             = 'Scheduled';
+            upsert ti;
+
+            // Find candidate email
+            String candidatEmail;
+            String prenom = '';
+            String nom = '';
+
+            List<Lead> leads = [
+                SELECT Id, FirstName, LastName, Email
+                FROM Lead WHERE ConvertedOpportunityId = :oppId LIMIT 1
+            ];
+            if (!leads.isEmpty() && String.isNotBlank(leads[0].Email)) {
+                candidatEmail = leads[0].Email;
+                prenom = leads[0].FirstName != null ? leads[0].FirstName : '';
+                nom    = leads[0].LastName  != null ? leads[0].LastName  : '';
+            }
+
+            if (String.isBlank(candidatEmail)) {
+                List<OpportunityContactRole> ocrs = [
+                    SELECT Contact.FirstName, Contact.LastName, Contact.Email
+                    FROM OpportunityContactRole
+                    WHERE OpportunityId = :oppId AND Contact.Email != null LIMIT 1
+                ];
+                if (!ocrs.isEmpty()) {
+                    candidatEmail = ocrs[0].Contact.Email;
+                    prenom = ocrs[0].Contact.FirstName != null ? ocrs[0].Contact.FirstName : '';
+                    nom    = ocrs[0].Contact.LastName  != null ? ocrs[0].Contact.LastName  : '';
+                }
+            }
+
+            if (String.isBlank(candidatEmail) && opp.AccountId != null) {
+                List<Contact> contacts = [
+                    SELECT FirstName, LastName, Email
+                    FROM Contact WHERE AccountId = :opp.AccountId AND Email != null LIMIT 1
+                ];
+                if (!contacts.isEmpty()) {
+                    candidatEmail = contacts[0].Email;
+                    prenom = contacts[0].FirstName != null ? contacts[0].FirstName : '';
+                    nom    = contacts[0].LastName  != null ? contacts[0].LastName  : '';
+                }
+            }
+
+            if (String.isNotBlank(candidatEmail)) {
+                String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+                String dureeLabel = duration == '30'  ? '30 minutes'
+                                  : duration == '45'  ? '45 minutes'
+                                  : duration == '60'  ? '1 heure'
+                                  : duration == '90'  ? '1h30'
+                                  : duration + ' min';
+
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                mail.setToAddresses(new List<String>{ candidatEmail });
+                mail.setSubject('💻 Invitation — Entretien Technique HR Talent Portal · Talan Tunisie');
+                mail.setHtmlBody(
+                    '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
+                    + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
+                    + '<div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);padding:40px 40px 32px;">'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">💻 Entretien Technique Planifié</h1>'
+                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '</div>'
+                    + '<div style="padding:36px 40px;">'
+                    + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
+                    + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
+                    + 'Nous vous confirmons la planification de votre <strong>entretien technique</strong> '
+                    + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>. '
+                    + 'Vous devrez résoudre des exercices de programmation et d\'architecture évalués par l\'IA.'
+                    + '</p>'
+                    + '<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
+                    + '<table style="width:100%;border-collapse:collapse;">'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">5 exercices techniques (code, architecture, debug)</td></tr>'
+                    + '</table>'
+                    + '</div>'
+                    + '<div style="text-align:center;margin:0 0 28px;">'
+                    + '<a href="' + meetLink + '" '
+                    + 'style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#ffffff;'
+                    + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
+                    + '💻 Accéder à l\'entretien technique'
+                    + '</a>'
+                    + '</div>'
+                    + '<div style="text-align:center;margin:0 0 24px;">'
+                    + '<a href="' + meetLink + '" '
+                    + 'style="display:inline-block;color:#3b82f6;font-size:13px;font-weight:600;text-decoration:none;'
+                    + 'border:1px solid #3b82f6;padding:8px 24px;border-radius:50px;">'
+                    + '🔗 Tester la connexion avant le jour J'
+                    + '</a>'
+                    + '</div>'
+                    + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
+                    + '<strong>Instructions :</strong> 5 exercices de programmation adaptés au poste, '
+                    + 'évaluation IA en temps réel, bonus de rapidité. Votre navigateur suffit.'
+                    + '</p>'
+                    + '</div>'
+                    + '<div style="background:#eff6ff;border-top:1px solid #dbeafe;padding:20px 40px;text-align:center;">'
+                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '</div>'
+                    + '</div></div>'
+                );
+                Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
+            }
+        } catch (Exception e) {
+            throw new AuraHandledException('Erreur planification entretien technique : ' + e.getMessage());
         }
     }
 }
