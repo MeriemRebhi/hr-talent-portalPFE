@@ -304,6 +304,7 @@ public without sharing class ApplicationController {
             SELECT Id, Name, StageName, Score_Matching__c, CreatedDate, CloseDate,
                    Description_Poste__c, Departement__c, Localisation__c, Type_de_Contrat__c,
                    Gaming_Test_DateTime__c, Gaming_Test_Duration__c, Gaming_Meet_Link__c,
+                   Gaming_Test_Score__c, Gaming_Test_Status__c,
                    RecordType.DeveloperName
             FROM Opportunity 
             WHERE AccountId = :con.AccountId
@@ -372,6 +373,8 @@ public without sharing class ApplicationController {
             cand.put('gamingDateTime', opp.Gaming_Test_DateTime__c);
             cand.put('gamingDuration', opp.Gaming_Test_Duration__c);
             cand.put('gamingMeetLink', opp.Gaming_Meet_Link__c);
+            cand.put('gamingScore', opp.Gaming_Test_Score__c);
+            cand.put('gamingStatus', opp.Gaming_Test_Status__c);
             candidatures.add(cand);
         }
 

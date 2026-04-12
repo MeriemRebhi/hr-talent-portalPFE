@@ -89,6 +89,11 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
                     gamingDurationLabel,
                     gamingMeetLink: c.gamingMeetLink || '',
                     gamingPassed: this._isStageAfter(c.stage, 'Gaming'),
+                    gamingScore: c.gamingScore != null ? Math.round(c.gamingScore) : null,
+                    gamingCompleted: c.gamingStatus === 'Completed',
+                    gamingScoreLabel: c.gamingScore != null ? Math.round(c.gamingScore) + '%' : '',
+                    gamingScoreClass: c.gamingScore >= 80 ? 'score-high' : c.gamingScore >= 60 ? 'score-medium' : c.gamingScore >= 40 ? 'score-medium' : 'score-low',
+                    gamingBadgeLabel: c.gamingScore >= 80 ? 'Excellent' : c.gamingScore >= 60 ? 'Bon' : c.gamingScore >= 40 ? 'Moyen' : c.gamingScore != null ? 'Insuffisant' : '',
                     // Technical interview data
                     hasTechInterview: !!(c.techDate || c.techScore || c.techMeetLink),
                     techScore: c.techScore,
@@ -102,7 +107,7 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
                     techRescheduleRequested: c.techRescheduleRequested || false,
                     // Step result classes
                     stepResultClass1: 'tl-step' + (c.score != null ? ' tl-done' : ''),
-                    stepResultClass2: 'tl-step' + (this._isStageAfter(c.stage, 'Gaming') ? ' tl-done' : (c.stage === 'Gaming' ? ' tl-active' : '')),
+                    stepResultClass2: 'tl-step' + (c.gamingStatus === 'Completed' || this._isStageAfter(c.stage, 'Gaming') ? ' tl-done' : (c.stage === 'Gaming' ? ' tl-active' : '')),
                     stepResultClass3: 'tl-step' + (c.techStatus === 'Completed' ? ' tl-done' : (c.stage === 'Technique' ? ' tl-active' : '')),
                     stepResultClass4: 'tl-step' + (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-done' : (c.stage === 'Architecture' ? ' tl-active' : '')),
                     stepResultClass5: 'tl-step' + (c.stage === 'Closed' || c.stage === 'Hired' || c.stage === 'Rejected' ? ' tl-done' : (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-active' : ''))

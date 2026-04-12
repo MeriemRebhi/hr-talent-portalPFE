@@ -577,12 +577,13 @@
                                                     <div class="tl-dot-wrap"><div class="tl-dot">2</div></div>
                                                     <div class="tl-content">
                                                         <span class="tl-step-name">Test Gaming</span>
-                                                        <template if:true={selectedCandidature.gamingPassed}>
+                                                        <template if:true={selectedCandidature.gamingCompleted}>
                                                             <div class="tl-result">
-                                                                <span class="score-high">Réussi ✓</span>
+                                                                <span class={selectedCandidature.gamingScoreClass}>{selectedCandidature.gamingScoreLabel}</span>
+                                                                <span class="tl-badge">{selectedCandidature.gamingBadgeLabel}</span>
                                                             </div>
                                                         </template>
-                                                        <template if:false={selectedCandidature.gamingPassed}>
+                                                        <template if:false={selectedCandidature.gamingCompleted}>
                                                             <template if:true={selectedCandidature.gamingScheduled}>
                                                                 <span class="tl-scheduled">📅 Planifié — {selectedCandidature.gamingDateFmt}</span>
                                                             </template>
