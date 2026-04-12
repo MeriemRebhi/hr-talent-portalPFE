@@ -100,6 +100,8 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
                     techCompleted: c.techStatus === 'Completed',
                     techMeetLink: c.techMeetLink || '',
                     techDateFmt: c.techDate ? this._formatDateFr(c.techDate) : '',
+                    managerValidatedScore: c.managerValidatedScore != null ? Math.round(c.managerValidatedScore) : null,
+                    hasManagerScore: c.managerValidatedScore != null,
                     techDurationLabel: this._formatDuration(c.techDuration),
                     techScoreClass: this.getScoreClass(c.techScore),
                     techExerciseLink: c.techMeetLink ? '' :

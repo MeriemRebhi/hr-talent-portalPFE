@@ -313,6 +313,9 @@
                             <template if:true={detailTechComposite}>
                                 <div class="detail-composite">Composite: {detailTechComposite}/100</div>
                             </template>
+                            <template if:true={detailHasManagerScore}>
+                                <div class="detail-validated">⚖️ Score validé: {detailManagerScore}/100</div>
+                            </template>
                         </template>
                         <template if:false={detailHasTech}>
                             <p class="detail-na">Non passé</p>
@@ -353,7 +356,84 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <template if:true={detailHasTech}>
+                    <button class="btn-validate-score" onclick={openValidationModal}>⚖️ Valider / Ajuster le score</button>
+                </template>
                 <button class="btn-cancel" onclick={closeDetailModal}>Fermer</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ── VALIDATION SCORE MODAL ── -->
+    <template if:true={showValidationModal}>
+        <div class="modal-backdrop" onclick={closeValidationModal}></div>
+        <div class="modal-box validation-modal" onclick={stopPropagationValidation}>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 class="modal-title">⚖️ Validation Entretien Technique</h2>
+                </div>
+                <button class="modal-close" onclick={closeValidationModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading -->
+                <template if:true={loadingDetails}>
+                    <div class="validation-loading">Chargement des détails...</div>
+                </template>
+                <template if:false={loadingDetails}>
+                    <!-- Score overview -->
+                    <div class="validation-scores">
+                        <div class="vs-card">
+                            <span class="vs-label">Score IA (automatique)</span>
+                            <span class="vs-value">{validationOriginalScore}/100</span>
+                        </div>
+                        <div class="vs-card vs-editable">
+                            <label class="vs-label" for="validScore">Score validé (ajustable)</label>
+                            <input type="number" id="validScore" class="vs-input" min="0" max="100" value={validationScore} onchange={handleValidationScoreChange}/>
+                            <template if:true={validationScoreAdjusted}>
+                                <span class="vs-adjusted">Ajusté ✎</span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Problem breakdown -->
+                    <template if:true={hasValidationProblems}>
+                        <h4 class="vp-title">📋 Détail des exercices</h4>
+                        <div class="vp-list">
+                            <template for:each={validationProblems} for:item="prob">
+                                <div class="vp-item" key={prob.index}>
+                                    <div class="vp-header">
+                                        <span class="vp-num">#{prob.index}</span>
+                                        <span class="vp-type">{prob.type}</span>
+                                        <span class="vp-diff">{prob.difficulty}</span>
+                                        <span class={prob.scoreClass}>{prob.aiScore}/100</span>
+                                    </div>
+                                    <div class="vp-answer"><strong>Réponse :</strong> {prob.truncatedAnswer}</div>
+                                    <template if:true={prob.aiFeedback}>
+                                        <div class="vp-feedback"><strong>IA :</strong> {prob.aiFeedback}</div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Decision -->
+                    <h4 class="vd-title">Décision</h4>
+                    <div class="vd-buttons">
+                        <button class={btnAcceptClass} onclick={setDecisionAccept}>
+                            ✅ Accepter — Avancer à Architecture
+                        </button>
+                        <button class={btnRejectClass} onclick={setDecisionReject}>
+                            ❌ Rejeter — Fermer la candidature
+                        </button>
+                    </div>
+                </template>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeValidationModal}>Annuler</button>
+                <button class="btn-confirm-validation" disabled={validationCannotSubmit} onclick={confirmValidation}>
+                    <template if:true={isValidating}>Envoi en cours...</template>
+                    <template if:false={isValidating}>Confirmer la décision</template>
+                </button>
             </div>
         </div>
     </template>

@@ -14,6 +14,8 @@ import generateGamingQuestionsApex from '@salesforce/apex/GamingQuestionService.
 import getGenerationStatus from '@salesforce/apex/GamingQuestionService.getGenerationStatus';
 import generateTechQuestionsApex from '@salesforce/apex/TechnicalQuestionService.generateQuestions';
 import getTechGenerationStatus from '@salesforce/apex/TechnicalQuestionService.getGenerationStatus';
+import validateScore from '@salesforce/apex/TechnicalInterviewController.validateScore';
+import getInterviewDetails from '@salesforce/apex/TechnicalInterviewController.getInterviewDetails';
 
 const STAGE_ORDER = ['Gaming', 'Technique', 'Architecture', 'RH Fit', 'Closed Won'];
 
@@ -112,6 +114,16 @@ export default class RecruteurDashboard extends LightningElement {
     @track showDetailModal = false;
     @track detailOpp = {};
 
+    // Validation modal
+    @track showValidationModal = false;
+    @track validationOppId = '';
+    @track validationScore = 0;
+    @track validationOriginalScore = 0;
+    @track validationDecision = '';
+    @track isValidating = false;
+    @track validationDetails = null;
+    @track loadingDetails = false;
+
     get isCandidaturesTab() { return this.activeTab === 'candidatures'; }
     get isOffresTab() { return this.activeTab === 'offres'; }
     get tabCandClass() { return 'rdb-tab' + (this.activeTab === 'candidatures' ? ' tab-active' : ''); }
@@ -140,6 +152,8 @@ export default class RecruteurDashboard extends LightningElement {
     get detailTechLabel() { return this.detailOpp.techResultLabel || ''; }
     get detailTechBadge() { return this.detailOpp.techScoreBadge || ''; }
     get detailTechComposite() { return this.detailOpp.techComposite; }
+    get detailHasManagerScore() { return this.detailOpp.hasManagerScore; }
+    get detailManagerScore() { return this.detailOpp.managerValidatedScore; }
 
     get planOppShortId() {
         return this.planOppId ? this.planOppId.substring(0, 15) : '';
@@ -240,7 +254,9 @@ export default class RecruteurDashboard extends LightningElement {
                              : o.techScore != null ? 'Insuffisant'
                              : '',
             techPending:       o.techStatus !== 'Completed' && !!o.techDateTime,
-            techComposite:     o.techComposite != null ? Math.round(o.techComposite) : null
+            techComposite:     o.techComposite != null ? Math.round(o.techComposite) : null,
+            managerValidatedScore: o.managerValidatedScore != null ? Math.round(o.managerValidatedScore) : null,
+            hasManagerScore:   o.managerValidatedScore != null
         };
     }
 
@@ -911,6 +927,113 @@ export default class RecruteurDashboard extends LightningElement {
     closeDetailModal() {
         this.showDetailModal = false;
     }
+
+    // ══════════════════════════════════════
+    // TECH INTERVIEW VALIDATION
+    // ══════════════════════════════════════
+
+    openValidationModal() {
+        const opp = this.detailOpp;
+        if (!opp.hasTechScore) {
+            this.showToast('❌ Aucun résultat technique à valider.', 'error');
+            return;
+        }
+        this.validationOppId = opp.Id;
+        this.validationScore = opp.techScore;
+        this.validationOriginalScore = opp.techScore;
+        this.validationDecision = '';
+        this.showValidationModal = true;
+        this.validationDetails = null;
+        this.loadingDetails = true;
+
+        getInterviewDetails({ oppId: opp.Id })
+            .then(result => {
+                this.validationDetails = result;
+                if (result.managerScore) {
+                    this.validationScore = Math.round(result.managerScore);
+                }
+                this.loadingDetails = false;
+            })
+            .catch(() => { this.loadingDetails = false; });
+    }
+
+    closeValidationModal() {
+        this.showValidationModal = false;
+    }
+
+    handleValidationScoreChange(e) {
+        this.validationScore = parseInt(e.target.value, 10) || 0;
+    }
+
+    setDecisionAccept() { this.validationDecision = 'accept'; }
+    setDecisionReject() { this.validationDecision = 'reject'; }
+
+    get validationCanSubmit() {
+        return this.validationDecision && !this.isValidating;
+    }
+
+    get validationCannotSubmit() {
+        return !this.validationDecision || this.isValidating;
+    }
+
+    get validationScoreAdjusted() {
+        return this.validationScore !== this.validationOriginalScore;
+    }
+
+    get btnAcceptClass() {
+        return 'btn-decision btn-accept' + (this.validationDecision === 'accept' ? ' decision-active' : '');
+    }
+
+    get btnRejectClass() {
+        return 'btn-decision btn-reject' + (this.validationDecision === 'reject' ? ' decision-active' : '');
+    }
+
+    get hasValidationProblems() {
+        return this.validationDetails && this.validationDetails.problemResults && this.validationDetails.problemResults.length > 0;
+    }
+
+    get validationProblems() {
+        if (!this.validationDetails || !this.validationDetails.problemResults) return [];
+        return this.validationDetails.problemResults.map((p, i) => ({
+            ...p,
+            index: i + 1,
+            scoreClass: p.aiScore >= 70 ? 'vp-score-high' : p.aiScore >= 50 ? 'vp-score-mid' : 'vp-score-low',
+            truncatedAnswer: p.candidateAnswer ? (p.candidateAnswer.length > 200 ? p.candidateAnswer.substring(0, 200) + '…' : p.candidateAnswer) : '—'
+        }));
+    }
+
+    async confirmValidation() {
+        if (!this.validationDecision) return;
+        this.isValidating = true;
+        try {
+            const result = await validateScore({
+                oppId: this.validationOppId,
+                managerScore: this.validationScore,
+                decision: this.validationDecision
+            });
+            this.showValidationModal = false;
+            this.showDetailModal = false;
+            // Update local data
+            const newStage = result.newStage;
+            this.allOpps = this.allOpps.map(o => {
+                if (o.Id === this.validationOppId) {
+                    return this.mapOpp({ ...o, StageName: newStage, managerValidatedScore: this.validationScore });
+                }
+                return o;
+            });
+            this.applyFilter();
+            const msg = result.passed
+                ? '✅ Candidat validé — avancé à ' + newStage
+                : '❌ Candidat non retenu — ' + newStage;
+            this.showToast(msg, result.passed ? 'success' : 'error');
+        } catch (err) {
+            this.showToast('❌ Erreur: ' + (err.body ? err.body.message : err.message), 'error');
+        } finally {
+            this.isValidating = false;
+        }
+    }
+
+    stopPropagationValidation(e) { e.stopPropagation(); }
 
     // ══════════════════════════════════════
     // IA RE-SCORING

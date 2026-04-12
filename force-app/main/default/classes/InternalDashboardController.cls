@@ -63,7 +63,8 @@ public with sharing class InternalDashboardController {
                        Description, CreatedDate, RecordType.DeveloperName,
                        Score_Matching__c,
                        Gaming_Test_DateTime__c, Gaming_Test_Duration__c, Gaming_Meet_Link__c,
-                       Gaming_Test_Score__c, Gaming_Test_Status__c
+                       Gaming_Test_Score__c, Gaming_Test_Status__c,
+                       Manager_Validated_Score__c
                 FROM Opportunity
                 WHERE RecordType.DeveloperName = 'Application'
                 AND Id IN :myOppIds
@@ -169,6 +170,7 @@ public with sharing class InternalDashboardController {
             row.put('gamingMeetLink',  o.Gaming_Meet_Link__c);
             row.put('gamingScore',     o.Gaming_Test_Score__c);
             row.put('gamingStatus',    o.Gaming_Test_Status__c);
+            row.put('managerValidatedScore', o.Manager_Validated_Score__c);
             // Technical interview from Technical_Interview__c
             Technical_Interview__c ti = tiByOpp.get(o.Id);
             row.put('techDateTime',    ti != null ? ti.Interview_DateTime__c : null);

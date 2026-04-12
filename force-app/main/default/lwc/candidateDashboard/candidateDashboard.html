@@ -534,8 +534,15 @@
                                                                 <span class="tech-score-val">{selectedCandidature.techScore}</span>
                                                                 <span class="tech-score-max">/100</span>
                                                             </div>
-                                                            <span class="tech-score-label">Score technique</span>
+                                                            <span class="tech-score-label">Score IA</span>
                                                         </div>
+                                                        <template if:true={selectedCandidature.hasManagerScore}>
+                                                            <div class="tech-validated-score">
+                                                                <span class="validated-icon">⚖️</span>
+                                                                <span class="validated-val">{selectedCandidature.managerValidatedScore}/100</span>
+                                                                <span class="validated-label">Score validé</span>
+                                                            </div>
+                                                        </template>
                                                     </template>
                                                 </div>
                                                 <template if:true={selectedCandidature.techExerciseLink}>
@@ -601,6 +608,9 @@
                                                         <template if:true={selectedCandidature.techCompleted}>
                                                             <div class="tl-result">
                                                                 <span class={selectedCandidature.techScoreClass}>{selectedCandidature.techScore}/100</span>
+                                                                <template if:true={selectedCandidature.hasManagerScore}>
+                                                                    <span class="tl-validated">⚖️ Validé: {selectedCandidature.managerValidatedScore}/100</span>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                         <template if:false={selectedCandidature.techCompleted}>
