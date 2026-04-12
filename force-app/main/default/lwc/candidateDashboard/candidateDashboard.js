@@ -36,6 +36,7 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     @track filterSort = 'recent';
     _wiredResult;
     _mapReady = false;
+    _mapSent = false;
 
     @wire(getJobPostings)
     wiredJobs({ data }) {
@@ -86,7 +87,25 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
                     gamingScheduled,
                     gamingDateFmt,
                     gamingDurationLabel,
-                    gamingMeetLink: c.gamingMeetLink || ''
+                    gamingMeetLink: c.gamingMeetLink || '',
+                    gamingPassed: this._isStageAfter(c.stage, 'Gaming'),
+                    // Technical interview data
+                    hasTechInterview: !!(c.techDate || c.techScore || c.techMeetLink),
+                    techScore: c.techScore,
+                    techCompleted: c.techStatus === 'Completed',
+                    techMeetLink: c.techMeetLink || '',
+                    techDateFmt: c.techDate ? this._formatDateFr(c.techDate) : '',
+                    techDurationLabel: this._formatDuration(c.techDuration),
+                    techScoreClass: this.getScoreClass(c.techScore),
+                    techExerciseLink: c.techMeetLink ? '' :
+                        (c.techDate ? 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique1?id=' + c.id : ''),
+                    techRescheduleRequested: c.techRescheduleRequested || false,
+                    // Step result classes
+                    stepResultClass1: 'tl-step' + (c.score != null ? ' tl-done' : ''),
+                    stepResultClass2: 'tl-step' + (this._isStageAfter(c.stage, 'Gaming') ? ' tl-done' : (c.stage === 'Gaming' ? ' tl-active' : '')),
+                    stepResultClass3: 'tl-step' + (c.techStatus === 'Completed' ? ' tl-done' : (c.stage === 'Technique' ? ' tl-active' : '')),
+                    stepResultClass4: 'tl-step' + (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-done' : (c.stage === 'Architecture' ? ' tl-active' : '')),
+                    stepResultClass5: 'tl-step' + (c.stage === 'Closed' || c.stage === 'Hired' || c.stage === 'Rejected' ? ' tl-done' : (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-active' : ''))
                 };
             });
         } else if (error) {
@@ -115,8 +134,6 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     }
 
     // ── Map ──
-    get isMap() { return this.activeTab === 'map'; }
-    get mapTabClass() { return 'tab' + (this.activeTab === 'map' ? ' active' : ''); }
     get mapUrl() { return WORLD_JOB_MAP; }
 
     handleMapLoad() {
@@ -126,7 +143,6 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     }
 
     _sendMapData() {
-        if (!this.isMap) return;
         const iframe = this.template.querySelector('.map-iframe');
         if (!iframe || !iframe.contentWindow) return;
         const payload = {
@@ -578,4 +594,40 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     }
     get filteredCount() { return this.filteredCandidatures.length; }
     get hasFilteredCandidatures() { return this.filteredCandidatures.length > 0; }
+
+    // ═══ HELPERS ═══
+    _formatDateFr(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+            + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    _formatDuration(dur) {
+        if (!dur) return '';
+        if (dur === '30') return '30 minutes';
+        if (dur === '45') return '45 minutes';
+        if (dur === '60') return '1 heure';
+        if (dur === '90') return '1h30';
+        return dur + ' min';
+    }
+
+    _isStageAfter(stage, target) {
+        const order = ['Gaming', 'Technique', 'Architecture', 'RH Fit', 'Closed'];
+        return order.indexOf(stage) > order.indexOf(target);
+    }
+
+    _isStageAfterOrEqual(stage, target) {
+        const order = ['Gaming', 'Technique', 'Architecture', 'RH Fit', 'Closed'];
+        return order.indexOf(stage) >= order.indexOf(target);
+    }
+
+    // ═══ MAP (always visible at bottom) ═══
+    renderedCallback() {
+        if (!this._mapSent && !this.isGuest && !this.isLoading) {
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            setTimeout(() => this._sendMapData(), 600);
+            this._mapSent = true;
+        }
+    }
 }

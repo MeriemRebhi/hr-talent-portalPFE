@@ -374,6 +374,41 @@ public without sharing class ApplicationController {
             cand.put('gamingMeetLink', opp.Gaming_Meet_Link__c);
             candidatures.add(cand);
         }
+
+        // 3b. Technical Interview data per candidature
+        if (!oppIds.isEmpty()) {
+            Map<Id, Technical_Interview__c> tiMap = new Map<Id, Technical_Interview__c>();
+            for (Technical_Interview__c ti : [
+                SELECT Opportunity__c, Score__c, Interview_DateTime__c, Meet_Link__c,
+                       Status__c, Duration__c, Composite_Score__c, Reschedule_Requested__c
+                FROM Technical_Interview__c
+                WHERE Opportunity__c IN :oppIds
+            ]) {
+                tiMap.put(ti.Opportunity__c, ti);
+            }
+            for (Map<String, Object> cand : candidatures) {
+                Id candId = (Id) cand.get('id');
+                if (tiMap.containsKey(candId)) {
+                    Technical_Interview__c ti = tiMap.get(candId);
+                    cand.put('techScore', ti.Score__c);
+                    cand.put('techDate', ti.Interview_DateTime__c);
+                    cand.put('techMeetLink', ti.Meet_Link__c);
+                    cand.put('techStatus', ti.Status__c);
+                    cand.put('techDuration', ti.Duration__c);
+                    cand.put('techCompositeScore', ti.Composite_Score__c);
+                    cand.put('techRescheduleRequested', ti.Reschedule_Requested__c);
+                } else {
+                    cand.put('techScore', null);
+                    cand.put('techDate', null);
+                    cand.put('techMeetLink', null);
+                    cand.put('techStatus', null);
+                    cand.put('techDuration', null);
+                    cand.put('techCompositeScore', null);
+                    cand.put('techRescheduleRequested', false);
+                }
+            }
+        }
+
         result.put('candidatures', candidatures);
         result.put('totalCandidatures', candidatures.size());
 

@@ -29,7 +29,7 @@ public without sharing class TechnicalInterviewController {
         // Get or initialize Technical_Interview__c record
         List<Technical_Interview__c> tiList = [
             SELECT Id, Interview_DateTime__c, Duration__c, Status__c,
-                   Score__c, Meet_Link__c, Composite_Score__c
+                   Score__c, Meet_Link__c, Composite_Score__c, Reschedule_Requested__c
             FROM Technical_Interview__c
             WHERE Opportunity__c = :oppId LIMIT 1
         ];
@@ -84,6 +84,7 @@ public without sharing class TechnicalInterviewController {
         result.put('hasProblems', qCount >= 4);
         result.put('meetLink', ti.Meet_Link__c);
         result.put('duration', ti.Duration__c);
+        result.put('rescheduleRequested', ti.Reschedule_Requested__c);
         result.put('gamingScore', null);
         result.put('matchingScore', opp.Score_Matching__c);
         return result;
@@ -465,5 +466,101 @@ public without sharing class TechnicalInterviewController {
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'Technical interview validation email error: ' + e.getMessage());
         }
+    }
+
+    // ═══════════════════════════════════════
+    //  REQUEST RESCHEDULE — candidat demande un report (1 seule fois)
+    // ═══════════════════════════════════════
+    @AuraEnabled
+    public static Map<String, Object> requestReschedule(Id oppId, String reason) {
+        Map<String, Object> result = new Map<String, Object>();
+
+        List<Technical_Interview__c> tiList = [
+            SELECT Id, Reschedule_Requested__c, Interview_DateTime__c, Meet_Link__c, Opportunity__c
+            FROM Technical_Interview__c
+            WHERE Opportunity__c = :oppId LIMIT 1
+        ];
+
+        if (tiList.isEmpty()) {
+            throw new AuraHandledException('Aucun entretien technique trouvé.');
+        }
+
+        Technical_Interview__c ti = tiList[0];
+
+        if (ti.Reschedule_Requested__c == true) {
+            throw new AuraHandledException('Vous avez déjà utilisé votre demande de report.');
+        }
+
+        ti.Reschedule_Requested__c = true;
+        update ti;
+
+        // Get candidate name
+        String candidateName = 'Candidat';
+        String candidateEmail = '';
+        List<Lead> leads = [
+            SELECT FirstName, LastName, Email FROM Lead
+            WHERE ConvertedOpportunityId = :oppId AND IsConverted = true LIMIT 1
+        ];
+        if (!leads.isEmpty()) {
+            candidateName = ((leads[0].FirstName != null ? leads[0].FirstName : '') + ' ' +
+                            (leads[0].LastName != null ? leads[0].LastName : '')).trim();
+            candidateEmail = leads[0].Email;
+        }
+
+        // Get job posting owner to notify
+        String recruiterEmail = '';
+        Id jobPostingId = null;
+        if (!leads.isEmpty()) {
+            Lead l = [SELECT Description FROM Lead WHERE Id = :leads[0].Id LIMIT 1];
+            if (l.Description != null) {
+                for (String line : l.Description.split('\n')) {
+                    if (line.startsWith('JOB_ID:')) {
+                        try { jobPostingId = (Id) line.replace('JOB_ID:', '').trim(); }
+                        catch (Exception e) { /* ignore */ }
+                        break;
+                    }
+                }
+            }
+        }
+        if (jobPostingId != null) {
+            List<Opportunity> jobs = [SELECT Owner.Email FROM Opportunity WHERE Id = :jobPostingId LIMIT 1];
+            if (!jobs.isEmpty()) recruiterEmail = jobs[0].Owner.Email;
+        }
+
+        // Send email to recruiter
+        if (String.isNotBlank(recruiterEmail)) {
+            String dateFmt = ti.Interview_DateTime__c != null
+                ? ti.Interview_DateTime__c.format('dd/MM/yyyy \'à\' HH:mm', 'Europe/Paris') : 'Non définie';
+
+            String html = '<div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;">'
+                + '<div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:30px 40px;border-radius:16px 16px 0 0;">'
+                + '<h1 style="color:#fff;margin:0;font-size:22px;">📅 Demande de report</h1>'
+                + '<p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">Entretien technique — HR Talent Portal</p>'
+                + '</div>'
+                + '<div style="background:#fff;padding:30px 40px;border:1px solid #e5e7eb;border-top:none;">'
+                + '<p style="font-size:15px;color:#334155;line-height:1.7;">Le candidat <strong>' + candidateName + '</strong> demande le report de son entretien technique.</p>'
+                + '<div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:16px 20px;margin:20px 0;">'
+                + '<p style="margin:0 0 8px;font-size:13px;color:#92400e;font-weight:600;">📅 Date prévue : ' + dateFmt + '</p>'
+                + '<p style="margin:0;font-size:13px;color:#92400e;font-weight:600;">💬 Motif : ' + (String.isNotBlank(reason) ? reason.escapeHtml4() : 'Non précisé') + '</p>'
+                + '</div>'
+                + '<p style="font-size:14px;color:#475569;">Veuillez replanifier l\'entretien depuis le dashboard recruteur.</p>'
+                + '</div>'
+                + '<div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8;">TALAN Tunisie — HR Talent Portal</div>'
+                + '</div>';
+
+            try {
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                mail.setToAddresses(new List<String>{ recruiterEmail });
+                mail.setSubject('🔄 Demande de report — ' + candidateName);
+                mail.setHtmlBody(html);
+                Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'Reschedule email error: ' + e.getMessage());
+            }
+        }
+
+        result.put('success', true);
+        result.put('message', 'Votre demande de report a été envoyée au recruteur.');
+        return result;
     }
 }

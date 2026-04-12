@@ -4,6 +4,7 @@ import getInterviewInfo from '@salesforce/apex/TechnicalInterviewController.getI
 import getProblems from '@salesforce/apex/TechnicalInterviewController.getProblems';
 import evaluateAnswer from '@salesforce/apex/TechnicalInterviewController.evaluateAnswer';
 import submitInterviewResults from '@salesforce/apex/TechnicalInterviewController.submitInterviewResults';
+import requestReschedule from '@salesforce/apex/TechnicalInterviewController.requestReschedule';
 
 export default class EntretienTechnique extends LightningElement {
 
@@ -42,7 +43,22 @@ export default class EntretienTechnique extends LightningElement {
     /* ────────── Error ────────── */
     @track errorMessage = '';
 
+    /* ────────── Reschedule ────────── */
+    @track rescheduleRequested = false;
+    @track showRescheduleModal = false;
+    @track rescheduleReason = '';
+    @track isRescheduling = false;
+    @track rescheduleSuccess = false;
+
     /* ═══════════ COMPUTED ═══════════ */
+
+    get canReschedule() {
+        return !this.rescheduleRequested && !this.rescheduleSuccess && this.scheduledDate;
+    }
+
+    get showRescheduleAlready() {
+        return this.rescheduleRequested && !this.rescheduleSuccess;
+    }
 
     get scheduledDateFormatted() {
         if (!this.scheduledDate) return '';
@@ -106,6 +122,9 @@ export default class EntretienTechnique extends LightningElement {
             else if (dur === '90') this.interviewDuration = '1h30';
             else this.interviewDuration = dur ? dur + ' min' : '';
 
+            // Track reschedule status
+            this.rescheduleRequested = info.rescheduleRequested || false;
+
             if (info.alreadyCompleted) {
                 this.step = 'done';
                 return;
@@ -145,6 +164,31 @@ export default class EntretienTechnique extends LightningElement {
         this.currentIndex = 0;
         this.step = 'interview';
         this._startProblemTimer();
+    }
+
+    /* ═══════════ RESCHEDULE ═══════════ */
+
+    openRescheduleModal() { this.showRescheduleModal = true; }
+    closeRescheduleModal() { this.showRescheduleModal = false; this.rescheduleReason = ''; }
+    handleRescheduleReason(e) { this.rescheduleReason = e.target.value; }
+    stopPropagation(e) { e.stopPropagation(); }
+
+    async confirmReschedule() {
+        this.isRescheduling = true;
+        try {
+            await requestReschedule({
+                oppId: this.oppId,
+                reason: this.rescheduleReason
+            });
+            this.rescheduleSuccess = true;
+            this.rescheduleRequested = true;
+            this.showRescheduleModal = false;
+            this.rescheduleReason = '';
+        } catch (err) {
+            this.errorMessage = err.body ? err.body.message : 'Erreur lors de la demande de report.';
+        } finally {
+            this.isRescheduling = false;
+        }
     }
 
     /* ═══════════ TIMER ═══════════ */

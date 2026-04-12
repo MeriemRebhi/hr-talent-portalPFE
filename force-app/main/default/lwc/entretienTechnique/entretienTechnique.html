@@ -129,9 +129,55 @@
                     </div>
                 </template>
 
+                <!-- Reschedule Button -->
+                <template lwc:if={canReschedule}>
+                    <div class="reschedule-section">
+                        <button class="btn-reschedule" onclick={openRescheduleModal}>
+                            📅 Demander un report
+                        </button>
+                        <p class="reschedule-hint">Vous ne pouvez reporter qu'une seule fois.</p>
+                    </div>
+                </template>
+                <template lwc:if={rescheduleSuccess}>
+                    <div class="reschedule-success">
+                        <span class="reschedule-success-icon">✓</span>
+                        <span>Votre demande de report a été envoyée au recruteur. Vous serez recontacté(e) sous peu.</span>
+                    </div>
+                </template>
+                <template lwc:if={showRescheduleAlready}>
+                    <div class="reschedule-already">
+                        <span>⏳ Report déjà demandé — en attente de réponse du recruteur</span>
+                    </div>
+                </template>
+
                 <button class="btn-start" onclick={startInterview}>
                     Commencer l'entretien ➜
                 </button>
+
+                <!-- Reschedule Modal -->
+                <template lwc:if={showRescheduleModal}>
+                    <div class="modal-overlay" onclick={closeRescheduleModal}>
+                        <div class="modal-card" onclick={stopPropagation}>
+                            <div class="modal-header">
+                                <h3>📅 Demander un report</h3>
+                                <button class="modal-close" onclick={closeRescheduleModal}>✕</button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="modal-info">Cette action est irréversible. Vous ne pouvez demander un report qu'<strong>une seule fois</strong>.</p>
+                                <label class="modal-label">Motif du report (optionnel)</label>
+                                <textarea class="modal-textarea" placeholder="Ex: Empêchement professionnel, problème technique..."
+                                    value={rescheduleReason} onchange={handleRescheduleReason}></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn-cancel" onclick={closeRescheduleModal}>Annuler</button>
+                                <button class="btn-confirm-reschedule" onclick={confirmReschedule} disabled={isRescheduling}>
+                                    <template lwc:if={isRescheduling}>Envoi en cours...</template>
+                                    <template lwc:else>Confirmer le report</template>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
     </template>
