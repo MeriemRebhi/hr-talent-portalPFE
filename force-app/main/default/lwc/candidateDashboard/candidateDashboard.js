@@ -7,6 +7,7 @@ import updateCandidateProfile from '@salesforce/apex/ApplicationController.updat
 import uploadCvForContact from '@salesforce/apex/ApplicationController.uploadCvForContact';
 import getCvBase64 from '@salesforce/apex/ApplicationController.getCvBase64';
 import getJobPostings from '@salesforce/apex/JobPostingController.getJobPostings';
+import requestReschedule from '@salesforce/apex/TechnicalInterviewController.requestReschedule';
 import WORLD_JOB_MAP from '@salesforce/resourceUrl/worldJobMap';
 
 export default class CandidateDashboard extends NavigationMixin(LightningElement) {
@@ -33,6 +34,13 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     @track filterSearch = '';
     @track filterStage = '';
     @track filterScore = '';
+
+    // Reschedule
+    @track showRescheduleModal = false;
+    @track rescheduleReason = '';
+    @track isRescheduling = false;
+    @track rescheduleSuccess = false;
+    @track rescheduleOppId = '';
     @track filterSort = 'recent';
     _wiredResult;
     _mapReady = false;
@@ -601,6 +609,52 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
     }
     get filteredCount() { return this.filteredCandidatures.length; }
     get hasFilteredCandidatures() { return this.filteredCandidatures.length > 0; }
+
+    // ═══ RESCHEDULE ═══
+    openRescheduleModal() {
+        if (!this.selectedCandidature) return;
+        this.rescheduleOppId = this.selectedCandidature.id;
+        this.rescheduleReason = '';
+        this.rescheduleSuccess = false;
+        this.showRescheduleModal = true;
+    }
+
+    closeRescheduleModal() {
+        this.showRescheduleModal = false;
+    }
+
+    handleRescheduleReason(e) {
+        this.rescheduleReason = e.target.value;
+    }
+
+    stopReschedulePropagation(e) { e.stopPropagation(); }
+
+    async confirmReschedule() {
+        this.isRescheduling = true;
+        try {
+            await requestReschedule({
+                oppId: this.rescheduleOppId,
+                reason: this.rescheduleReason || 'Aucune raison précisée'
+            });
+            this.rescheduleSuccess = true;
+            // Update local data
+            this.candidatures = this.candidatures.map(c => {
+                if (c.id === this.rescheduleOppId) {
+                    return { ...c, techRescheduleRequested: true };
+                }
+                return c;
+            });
+            if (this.selectedCandidature && this.selectedCandidature.id === this.rescheduleOppId) {
+                this.selectedCandidature = { ...this.selectedCandidature, techRescheduleRequested: true };
+            }
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            setTimeout(() => { this.showRescheduleModal = false; }, 2000);
+        } catch (err) {
+            this.errorMessage = err.body ? err.body.message : 'Erreur lors de la demande de report.';
+        } finally {
+            this.isRescheduling = false;
+        }
+    }
 
     // ═══ HELPERS ═══
     _formatDateFr(dateStr) {

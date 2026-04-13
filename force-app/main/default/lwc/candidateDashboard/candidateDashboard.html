@@ -553,6 +553,20 @@
                                                         </a>
                                                     </div>
                                                 </template>
+                                                <!-- Reschedule section -->
+                                                <template if:false={selectedCandidature.techCompleted}>
+                                                    <template if:false={selectedCandidature.techRescheduleRequested}>
+                                                        <div class="tech-reschedule-section">
+                                                            <button class="btn-reschedule-dash" onclick={openRescheduleModal}>📅 Demander un report</button>
+                                                            <p class="reschedule-hint-dash">Vous pouvez demander un report une seule fois.</p>
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={selectedCandidature.techRescheduleRequested}>
+                                                        <div class="tech-reschedule-pending">
+                                                            ⏳ Report demandé — en attente de réponse du recruteur
+                                                        </div>
+                                                    </template>
+                                                </template>
                                             </div>
                                         </template>
 
@@ -861,6 +875,46 @@
     ═══════════════════════════════════════════ -->
     <template if:false={isGuest}>
         <c-agentforce-chat email={profile.email}></c-agentforce-chat>
+    </template>
+
+    <!-- ═══ RESCHEDULE MODAL ═══ -->
+    <template if:true={showRescheduleModal}>
+        <div class="reschedule-overlay" onclick={closeRescheduleModal}>
+            <div class="reschedule-modal-card" onclick={stopReschedulePropagation}>
+                <div class="reschedule-modal-header">
+                    <h3>📅 Demander un report d'entretien</h3>
+                    <button class="reschedule-modal-close" onclick={closeRescheduleModal}>✕</button>
+                </div>
+                <div class="reschedule-modal-body">
+                    <template if:true={rescheduleSuccess}>
+                        <div class="reschedule-success-msg">
+                            <span class="reschedule-success-icon">✓</span>
+                            <div>
+                                <strong>Demande envoyée !</strong>
+                                <p>Le recruteur a été notifié. Vous serez recontacté(e) pour une nouvelle date.</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={rescheduleSuccess}>
+                        <p class="reschedule-modal-info">
+                            Cette action est <strong>irréversible</strong> et ne peut être effectuée qu'<strong>une seule fois</strong>.
+                            Le recruteur recevra votre demande par email.
+                        </p>
+                        <label class="reschedule-modal-label" for="reschedReason">Raison du report (optionnel)</label>
+                        <textarea id="reschedReason" class="reschedule-modal-textarea" placeholder="Ex: Conflit d'horaire, urgence personnelle..." value={rescheduleReason} onchange={handleRescheduleReason}></textarea>
+                    </template>
+                </div>
+                <template if:false={rescheduleSuccess}>
+                    <div class="reschedule-modal-footer">
+                        <button class="btn-cancel-resched" onclick={closeRescheduleModal}>Annuler</button>
+                        <button class="btn-confirm-resched" onclick={confirmReschedule}>
+                            <template if:true={isRescheduling}>Envoi en cours...</template>
+                            <template if:false={isRescheduling}>Confirmer le report</template>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
     </template>
 
 </template>
