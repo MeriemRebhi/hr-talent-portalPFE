@@ -256,7 +256,8 @@ export default class RecruteurDashboard extends LightningElement {
             techPending:       o.techStatus !== 'Completed' && !!o.techDateTime,
             techComposite:     o.techComposite != null ? Math.round(o.techComposite) : null,
             managerValidatedScore: o.managerValidatedScore != null ? Math.round(o.managerValidatedScore) : null,
-            hasManagerScore:   o.managerValidatedScore != null
+            hasManagerScore:   o.managerValidatedScore != null,
+            techRescheduleRequested: !!o.techRescheduleRequested
         };
     }
 
@@ -508,7 +509,8 @@ export default class RecruteurDashboard extends LightningElement {
                         techDateTime: this.techPlanDateTime,
                         techDuration: this.techPlanDuration,
                         techMeetLink: meetLink,
-                        techStatus:   'Scheduled'
+                        techStatus:   'Scheduled',
+                        techRescheduleRequested: false
                     });
                 }
                 return o;

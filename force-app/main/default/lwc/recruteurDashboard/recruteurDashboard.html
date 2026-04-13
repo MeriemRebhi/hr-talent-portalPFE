@@ -708,7 +708,18 @@
                                                         </button>
                                                     </template>
                                                     <template if:true={opp.techScheduled}>
-                                                        <span class="tech-scheduled-tag">💻 Technique planifié</span>
+                                                        <template if:true={opp.techRescheduleRequested}>
+                                                            <span class="tech-reschedule-tag">⚠️ Report demandé</span>
+                                                            <button class="btn-action btn-replan-tech"
+                                                                data-id={opp.Id}
+                                                                data-name={opp.Name}
+                                                                onclick={openTechPlanModal}>
+                                                                📅 Replanifier
+                                                            </button>
+                                                        </template>
+                                                        <template if:false={opp.techRescheduleRequested}>
+                                                            <span class="tech-scheduled-tag">💻 Technique planifié</span>
+                                                        </template>
                                                     </template>
                                                 </template>
                                                 <button class="btn-action btn-rescore"

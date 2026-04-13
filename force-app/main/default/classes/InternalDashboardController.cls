@@ -81,7 +81,8 @@ public with sharing class InternalDashboardController {
         Map<Id, Technical_Interview__c> tiByOpp = new Map<Id, Technical_Interview__c>();
         for (Technical_Interview__c ti : [
             SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
-                   Meet_Link__c, Score__c, Status__c, Composite_Score__c
+                   Meet_Link__c, Score__c, Status__c, Composite_Score__c,
+                   Reschedule_Requested__c
             FROM Technical_Interview__c
             WHERE Opportunity__c IN :oppIds
         ]) {
@@ -179,6 +180,7 @@ public with sharing class InternalDashboardController {
             row.put('techScore',       ti != null ? ti.Score__c : null);
             row.put('techStatus',      ti != null ? ti.Status__c : null);
             row.put('techComposite',   ti != null ? ti.Composite_Score__c : null);
+            row.put('techRescheduleRequested', ti != null ? ti.Reschedule_Requested__c : false);
             // Job Posting title
             String jobTitle = '';
             Id jId = oppIdToJobId.get(o.Id);
@@ -571,7 +573,8 @@ public with sharing class InternalDashboardController {
         Map<Id, Technical_Interview__c> tiByOpp = new Map<Id, Technical_Interview__c>();
         for (Technical_Interview__c ti : [
             SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
-                   Meet_Link__c, Score__c, Status__c, Composite_Score__c
+                   Meet_Link__c, Score__c, Status__c, Composite_Score__c,
+                   Reschedule_Requested__c
             FROM Technical_Interview__c
             WHERE Opportunity__c IN :oppIds
         ]) {
@@ -1038,6 +1041,7 @@ public with sharing class InternalDashboardController {
             ti.Duration__c           = duration;
             ti.Meet_Link__c          = videoLink != null ? videoLink : exerciseLink;
             ti.Status__c             = 'Scheduled';
+            ti.Reschedule_Requested__c = false;
             upsert ti;
 
             // Find candidate email
