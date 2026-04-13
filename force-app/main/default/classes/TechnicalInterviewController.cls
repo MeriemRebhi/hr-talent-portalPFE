@@ -22,7 +22,7 @@ public without sharing class TechnicalInterviewController {
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getInterviewInfo(Id oppId) {
         Opportunity opp = [
-            SELECT Id, Name, StageName, AccountId, Score_Matching__c
+            SELECT Id, Name, StageName, AccountId, Score_Matching__c, Gaming_Test_Score__c
             FROM Opportunity WHERE Id = :oppId LIMIT 1
         ];
 
@@ -85,7 +85,7 @@ public without sharing class TechnicalInterviewController {
         result.put('meetLink', ti.Meet_Link__c);
         result.put('duration', ti.Duration__c);
         result.put('rescheduleRequested', ti.Reschedule_Requested__c);
-        result.put('gamingScore', null);
+        result.put('gamingScore', opp.Gaming_Test_Score__c);
         result.put('matchingScore', opp.Score_Matching__c);
         return result;
     }
@@ -259,12 +259,12 @@ public without sharing class TechnicalInterviewController {
         Integer totalProblems, Integer timeSpentSeconds
     ) {
         Opportunity opp = [
-            SELECT Id, StageName, Score_Matching__c
+            SELECT Id, StageName, Score_Matching__c, Gaming_Test_Score__c
             FROM Opportunity WHERE Id = :oppId LIMIT 1
         ];
 
         // Score composite : 50% technique + 25% gaming + 25% matching CV
-        Decimal gamingScore = 0;
+        Decimal gamingScore = opp.Gaming_Test_Score__c != null ? opp.Gaming_Test_Score__c : 0;
         Decimal matchScore  = opp.Score_Matching__c != null ? opp.Score_Matching__c : 0;
         Decimal composite   = (technicalScore * 0.50) + (gamingScore * 0.25) + (matchScore * 0.25);
         composite = composite.setScale(1, RoundingMode.HALF_UP);
@@ -335,7 +335,7 @@ public without sharing class TechnicalInterviewController {
     @AuraEnabled
     public static Map<String, Object> getInterviewDetails(Id oppId) {
         Opportunity opp = [
-            SELECT Id, Name, StageName, Score_Matching__c, Manager_Validated_Score__c
+            SELECT Id, Name, StageName, Score_Matching__c, Manager_Validated_Score__c, Gaming_Test_Score__c
             FROM Opportunity WHERE Id = :oppId LIMIT 1
         ];
 
@@ -397,7 +397,7 @@ public without sharing class TechnicalInterviewController {
         result.put('candidateName', candidateName);
         result.put('technicalScore', ti.Score__c);
         result.put('compositeScore', ti.Composite_Score__c);
-        result.put('gamingScore', null);
+        result.put('gamingScore', opp.Gaming_Test_Score__c);
         result.put('matchingScore', opp.Score_Matching__c);
         result.put('status', ti.Status__c);
         result.put('managerScore', opp.Manager_Validated_Score__c);
