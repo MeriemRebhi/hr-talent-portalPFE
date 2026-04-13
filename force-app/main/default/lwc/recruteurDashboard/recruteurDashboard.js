@@ -124,6 +124,13 @@ export default class RecruteurDashboard extends LightningElement {
     @track validationDetails = null;
     @track loadingDetails = false;
 
+    // Observation criteria (stars 0-5)
+    @track obsCommunication = 0;
+    @track obsApproach = 0;
+    @track obsAutonomy = 0;
+    @track observationNotes = '';
+    @track existingManagerNotes = '';
+
     get isCandidaturesTab() { return this.activeTab === 'candidatures'; }
     get isOffresTab() { return this.activeTab === 'offres'; }
     get tabCandClass() { return 'rdb-tab' + (this.activeTab === 'candidatures' ? ' tab-active' : ''); }
@@ -947,12 +954,20 @@ export default class RecruteurDashboard extends LightningElement {
         this.showValidationModal = true;
         this.validationDetails = null;
         this.loadingDetails = true;
+        this.obsCommunication = 0;
+        this.obsApproach = 0;
+        this.obsAutonomy = 0;
+        this.observationNotes = '';
+        this.existingManagerNotes = '';
 
         getInterviewDetails({ oppId: opp.Id })
             .then(result => {
                 this.validationDetails = result;
                 if (result.managerScore) {
                     this.validationScore = Math.round(result.managerScore);
+                }
+                if (result.managerNotes) {
+                    this.existingManagerNotes = result.managerNotes;
                 }
                 this.loadingDetails = false;
             })
@@ -994,6 +1009,39 @@ export default class RecruteurDashboard extends LightningElement {
         return this.validationDetails && this.validationDetails.problemResults && this.validationDetails.problemResults.length > 0;
     }
 
+    // Star rating getters
+    _buildStars(rating) {
+        return [1, 2, 3, 4, 5].map(v => ({
+            key: v,
+            value: v,
+            cls: v <= rating ? 'obs-star obs-star-active' : 'obs-star'
+        }));
+    }
+    get starsCommunication() { return this._buildStars(this.obsCommunication); }
+    get starsApproach() { return this._buildStars(this.obsApproach); }
+    get starsAutonomy() { return this._buildStars(this.obsAutonomy); }
+
+    handleStarClick(e) {
+        const criteria = e.currentTarget.dataset.criteria;
+        const value = parseInt(e.currentTarget.dataset.value, 10);
+        if (criteria === 'communication') this.obsCommunication = value;
+        else if (criteria === 'approach') this.obsApproach = value;
+        else if (criteria === 'autonomy') this.obsAutonomy = value;
+    }
+
+    handleObsNotesChange(e) {
+        this.observationNotes = e.target.value;
+    }
+
+    _buildManagerNotes() {
+        let notes = '';
+        if (this.obsCommunication) notes += 'Communication: ' + this.obsCommunication + '/5\n';
+        if (this.obsApproach) notes += 'Approche: ' + this.obsApproach + '/5\n';
+        if (this.obsAutonomy) notes += 'Autonomie: ' + this.obsAutonomy + '/5\n';
+        if (this.observationNotes) notes += '---\n' + this.observationNotes;
+        return notes.trim();
+    }
+
     get validationProblems() {
         if (!this.validationDetails || !this.validationDetails.problemResults) return [];
         return this.validationDetails.problemResults.map((p, i) => ({
@@ -1011,7 +1059,8 @@ export default class RecruteurDashboard extends LightningElement {
             const result = await validateScore({
                 oppId: this.validationOppId,
                 managerScore: this.validationScore,
-                decision: this.validationDecision
+                decision: this.validationDecision,
+                managerNotes: this._buildManagerNotes()
             });
             this.showValidationModal = false;
             this.showDetailModal = false;

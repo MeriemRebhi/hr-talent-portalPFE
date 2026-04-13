@@ -295,7 +295,7 @@ public without sharing class TechnicalInterviewController {
     //  MANAGER VALIDATION — valide ou ajuste le score
     // ═══════════════════════════════════════
     @AuraEnabled
-    public static Map<String, Object> validateScore(Id oppId, Decimal managerScore, String decision) {
+    public static Map<String, Object> validateScore(Id oppId, Decimal managerScore, String decision, String managerNotes) {
         Opportunity opp = [
             SELECT Id, StageName
             FROM Opportunity WHERE Id = :oppId LIMIT 1
@@ -317,6 +317,17 @@ public without sharing class TechnicalInterviewController {
         }
 
         update opp;
+
+        // Save manager observations on Technical_Interview__c
+        if (String.isNotBlank(managerNotes)) {
+            List<Technical_Interview__c> tiList = [
+                SELECT Id FROM Technical_Interview__c WHERE Opportunity__c = :oppId LIMIT 1
+            ];
+            if (!tiList.isEmpty()) {
+                tiList[0].Manager_Notes__c = managerNotes;
+                update tiList[0];
+            }
+        }
 
         // Send notification email to candidate
         sendValidationEmail(oppId, passed, managerScore, opp.StageName);
@@ -341,7 +352,7 @@ public without sharing class TechnicalInterviewController {
 
         // Get Technical_Interview__c data
         List<Technical_Interview__c> tiList = [
-            SELECT Id, Score__c, Composite_Score__c, Status__c
+            SELECT Id, Score__c, Composite_Score__c, Status__c, Manager_Notes__c
             FROM Technical_Interview__c WHERE Opportunity__c = :oppId LIMIT 1
         ];
         Technical_Interview__c ti = tiList.isEmpty() ? new Technical_Interview__c() : tiList[0];
@@ -401,6 +412,7 @@ public without sharing class TechnicalInterviewController {
         result.put('matchingScore', opp.Score_Matching__c);
         result.put('status', ti.Status__c);
         result.put('managerScore', opp.Manager_Validated_Score__c);
+        result.put('managerNotes', ti.Manager_Notes__c);
         result.put('problemResults', problemResults);
         return result;
     }

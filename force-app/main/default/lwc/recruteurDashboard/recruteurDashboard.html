@@ -416,6 +416,54 @@
                         </div>
                     </template>
 
+                    <!-- Observations en direct -->
+                    <h4 class="vp-title">🎥 Observations entretien en direct</h4>
+                    <div class="obs-section">
+                        <div class="obs-criteria">
+                            <div class="obs-row">
+                                <span class="obs-label">💬 Communication</span>
+                                <div class="obs-stars">
+                                    <template for:each={starsCommunication} for:item="s">
+                                        <span key={s.key} class={s.cls} data-criteria="communication" data-value={s.value} onclick={handleStarClick}>★</span>
+                                    </template>
+                                </div>
+                                <span class="obs-hint">Clarté, échange, explique sa démarche</span>
+                            </div>
+                            <div class="obs-row">
+                                <span class="obs-label">🧠 Approche</span>
+                                <div class="obs-stars">
+                                    <template for:each={starsApproach} for:item="s">
+                                        <span key={s.key} class={s.cls} data-criteria="approach" data-value={s.value} onclick={handleStarClick}>★</span>
+                                    </template>
+                                </div>
+                                <span class="obs-hint">Méthodologie, réflexion structurée</span>
+                            </div>
+                            <div class="obs-row">
+                                <span class="obs-label">🚀 Autonomie</span>
+                                <div class="obs-stars">
+                                    <template for:each={starsAutonomy} for:item="s">
+                                        <span key={s.key} class={s.cls} data-criteria="autonomy" data-value={s.value} onclick={handleStarClick}>★</span>
+                                    </template>
+                                </div>
+                                <span class="obs-hint">Confiance, besoin d'aide minimal</span>
+                            </div>
+                        </div>
+                        <div class="obs-notes-wrap">
+                            <label class="obs-notes-label" for="obsNotes">📝 Notes du recruteur</label>
+                            <textarea id="obsNotes" class="obs-notes" rows="3"
+                                placeholder="Ex: Candidat très clair, a bien expliqué sa démarche. A hesité sur l'exercice 3 mais a trouvé la solution seul..."
+                                value={observationNotes} onchange={handleObsNotesChange}></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Existing notes (if re-editing) -->
+                    <template if:true={existingManagerNotes}>
+                        <div class="obs-existing">
+                            <h4 class="obs-existing-title">📄 Notes précédentes</h4>
+                            <p class="obs-existing-text">{existingManagerNotes}</p>
+                        </div>
+                    </template>
+
                     <!-- Decision -->
                     <h4 class="vd-title">Décision</h4>
                     <div class="vd-buttons">
