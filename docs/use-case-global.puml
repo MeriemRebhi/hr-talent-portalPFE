@@ -1,142 +1,171 @@
 @startuml
-title Diagramme de cas d'utilisation global - HR Talent Portal
+title Diagramme de cas d'utilisation global — HR Talent Portal
 
 left to right direction
 skinparam packageStyle rectangle
 skinparam actorStyle stickman
 skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 12
+skinparam linetype ortho
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+}
 
 ' ════════════════════════════════════════
-'         ACTEURS (côté gauche)
+'              ACTEURS
 ' ════════════════════════════════════════
 actor "Visiteur" as V
 actor "Candidat" as C
 actor "Recruteur" as R
 actor "Manager" as M
 actor "Responsable RH" as RRH
+actor "Système IA" as IA <<System>>
 
-' ════════════════════════════════════════
-'     HÉRITAGE ENTRE ACTEURS
-'   Candidat est une spécialisation
-'   de Visiteur (il hérite de Consulter
-'   les offres et Déposer candidature)
-' ════════════════════════════════════════
 V <|-- C
 
 ' ════════════════════════════════════════
 '         SYSTÈME PRINCIPAL
 ' ════════════════════════════════════════
-rectangle "HR Talent Portal (Salesforce)" {
+rectangle "HR Talent Portal — Salesforce Experience Cloud" {
 
-    ' ── Authentification ──
+    ' ── Transverse ──
     usecase "S'authentifier" as UC_AUTH
+    usecase "S'inscrire / Reset\nmot de passe" as UC_REGISTER
 
-    ' ── Cas d'utilisation Visiteur ──
-    usecase "Consulter les offres\nd'emploi" as UC_OFFRES
-    usecase "Déposer candidature\n(Upload CV)" as UC_DEPOSER
+    ' ── Visiteur ──
+    package "Espace public" {
+        usecase "Consulter les offres" as UC_OFFRES
+        usecase "Déposer candidature\n+ Upload CV" as UC_DEPOSER
+    }
 
-    ' ── Cas d'utilisation Candidat ──
-    usecase "Passer le Test Gaming" as UC_GAMING
-    usecase "Gérer son profil B2C" as UC_PROFIL
-    usecase "Suivre l'avancement\ndu dossier" as UC_SUIVI
-    usecase "Interagir avec le\nChatbot NLP" as UC_CHAT
+    ' ── Candidat ──
+    package "Espace candidat" {
+        usecase "Passer le Test Gaming" as UC_GAMING
+        usecase "Passer l'Entretien\nTechnique" as UC_TECH
+        usecase "Demander un report" as UC_REPORT
+        usecase "Suivre l'avancement\n(Dashboard)" as UC_SUIVI
+        usecase "Gérer son profil\n+ Upload CV" as UC_PROFIL
+        usecase "Chatbot NLP\n+ Agentforce" as UC_CHAT
+    }
 
-    ' ── Cas d'utilisation Recruteur ──
-    usecase "Publier les offres\nd'emploi" as UC_PUBLIER
-    usecase "Générer description\noffre par IA" as UC_GENDESC
-    usecase "Générer questions\nGaming IA" as UC_GENQUEST
-    usecase "Planifier les tests\ngaming" as UC_PLANIF
+    ' ── Recruteur ──
+    package "Espace recruteur" {
+        usecase "Publier / Gérer\nles offres" as UC_PUBLIER
+        usecase "Générer description\npar IA" as UC_GENDESC
+        usecase "Planifier Test\nGaming" as UC_PLAN_GAMING
+        usecase "Planifier Entretien\nTechnique" as UC_PLAN_TECH
+        usecase "Replanifier après\nreport" as UC_REPLAN
+        usecase "Générer questions\nGaming (IA)" as UC_GENQUEST
+        usecase "Générer exercices\nTechniques (IA)" as UC_GENEXO
+        usecase "Re-scorer CV (IA)" as UC_RESCORE
+        usecase "Changer le stage" as UC_STAGE
+    }
 
-    ' ── Cas d'utilisation Manager ──
-    usecase "Saisir feedback\névaluateur" as UC_FEEDBACK
-    usecase "Valider / Refuser\nun candidat" as UC_VALIDER
+    ' ── Manager ──
+    package "Espace manager" {
+        usecase "Consulter détail\nrésultats techniques" as UC_DETAIL
+        usecase "Valider / Ajuster\nle score" as UC_VALIDER
+        usecase "Décision : Accepter\nou Rejeter" as UC_DECISION
+    }
 
-    ' ── Cas d'utilisation Responsable RH ──
-    usecase "Consulter Dashboards\n& KPIs" as UC_KPI
-    usecase "Gérer Onboarding\n& Contrats" as UC_ONBOARD
+    ' ── Responsable RH ──
+    package "Espace RH" {
+        usecase "Dashboards & KPIs" as UC_KPI
+        usecase "Pipeline : Architecture\n→ RH Fit → Embauche" as UC_PIPELINE
+        usecase "Onboarding & Contrats" as UC_ONBOARD
+    }
 
-    ' ── Cas d'utilisation IA ──
-    usecase "Scorer le CV\n(Analyse NLP)" as UC_SCORER
-    usecase "Calculer Match Score" as UC_MATCH
+    ' ── IA ──
+    package "Automatisations IA" {
+        usecase "Scorer le CV\n(Groq LLaMA)" as UC_SCORER
+        usecase "Score Composite\n50% Tech+25% Gaming\n+25% CV" as UC_COMPOSITE
+        usecase "Évaluer réponses\ntechniques" as UC_EVALREPONSE
+        usecase "Convertir Lead\nautomatiquement" as UC_CONVERT
+        usecase "Notifications email\npar étape" as UC_EMAIL
+        usecase "Créer utilisateur\nportail" as UC_CREATEUSER
+    }
 }
 
 ' ════════════════════════════════════════
-'  SYSTÈME IA (côté droit — composant,
-'  pas un acteur humain)
-' ════════════════════════════════════════
-component "Système IA" as IA <<System>>
-
-' ════════════════════════════════════════
-'         ASSOCIATIONS VISITEUR
-'  (héritées par Candidat)
+'      ASSOCIATIONS — VISITEUR
 ' ════════════════════════════════════════
 V -- UC_OFFRES
 V -- UC_DEPOSER
+V -- UC_REGISTER
 
 ' ════════════════════════════════════════
-'       ASSOCIATIONS CANDIDAT
-'  (UC_OFFRES et UC_DEPOSER sont hérités)
+'      ASSOCIATIONS — CANDIDAT
 ' ════════════════════════════════════════
 C -- UC_GAMING
-C -- UC_PROFIL
+C -- UC_TECH
+C -- UC_REPORT
 C -- UC_SUIVI
+C -- UC_PROFIL
 C -- UC_CHAT
 
 ' ════════════════════════════════════════
-'       ASSOCIATIONS RECRUTEUR
+'      ASSOCIATIONS — RECRUTEUR
 ' ════════════════════════════════════════
 R -- UC_PUBLIER
-R -- UC_GENDESC
+R -- UC_PLAN_GAMING
+R -- UC_PLAN_TECH
 R -- UC_GENQUEST
-R -- UC_PLANIF
+R -- UC_GENEXO
+R -- UC_RESCORE
+R -- UC_STAGE
 
 ' ════════════════════════════════════════
-'       ASSOCIATIONS MANAGER
+'      ASSOCIATIONS — MANAGER
 ' ════════════════════════════════════════
-M -- UC_FEEDBACK
+M -- UC_DETAIL
 M -- UC_VALIDER
 
 ' ════════════════════════════════════════
-'     ASSOCIATIONS RESPONSABLE RH
+'      ASSOCIATIONS — RESPONSABLE RH
 ' ════════════════════════════════════════
 RRH -- UC_KPI
+RRH -- UC_PIPELINE
 RRH -- UC_ONBOARD
 
 ' ════════════════════════════════════════
-'     ASSOCIATIONS SYSTÈME IA
+'      ASSOCIATIONS — SYSTÈME IA
 ' ════════════════════════════════════════
 IA -- UC_SCORER
-IA -- UC_MATCH
-IA -- UC_GENQUEST
+IA -- UC_COMPOSITE
+IA -- UC_EVALREPONSE
+IA -- UC_CONVERT
+IA -- UC_EMAIL
+IA -- UC_CREATEUSER
 
 ' ════════════════════════════════════════
-'     DÉPENDANCES <<include>>
+'     <<include>> — Chaîne fonctionnelle
+'     (Auth omis pour lisibilité :
+'      tous les espaces authentifiés
+'      incluent UC_AUTH)
 ' ════════════════════════════════════════
-UC_GAMING ..> UC_AUTH : <<include>>
-UC_PROFIL ..> UC_AUTH : <<include>>
-UC_SUIVI ..> UC_AUTH  : <<include>>
-UC_CHAT ..> UC_AUTH   : <<include>>
-
-UC_DEPOSER ..> UC_SCORER : <<include>>
-
-' Recruteur → Authentification
-UC_PUBLIER ..> UC_AUTH  : <<include>>
-UC_GENDESC ..> UC_AUTH  : <<include>>
-UC_GENQUEST ..> UC_AUTH : <<include>>
-UC_PLANIF ..> UC_AUTH  : <<include>>
-
-' Manager → Authentification
-UC_FEEDBACK ..> UC_AUTH : <<include>>
-UC_VALIDER ..> UC_AUTH : <<include>>
-
-' Responsable RH → Authentification
-UC_KPI ..> UC_AUTH     : <<include>>
-UC_ONBOARD ..> UC_AUTH : <<include>>
+UC_DEPOSER ..> UC_SCORER       : <<include>>
+UC_TECH ..> UC_EVALREPONSE     : <<include>>
+UC_TECH ..> UC_COMPOSITE       : <<include>>
 
 ' ════════════════════════════════════════
-'     DÉPENDANCE <<extend>>
+'     <<extend>>
 ' ════════════════════════════════════════
-UC_VALIDER <.. UC_MATCH : <<extend>>
+UC_DEPOSER <.. UC_CONVERT      : <<extend>>
+UC_CONVERT <.. UC_CREATEUSER   : <<extend>>
+UC_VALIDER <.. UC_DECISION     : <<extend>>
+UC_PLAN_TECH <.. UC_REPLAN     : <<extend>>
+UC_STAGE <.. UC_EMAIL          : <<extend>>
+UC_PUBLIER <.. UC_GENDESC      : <<extend>>
+
+' ════════════════════════════════════════
+'     NOTE
+' ════════════════════════════════════════
+note bottom of UC_AUTH
+  Tous les espaces (Candidat,
+  Recruteur, Manager, RH)
+  incluent « S'authentifier »
+end note
 
 @enduml
