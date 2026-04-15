@@ -1,5 +1,5 @@
 @startuml
-title Diagramme de cas d'utilisation global — HR Talent Portal
+title Diagramme de cas d'utilisation — HR Talent Portal
 
 left to right direction
 skinparam packageStyle rectangle
@@ -8,14 +8,7 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 12
 skinparam linetype ortho
-skinparam usecase {
-    BackgroundColor White
-    BorderColor Black
-}
 
-' ════════════════════════════════════════
-'              ACTEURS
-' ════════════════════════════════════════
 actor "Visiteur" as V
 actor "Candidat" as C
 actor "Recruteur" as R
@@ -25,146 +18,105 @@ actor "Système IA" as IA <<System>>
 
 V <|-- C
 
-' ════════════════════════════════════════
-'         SYSTÈME PRINCIPAL
-' ════════════════════════════════════════
 rectangle "HR Talent Portal — Salesforce Experience Cloud" {
 
-    ' ── Transverse ──
     usecase "S'authentifier" as UC_AUTH
-    usecase "S'inscrire / Reset\nmot de passe" as UC_REGISTER
+    usecase "S'inscrire" as UC_REGISTER
 
-    ' ── Visiteur ──
     package "Espace public" {
         usecase "Consulter les offres" as UC_OFFRES
-        usecase "Déposer candidature\n+ Upload CV" as UC_DEPOSER
+        usecase "Déposer candidature" as UC_DEPOSER
     }
 
-    ' ── Candidat ──
     package "Espace candidat" {
-        usecase "Passer le Test Gaming" as UC_GAMING
-        usecase "Passer l'Entretien\nTechnique" as UC_TECH
+        usecase "Test Gaming" as UC_GAMING
+        usecase "Entretien Technique" as UC_TECH
+        usecase "Entretien Architecture\n(Jitsi)" as UC_ARCH
         usecase "Demander un report" as UC_REPORT
-        usecase "Suivre l'avancement\n(Dashboard)" as UC_SUIVI
-        usecase "Gérer son profil\n+ Upload CV" as UC_PROFIL
-        usecase "Chatbot NLP\n+ Agentforce" as UC_CHAT
+        usecase "Suivre l'avancement" as UC_SUIVI
+        usecase "Gérer profil / CV" as UC_PROFIL
+        usecase "Chatbot NLP" as UC_CHAT
     }
 
-    ' ── Recruteur ──
     package "Espace recruteur" {
-        usecase "Publier / Gérer\nles offres" as UC_PUBLIER
-        usecase "Générer description\npar IA" as UC_GENDESC
-        usecase "Planifier Test\nGaming" as UC_PLAN_GAMING
-        usecase "Planifier Entretien\nTechnique" as UC_PLAN_TECH
-        usecase "Replanifier après\nreport" as UC_REPLAN
-        usecase "Générer questions\nGaming (IA)" as UC_GENQUEST
-        usecase "Générer exercices\nTechniques (IA)" as UC_GENEXO
-        usecase "Re-scorer CV (IA)" as UC_RESCORE
+        usecase "Gérer les offres" as UC_PUBLIER
+        usecase "Planifier Gaming" as UC_PLAN_GAMING
+        usecase "Planifier Technique" as UC_PLAN_TECH
+        usecase "Planifier Architecture" as UC_PLAN_ARCH
+        usecase "Replanifier" as UC_REPLAN
         usecase "Changer le stage" as UC_STAGE
     }
 
-    ' ── Manager ──
     package "Espace manager" {
-        usecase "Consulter détail\nrésultats techniques" as UC_DETAIL
-        usecase "Valider / Ajuster\nle score" as UC_VALIDER
-        usecase "Décision : Accepter\nou Rejeter" as UC_DECISION
+        usecase "Consulter résultats" as UC_DETAIL
+        usecase "Valider / Ajuster score" as UC_VALIDER
+        usecase "Décision finale" as UC_DECISION
     }
 
-    ' ── Responsable RH ──
     package "Espace RH" {
         usecase "Dashboards & KPIs" as UC_KPI
-        usecase "Pipeline : Architecture\n→ RH Fit → Embauche" as UC_PIPELINE
-        usecase "Onboarding & Contrats" as UC_ONBOARD
+        usecase "Pipeline recrutement" as UC_PIPELINE
+        usecase "Onboarding" as UC_ONBOARD
     }
 
-    ' ── IA ──
     package "Automatisations IA" {
-        usecase "Scorer le CV\n(Groq LLaMA)" as UC_SCORER
-        usecase "Score Composite\n50% Tech+25% Gaming\n+25% CV" as UC_COMPOSITE
+        usecase "Scorer CV (LLaMA)" as UC_SCORER
+        usecase "Score Composite" as UC_COMPOSITE
         usecase "Évaluer réponses\ntechniques" as UC_EVALREPONSE
-        usecase "Convertir Lead\nautomatiquement" as UC_CONVERT
-        usecase "Notifications email\npar étape" as UC_EMAIL
-        usecase "Créer utilisateur\nportail" as UC_CREATEUSER
+        usecase "Transcrire audio\n(Whisper)" as UC_WHISPER
+        usecase "Analyser architecture\n(LLaMA)" as UC_ARCH_EVAL
+        usecase "Convertir Lead" as UC_CONVERT
+        usecase "Notifications email" as UC_EMAIL
     }
 }
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — VISITEUR
-' ════════════════════════════════════════
 V -- UC_OFFRES
 V -- UC_DEPOSER
 V -- UC_REGISTER
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — CANDIDAT
-' ════════════════════════════════════════
 C -- UC_GAMING
 C -- UC_TECH
+C -- UC_ARCH
 C -- UC_REPORT
 C -- UC_SUIVI
 C -- UC_PROFIL
 C -- UC_CHAT
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — RECRUTEUR
-' ════════════════════════════════════════
 R -- UC_PUBLIER
 R -- UC_PLAN_GAMING
 R -- UC_PLAN_TECH
-R -- UC_GENQUEST
-R -- UC_GENEXO
-R -- UC_RESCORE
+R -- UC_PLAN_ARCH
 R -- UC_STAGE
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — MANAGER
-' ════════════════════════════════════════
 M -- UC_DETAIL
 M -- UC_VALIDER
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — RESPONSABLE RH
-' ════════════════════════════════════════
 RRH -- UC_KPI
 RRH -- UC_PIPELINE
 RRH -- UC_ONBOARD
 
-' ════════════════════════════════════════
-'      ASSOCIATIONS — SYSTÈME IA
-' ════════════════════════════════════════
-IA -- UC_SCORER
-IA -- UC_COMPOSITE
-IA -- UC_EVALREPONSE
-IA -- UC_CONVERT
-IA -- UC_EMAIL
-IA -- UC_CREATEUSER
+UC_SCORER -- IA
+UC_COMPOSITE -- IA
+UC_EVALREPONSE -- IA
+UC_WHISPER -- IA
+UC_ARCH_EVAL -- IA
+UC_CONVERT -- IA
+UC_EMAIL -- IA
 
-' ════════════════════════════════════════
-'     <<include>> — Chaîne fonctionnelle
-'     (Auth omis pour lisibilité :
-'      tous les espaces authentifiés
-'      incluent UC_AUTH)
-' ════════════════════════════════════════
-UC_DEPOSER ..> UC_SCORER       : <<include>>
-UC_TECH ..> UC_EVALREPONSE     : <<include>>
-UC_TECH ..> UC_COMPOSITE       : <<include>>
+UC_DEPOSER ..> UC_SCORER      : <<include>>
+UC_TECH ..> UC_EVALREPONSE    : <<include>>
+UC_TECH ..> UC_COMPOSITE      : <<include>>
+UC_ARCH ..> UC_WHISPER         : <<include>>
+UC_ARCH ..> UC_ARCH_EVAL       : <<include>>
 
-' ════════════════════════════════════════
-'     <<extend>>
-' ════════════════════════════════════════
-UC_DEPOSER <.. UC_CONVERT      : <<extend>>
-UC_CONVERT <.. UC_CREATEUSER   : <<extend>>
-UC_VALIDER <.. UC_DECISION     : <<extend>>
-UC_PLAN_TECH <.. UC_REPLAN     : <<extend>>
-UC_STAGE <.. UC_EMAIL          : <<extend>>
-UC_PUBLIER <.. UC_GENDESC      : <<extend>>
+UC_DEPOSER <.. UC_CONVERT     : <<extend>>
+UC_VALIDER <.. UC_DECISION    : <<extend>>
+UC_PLAN_TECH <.. UC_REPLAN    : <<extend>>
+UC_PLAN_ARCH <.. UC_REPLAN    : <<extend>>
+UC_STAGE <.. UC_EMAIL         : <<extend>>
 
-' ════════════════════════════════════════
-'     NOTE
-' ════════════════════════════════════════
 note bottom of UC_AUTH
-  Tous les espaces (Candidat,
-  Recruteur, Manager, RH)
+  Tous les espaces authentifiés
   incluent « S'authentifier »
 end note
 

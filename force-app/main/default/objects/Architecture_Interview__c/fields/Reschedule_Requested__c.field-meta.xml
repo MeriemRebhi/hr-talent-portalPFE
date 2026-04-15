@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/metadataAPI">
+    <fullName>Reschedule_Requested__c</fullName>
+    <label>Reschedule Requested</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

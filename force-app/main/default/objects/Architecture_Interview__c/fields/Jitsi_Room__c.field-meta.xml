@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/metadataAPI">
+    <fullName>Jitsi_Room__c</fullName>
+    <label>Jitsi Room</label>
+    <description>Auto-generated Jitsi room name (UUID-based)</description>
+    <type>Text</type>
+    <length>100</length>
+</CustomField>

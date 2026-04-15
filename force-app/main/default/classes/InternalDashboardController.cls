@@ -89,6 +89,18 @@ public with sharing class InternalDashboardController {
             tiByOpp.put(ti.Opportunity__c, ti);
         }
 
+        // Query Architecture_Interview__c records
+        Map<Id, Architecture_Interview__c> archByOpp = new Map<Id, Architecture_Interview__c>();
+        for (Architecture_Interview__c ai : [
+            SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
+                   Meet_Link__c, Jitsi_Room__c, Score__c, Status__c,
+                   Transcription__c, AI_Feedback__c, Reschedule_Requested__c
+            FROM Architecture_Interview__c
+            WHERE Opportunity__c IN :oppIds
+        ]) {
+            archByOpp.put(ai.Opportunity__c, ai);
+        }
+
         // Join Lead (score IA) via ConvertedOpportunityId
 
         Map<Id, Lead> oppLeadMap = new Map<Id, Lead>();
@@ -181,6 +193,15 @@ public with sharing class InternalDashboardController {
             row.put('techStatus',      ti != null ? ti.Status__c : null);
             row.put('techComposite',   ti != null ? ti.Composite_Score__c : null);
             row.put('techRescheduleRequested', ti != null ? ti.Reschedule_Requested__c : false);
+            // Architecture interview from Architecture_Interview__c
+            Architecture_Interview__c archI = archByOpp.get(o.Id);
+            row.put('archDateTime',    archI != null ? archI.Interview_DateTime__c : null);
+            row.put('archDuration',    archI != null ? archI.Duration__c : null);
+            row.put('archMeetLink',    archI != null ? archI.Meet_Link__c : null);
+            row.put('archJitsiRoom',   archI != null ? archI.Jitsi_Room__c : null);
+            row.put('archScore',       archI != null ? archI.Score__c : null);
+            row.put('archStatus',      archI != null ? archI.Status__c : null);
+            row.put('archRescheduleRequested', archI != null ? archI.Reschedule_Requested__c : false);
             // Job Posting title
             String jobTitle = '';
             Id jId = oppIdToJobId.get(o.Id);
@@ -1028,7 +1049,16 @@ public with sharing class InternalDashboardController {
             ];
 
             String exerciseLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique1?id=' + oppId;
-            String videoLink = String.isNotBlank(meetUrl) ? meetUrl.trim() : null;
+
+            // Auto-generate Jitsi link if no custom meet URL provided
+            String videoLink;
+            if (String.isNotBlank(meetUrl)) {
+                videoLink = meetUrl.trim();
+            } else {
+                String hex = EncodingUtil.convertToHex(Crypto.generateAesKey(128));
+                String jitsiRoom = 'talan-tech-' + hex.substring(0, 8) + '-' + hex.substring(8, 12) + '-' + hex.substring(12, 16);
+                videoLink = 'https://meet.jit.si/' + jitsiRoom;
+            }
 
             // Upsert Technical_Interview__c record
             List<Technical_Interview__c> tiList = [
@@ -1233,6 +1263,211 @@ public with sharing class InternalDashboardController {
             }
         } catch (Exception e) {
             throw new AuraHandledException('Erreur planification entretien technique : ' + e.getMessage());
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // ACTION — Planifier l'entretien Architecture
+    //          avec Jitsi room auto-générée (UUID)
+    // ══════════════════════════════════════════
+
+    @AuraEnabled
+    public static Map<String, Object> scheduleArchitectureInterview(
+        Id oppId,
+        String interviewDateTime,
+        String duration
+    ) {
+        try {
+            DateTime parsedDt = DateTime.valueOf(interviewDateTime.replace('T', ' ').length() == 16
+                ? interviewDateTime.replace('T', ' ') + ':00'
+                : interviewDateTime.replace('T', ' '));
+
+            Opportunity opp = [
+                SELECT Id, Name, StageName, AccountId
+                FROM Opportunity WHERE Id = :oppId LIMIT 1
+            ];
+
+            // Auto-generate Jitsi room with UUID
+            String hex = EncodingUtil.convertToHex(Crypto.generateAesKey(128));
+            String jitsiRoom = 'talan-arch-' + hex.substring(0, 8) + '-' + hex.substring(8, 12) + '-' + hex.substring(12, 16) + '-' + hex.substring(16, 20);
+            String jitsiUrl = 'https://meet.jit.si/' + jitsiRoom;
+
+            String portalLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/architectureinterview?id=' + oppId;
+
+            // Upsert Architecture_Interview__c record
+            List<Architecture_Interview__c> aiList = [
+                SELECT Id FROM Architecture_Interview__c WHERE Opportunity__c = :oppId LIMIT 1
+            ];
+            Architecture_Interview__c ai = aiList.isEmpty()
+                ? new Architecture_Interview__c(Opportunity__c = oppId)
+                : aiList[0];
+            ai.Interview_DateTime__c   = parsedDt;
+            ai.Duration__c             = duration;
+            ai.Jitsi_Room__c           = jitsiRoom;
+            ai.Meet_Link__c            = jitsiUrl;
+            ai.Status__c               = 'Scheduled';
+            ai.Reschedule_Requested__c = false;
+            upsert ai;
+
+            // Find candidate email (3-level fallback)
+            String candidatEmail;
+            String prenom = '';
+            String nom = '';
+
+            List<Lead> leads = [
+                SELECT Id, FirstName, LastName, Email, Description
+                FROM Lead WHERE ConvertedOpportunityId = :oppId LIMIT 1
+            ];
+            if (!leads.isEmpty() && String.isNotBlank(leads[0].Email)) {
+                candidatEmail = leads[0].Email;
+                prenom = leads[0].FirstName != null ? leads[0].FirstName : '';
+                nom    = leads[0].LastName  != null ? leads[0].LastName  : '';
+            }
+            if (String.isBlank(candidatEmail)) {
+                List<OpportunityContactRole> ocrs = [
+                    SELECT Contact.FirstName, Contact.LastName, Contact.Email
+                    FROM OpportunityContactRole
+                    WHERE OpportunityId = :oppId AND Contact.Email != null LIMIT 1
+                ];
+                if (!ocrs.isEmpty()) {
+                    candidatEmail = ocrs[0].Contact.Email;
+                    prenom = ocrs[0].Contact.FirstName != null ? ocrs[0].Contact.FirstName : '';
+                    nom    = ocrs[0].Contact.LastName  != null ? ocrs[0].Contact.LastName  : '';
+                }
+            }
+            if (String.isBlank(candidatEmail) && opp.AccountId != null) {
+                List<Contact> contacts = [
+                    SELECT FirstName, LastName, Email
+                    FROM Contact WHERE AccountId = :opp.AccountId AND Email != null LIMIT 1
+                ];
+                if (!contacts.isEmpty()) {
+                    candidatEmail = contacts[0].Email;
+                    prenom = contacts[0].FirstName != null ? contacts[0].FirstName : '';
+                    nom    = contacts[0].LastName  != null ? contacts[0].LastName  : '';
+                }
+            }
+
+            String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+            String dureeLabel = duration == '30'  ? '30 minutes'
+                              : duration == '45'  ? '45 minutes'
+                              : duration == '60'  ? '1 heure'
+                              : duration == '90'  ? '1h30'
+                              : duration + ' min';
+
+            if (String.isNotBlank(candidatEmail)) {
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                mail.setToAddresses(new List<String>{ candidatEmail });
+                mail.setSubject('🏗️ Invitation — Entretien Architecture HR Talent Portal · Talan Tunisie');
+                mail.setHtmlBody(
+                    '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
+                    + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
+                    + '<div style="background:linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%);padding:40px 40px 32px;">'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">🏗️ Entretien Architecture Planifié</h1>'
+                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '</div>'
+                    + '<div style="padding:36px 40px;">'
+                    + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
+                    + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
+                    + 'Nous vous confirmons la planification de votre <strong>entretien architecture</strong> '
+                    + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>. '
+                    + 'Un recruteur vous posera des questions sur la conception logicielle et l\'architecture technique en visioconférence.'
+                    + '</p>'
+                    + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
+                    + '<table style="width:100%;border-collapse:collapse;">'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Visioconférence Jitsi + Enregistrement IA</td></tr>'
+                    + '</table>'
+                    + '</div>'
+                    + '<div style="text-align:center;margin:0 0 20px;">'
+                    + '<a href="' + portalLink + '" '
+                    + 'style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#ffffff;'
+                    + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
+                    + '🏗️ Accéder à l\'entretien architecture'
+                    + '</a>'
+                    + '</div>'
+                    + '<div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:12px 16px;margin:0 0 20px;">'
+                    + '<p style="margin:0;font-size:13px;color:#92400e;">⚠️ <strong>Important :</strong> Cet entretien sera enregistré et analysé par l\'intelligence artificielle. '
+                    + 'Vous devrez donner votre consentement avant le début.</p>'
+                    + '</div>'
+                    + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
+                    + '<strong>Conseil :</strong> Préparez-vous à discuter de patterns de conception, '
+                    + 'd\'architecture microservices, de choix techniques et de scalabilité. Votre navigateur suffit.'
+                    + '</p>'
+                    + '</div>'
+                    + '<div style="background:#f5f3ff;border-top:1px solid #ddd6fe;padding:20px 40px;text-align:center;">'
+                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '</div>'
+                    + '</div></div>'
+                );
+
+                List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>{ mail };
+
+                // Notify manager
+                Id jobPostingId = null;
+                if (!leads.isEmpty() && leads[0].Description != null) {
+                    for (String line : leads[0].Description.split('\n')) {
+                        if (line.startsWith('JOB_ID:')) {
+                            try { jobPostingId = (Id) line.replace('JOB_ID:', '').trim(); }
+                            catch (Exception ex) {}
+                            break;
+                        }
+                    }
+                }
+                if (jobPostingId != null) {
+                    List<Opportunity> jobList = [
+                        SELECT OwnerId, Owner.Email, Owner.FirstName, Name
+                        FROM Opportunity WHERE Id = :jobPostingId LIMIT 1
+                    ];
+                    if (!jobList.isEmpty() && String.isNotBlank(jobList[0].Owner.Email)
+                        && jobList[0].Owner.Email != UserInfo.getUserEmail()) {
+                        Messaging.SingleEmailMessage mgrMail = new Messaging.SingleEmailMessage();
+                        mgrMail.setToAddresses(new List<String>{ jobList[0].Owner.Email });
+                        mgrMail.setSubject('🏗️ Entretien Architecture planifié — ' + prenom + ' ' + nom + ' · ' + jobList[0].Name);
+                        mgrMail.setHtmlBody(
+                            '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
+                            + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
+                            + '<div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);padding:40px 40px 32px;">'
+                            + '<h1 style="margin:0;color:#fff;font-size:22px;">🏗️ Entretien Architecture — Notification</h1>'
+                            + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                            + '</div>'
+                            + '<div style="padding:36px 40px;">'
+                            + '<p style="font-size:15px;color:#4a5568;line-height:1.7;">'
+                            + 'Un entretien architecture a été planifié pour <strong>' + prenom + ' ' + nom + '</strong> '
+                            + 'pour le poste <strong>' + jobList[0].Name + '</strong>.</p>'
+                            + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:16px 20px;margin:20px 0;">'
+                            + '<p style="margin:0 0 4px;font-size:13px;color:#4a5568;">📅 ' + dateLabel + '</p>'
+                            + '<p style="margin:0;font-size:13px;color:#4a5568;">⏱ ' + dureeLabel + '</p>'
+                            + '</div>'
+                            + '<div style="text-align:center;margin:20px 0;">'
+                            + '<a href="' + jitsiUrl + '" '
+                            + 'style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">'
+                            + '🎥 Rejoindre la visio Jitsi</a>'
+                            + '</div>'
+                            + '<p style="font-size:13px;color:#718096;">Les résultats IA seront disponibles dans votre dashboard après l\'entretien.</p>'
+                            + '</div>'
+                            + '<div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8;">HR Talent Portal · Talan Tunisie</div>'
+                            + '</div></div>'
+                        );
+                        emails.add(mgrMail);
+                    }
+                }
+
+                Messaging.sendEmail(emails);
+            }
+
+            // Return Jitsi info for display
+            Map<String, Object> result = new Map<String, Object>();
+            result.put('jitsiRoom', jitsiRoom);
+            result.put('jitsiUrl', jitsiUrl);
+            result.put('success', true);
+            return result;
+
+        } catch (Exception e) {
+            throw new AuraHandledException('Erreur planification entretien architecture : ' + e.getMessage());
         }
     }
 }

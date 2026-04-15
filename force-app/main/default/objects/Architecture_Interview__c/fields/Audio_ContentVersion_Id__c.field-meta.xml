@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/metadataAPI">
+    <fullName>Audio_ContentVersion_Id__c</fullName>
+    <label>Audio File Id</label>
+    <description>ContentVersion Id of the uploaded audio recording</description>
+    <type>Text</type>
+    <length>18</length>
+</CustomField>

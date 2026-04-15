@@ -115,11 +115,24 @@ export default class CandidateDashboard extends NavigationMixin(LightningElement
                     techExerciseLink: c.techMeetLink ? '' :
                         (c.techDate ? 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/entretientechnique1?id=' + c.id : ''),
                     techRescheduleRequested: c.techRescheduleRequested || false,
+                    // Architecture interview data
+                    hasArchInterview: !!(c.archDate || c.archScore || c.archMeetLink),
+                    archScore: c.archScore != null ? Math.round(c.archScore) : null,
+                    hasArchScore: c.archScore != null,
+                    archCompleted: c.archStatus === 'Completed',
+                    archDateFmt: c.archDate ? this._formatDateFr(c.archDate) : '',
+                    archDurationLabel: this._formatDuration(c.archDuration),
+                    archMeetLink: c.archMeetLink || '',
+                    archJitsiRoom: c.archJitsiRoom || '',
+                    archRescheduleRequested: c.archRescheduleRequested || false,
+                    archFeedback: c.archFeedback || '',
+                    archScoreClass: this.getScoreClass(c.archScore),
+                    archInterviewLink: c.archDate ? 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/architectureinterview?id=' + c.id : '',
                     // Step result classes
                     stepResultClass1: 'tl-step' + (c.score != null ? ' tl-done' : ''),
                     stepResultClass2: 'tl-step' + (c.gamingStatus === 'Completed' || this._isStageAfter(c.stage, 'Gaming') ? ' tl-done' : (c.stage === 'Gaming' ? ' tl-active' : '')),
                     stepResultClass3: 'tl-step' + (c.techStatus === 'Completed' ? ' tl-done' : (c.stage === 'Technique' ? ' tl-active' : '')),
-                    stepResultClass4: 'tl-step' + (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-done' : (c.stage === 'Architecture' ? ' tl-active' : '')),
+                    stepResultClass4: 'tl-step' + (c.archStatus === 'Completed' || this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-done' : (c.stage === 'Architecture' ? ' tl-active' : '')),
                     stepResultClass5: 'tl-step' + (c.stage === 'Closed' || c.stage === 'Hired' || c.stage === 'Rejected' ? ' tl-done' : (this._isStageAfterOrEqual(c.stage, 'RH Fit') ? ' tl-active' : ''))
                 };
             });

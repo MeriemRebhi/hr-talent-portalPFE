@@ -5,6 +5,7 @@ import scheduleGamingTest from '@salesforce/apex/InternalDashboardController.sch
 import scheduleBatchGamingTests from '@salesforce/apex/InternalDashboardController.scheduleBatchGamingTests';
 import cancelGamingTest from '@salesforce/apex/InternalDashboardController.cancelGamingTest';
 import scheduleTechnicalInterview from '@salesforce/apex/InternalDashboardController.scheduleTechnicalInterview';
+import scheduleArchitectureInterview from '@salesforce/apex/InternalDashboardController.scheduleArchitectureInterview';
 import getJobPostings from '@salesforce/apex/InternalDashboardController.getJobPostings';
 import createJobPosting from '@salesforce/apex/InternalDashboardController.createJobPosting';
 import toggleJobPosting from '@salesforce/apex/InternalDashboardController.toggleJobPosting';
@@ -83,6 +84,14 @@ export default class RecruteurDashboard extends LightningElement {
     @track techPlanDuration = '60';
     @track techPlanMeetUrl = '';
     @track isTechSending = false;
+
+    // Architecture interview planning modal
+    @track showArchPlanModal = false;
+    @track archPlanOppId = '';
+    @track archPlanCandidatName = '';
+    @track archPlanDateTime = '';
+    @track archPlanDuration = '45';
+    @track isArchSending = false;
 
     // Batch planning
     @track selectedMap = {};
@@ -264,7 +273,22 @@ export default class RecruteurDashboard extends LightningElement {
             techComposite:     o.techComposite != null ? Math.round(o.techComposite) : null,
             managerValidatedScore: o.managerValidatedScore != null ? Math.round(o.managerValidatedScore) : null,
             hasManagerScore:   o.managerValidatedScore != null,
-            techRescheduleRequested: !!o.techRescheduleRequested
+            techRescheduleRequested: !!o.techRescheduleRequested,
+            // Architecture interview
+            isArchitecture:    stage === 'Architecture',
+            archScheduled:     !!o.archDateTime,
+            archDateFmt:       (() => {
+                if (!o.archDateTime) return '';
+                const dt3 = new Date(o.archDateTime);
+                return dt3.toLocaleDateString('fr-FR') + ' \u00e0 ' + dt3.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            })(),
+            archMeetLink:      o.archMeetLink || '',
+            archJitsiRoom:     o.archJitsiRoom || '',
+            archScore:         o.archScore != null ? Math.round(o.archScore) : null,
+            hasArchScore:      o.archScore != null && o.archStatus === 'Completed',
+            archScoreLabel:    o.archScore != null ? Math.round(o.archScore) + '/100' : '\u2014',
+            archPending:       o.archStatus !== 'Completed' && !!o.archDateTime,
+            archRescheduleRequested: !!o.archRescheduleRequested
         };
     }
 
@@ -526,6 +550,62 @@ export default class RecruteurDashboard extends LightningElement {
         })
         .catch(err => {
             this.isTechSending = false;
+            this.showToast('❌ Erreur : ' + (err.body ? err.body.message : err.message), 'error');
+        });
+    }
+
+    // ── Architecture Interview Planning ──
+    openArchPlanModal(event) {
+        this.archPlanOppId        = event.currentTarget.dataset.id;
+        this.archPlanCandidatName = event.currentTarget.dataset.name;
+        this.archPlanDuration     = '45';
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        this.archPlanDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        this.showArchPlanModal = true;
+    }
+
+    closeArchPlanModal() {
+        this.showArchPlanModal = false;
+        this.isArchSending = false;
+    }
+
+    onArchDateTimeChange(event) { this.archPlanDateTime = event.target.value; }
+    onArchDurationChange(event) { this.archPlanDuration = event.target.value; }
+
+    confirmArchSchedule() {
+        if (!this.archPlanDateTime) {
+            this.showToast('⚠️ Veuillez choisir une date et heure.', 'error');
+            return;
+        }
+        this.isArchSending = true;
+        scheduleArchitectureInterview({
+            oppId:             this.archPlanOppId,
+            interviewDateTime: this.archPlanDateTime,
+            duration:          this.archPlanDuration
+        })
+        .then(result => {
+            this.showArchPlanModal = false;
+            this.isArchSending = false;
+            this.showToast('✅ Entretien architecture planifié ! Lien Jitsi auto-généré.', 'success');
+            this.allOpps = this.allOpps.map(o => {
+                if (o.Id === this.archPlanOppId) {
+                    return this.mapOpp({
+                        ...o,
+                        archDateTime:  this.archPlanDateTime,
+                        archDuration:  this.archPlanDuration,
+                        archMeetLink:  result.jitsiUrl,
+                        archJitsiRoom: result.jitsiRoom,
+                        archStatus:    'Scheduled',
+                        archRescheduleRequested: false
+                    });
+                }
+                return o;
+            });
+            this.applyFilter();
+        })
+        .catch(err => {
+            this.isArchSending = false;
             this.showToast('❌ Erreur : ' + (err.body ? err.body.message : err.message), 'error');
         });
     }

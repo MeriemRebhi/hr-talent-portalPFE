@@ -391,6 +391,19 @@ public without sharing class ApplicationController {
             ]) {
                 tiMap.put(ti.Opportunity__c, ti);
             }
+
+            // Architecture Interview data
+            Map<Id, Architecture_Interview__c> aiMap = new Map<Id, Architecture_Interview__c>();
+            for (Architecture_Interview__c ai : [
+                SELECT Opportunity__c, Score__c, Interview_DateTime__c, Meet_Link__c,
+                       Status__c, Duration__c, Jitsi_Room__c, Reschedule_Requested__c,
+                       AI_Feedback__c
+                FROM Architecture_Interview__c
+                WHERE Opportunity__c IN :oppIds
+            ]) {
+                aiMap.put(ai.Opportunity__c, ai);
+            }
+
             for (Map<String, Object> cand : candidatures) {
                 Id candId = (Id) cand.get('id');
                 if (tiMap.containsKey(candId)) {
@@ -410,6 +423,27 @@ public without sharing class ApplicationController {
                     cand.put('techDuration', null);
                     cand.put('techCompositeScore', null);
                     cand.put('techRescheduleRequested', false);
+                }
+                // Architecture Interview
+                if (aiMap.containsKey(candId)) {
+                    Architecture_Interview__c ai = aiMap.get(candId);
+                    cand.put('archScore', ai.Score__c);
+                    cand.put('archDate', ai.Interview_DateTime__c);
+                    cand.put('archMeetLink', ai.Meet_Link__c);
+                    cand.put('archStatus', ai.Status__c);
+                    cand.put('archDuration', ai.Duration__c);
+                    cand.put('archJitsiRoom', ai.Jitsi_Room__c);
+                    cand.put('archRescheduleRequested', ai.Reschedule_Requested__c);
+                    cand.put('archFeedback', ai.AI_Feedback__c);
+                } else {
+                    cand.put('archScore', null);
+                    cand.put('archDate', null);
+                    cand.put('archMeetLink', null);
+                    cand.put('archStatus', null);
+                    cand.put('archDuration', null);
+                    cand.put('archJitsiRoom', null);
+                    cand.put('archRescheduleRequested', false);
+                    cand.put('archFeedback', null);
                 }
             }
         }

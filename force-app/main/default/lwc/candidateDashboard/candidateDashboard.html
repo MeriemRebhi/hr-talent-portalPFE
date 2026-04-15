@@ -570,6 +570,76 @@
                                             </div>
                                         </template>
 
+                                        <!-- Architecture Interview Card -->
+                                        <template if:true={selectedCandidature.hasArchInterview}>
+                                            <div class="step-result-card tech-card arch-card anim-slide-up">
+                                                <div class="tech-card-header">
+                                                    <span>🏗️</span>
+                                                    <span class="tech-card-title">Entretien Architecture</span>
+                                                    <template if:true={selectedCandidature.archCompleted}>
+                                                        <span class="result-badge result-done">✓ Complété</span>
+                                                    </template>
+                                                    <template if:false={selectedCandidature.archCompleted}>
+                                                        <span class="result-badge result-pending">En attente</span>
+                                                    </template>
+                                                </div>
+                                                <div class="tech-card-body">
+                                                    <template if:true={selectedCandidature.archDateFmt}>
+                                                        <div class="tech-info-row">
+                                                            <span class="tech-info-icon">📅</span>
+                                                            <div>
+                                                                <span class="tech-info-label">Date</span>
+                                                                <span class="tech-info-value">{selectedCandidature.archDateFmt}</span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={selectedCandidature.archDurationLabel}>
+                                                        <div class="tech-info-row">
+                                                            <span class="tech-info-icon">⏱</span>
+                                                            <div>
+                                                                <span class="tech-info-label">Durée</span>
+                                                                <span class="tech-info-value">{selectedCandidature.archDurationLabel}</span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={selectedCandidature.archJitsiRoom}>
+                                                        <div class="tech-info-row">
+                                                            <span class="tech-info-icon">🎥</span>
+                                                            <div>
+                                                                <span class="tech-info-label">Visioconférence Jitsi</span>
+                                                                <span class="tech-info-value" style="font-family:monospace;font-size:12px">{selectedCandidature.archJitsiRoom}</span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={selectedCandidature.archCompleted}>
+                                                        <div class="tech-score-display">
+                                                            <div class="tech-score-ring">
+                                                                <span class="tech-score-val">{selectedCandidature.archScore}</span>
+                                                                <span class="tech-score-max">/100</span>
+                                                            </div>
+                                                            <span class="tech-score-label">Score Architecture IA</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <template if:true={selectedCandidature.archInterviewLink}>
+                                                    <template if:false={selectedCandidature.archCompleted}>
+                                                        <div class="tech-card-footer">
+                                                            <a href={selectedCandidature.archInterviewLink} target="_blank" class="tech-exercise-btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">
+                                                                🏗️ Passer l'entretien architecture
+                                                            </a>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                                <template if:false={selectedCandidature.archCompleted}>
+                                                    <template if:true={selectedCandidature.archRescheduleRequested}>
+                                                        <div class="tech-reschedule-pending">
+                                                            ⏳ Report demandé — en attente de réponse du recruteur
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </template>
+
                                         <!-- ═══ TRANSPARENCE : Résultats par étape ═══ -->
                                         <div class="results-timeline anim-slide-up">
                                             <h3 class="results-title">
@@ -641,8 +711,20 @@
                                                 <div class={selectedCandidature.stepResultClass4}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">4</div></div>
                                                     <div class="tl-content">
-                                                        <span class="tl-step-name">Entretien RH</span>
-                                                        <span class="tl-pending">—</span>
+                                                        <span class="tl-step-name">Entretien Architecture</span>
+                                                        <template if:true={selectedCandidature.archCompleted}>
+                                                            <div class="tl-result">
+                                                                <span class={selectedCandidature.archScoreClass}>{selectedCandidature.archScore}/100</span>
+                                                            </div>
+                                                        </template>
+                                                        <template if:false={selectedCandidature.archCompleted}>
+                                                            <template if:true={selectedCandidature.archDateFmt}>
+                                                                <span class="tl-scheduled">📅 {selectedCandidature.archDateFmt}</span>
+                                                            </template>
+                                                            <template if:false={selectedCandidature.archDateFmt}>
+                                                                <span class="tl-pending">—</span>
+                                                            </template>
+                                                        </template>
                                                     </div>
                                                 </div>
                                                 <!-- Étape 5: Closed -->
