@@ -1,0 +1,705 @@
+\chapter{Sprint 1 : Socle Applicatif et Identité Numérique}
+\label{chap:sprint1}
+\setlength{\fboxsep}{1pt}
+\setlength{\fboxrule}{0.4pt}
+
+\section{Introduction}
+
+Après avoir formalisé les spécifications fonctionnelles et l'architecture globale du \textbf{HR Talent Portal}, nous entamons le premier cycle de réalisation. Ce sprint inaugural constitue la fondation opérationnelle de l'ensemble du système : sans portail fonctionnel, sans mécanisme d'authentification sécurisé et sans catalogue d'offres exposé aux visiteurs, aucune des fonctionnalités avancées --- scoring IA, gaming, entretiens --- ne pourrait être exploitée.
+
+\medskip
+
+Le périmètre de ce sprint couvre deux axes complémentaires. Le premier axe, orienté \textbf{Front-office}, vise à déployer la vitrine numérique de recrutement sur \textbf{Experience Cloud} : page d'accueil, catalogue d'offres filtrable, formulaire de candidature avec téléversement de CV, et espace personnel du candidat. Le second axe, orienté \textbf{Back-office et sécurité}, établit l'infrastructure d'identité numérique : authentification par email avec résolution dynamique du username, réinitialisation de mot de passe par token cryptographique SHA-256, connexion alternative par QR~code, journal d'audit sécurité, et gestion des habilitations via \texttt{PermissionSets}.
+
+\medskip
+
+Nous détaillerons dans ce chapitre le backlog spécifique à ce sprint, l'analyse fonctionnelle (cas d'utilisation raffinés et diagrammes de séquence), la conception (diagramme de classes et diagrammes d'activité), puis les livrables techniques avec leurs interfaces.
+
+\section{Backlog du sprint 1}
+
+Le backlog du sprint~1 (Tableau~\ref{tab:Backlog_sprint1}) couvre les User Stories \no1 à \no10, réparties en quatre domaines fonctionnels : portail public, authentification et sécurité, espace candidat et administration. Chaque item est décliné en tâches techniques évaluées en jours-homme.
+\\
+\\
+\\
+\\
+
+\begin{longtable}{|c|p{5.5cm}|p{6cm}|c|}
+\caption{Backlog du sprint 1 : Socle applicatif et identité numérique} \label{tab:Backlog_sprint1} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{User Story} & \textbf{Tâches techniques} & \textbf{Est. (j)} \\
+\hline
+\endfirsthead
+
+\multicolumn{4}{c}{\textit{(Suite du backlog du sprint 1)}} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{User Story} & \textbf{Tâches techniques} & \textbf{Est. (j)} \\
+\hline
+\endhead
+
+\hline \multicolumn{4}{r}{\textit{Suite sur la page suivante...}} \\
+\endfoot
+
+\hline
+\endlastfoot
+
+%% ── Portail public ──
+\multicolumn{4}{|c|}{\cellcolor{blue!8}\textbf{Portail public --- Vitrine de recrutement}} \\
+\hline
+
+\multirow{4}{*}{\textbf{1}} & \multirow{4}{5.5cm}{En tant que visiteur, je souhaite consulter la liste des offres avec des filtres multicritères afin de trouver les postes correspondant à mon profil.} & 1.1 Configuration du site Experience Cloud (domaine, thème LWR, pages publiques). & 1 \\
+\cline{3-4}
+& & 1.2 Développement du composant LWC \texttt{jobList} (liste d'offres avec pagination). & 1.5 \\
+\cline{3-4}
+& & 1.3 Développement du composant LWC \texttt{jobFilter} (filtrage par mot-clé, localisation, type de contrat, département). & 1 \\
+\cline{3-4}
+& & 1.4 Développement du contrôleur Apex \texttt{JobPostingController} (requête SOQL sur Opportunity de Record Type \textit{Job\_Posting}). & 0.5 \\
+
+\hline
+
+\multirow{2}{*}{\textbf{2}} & \multirow{2}{5.5cm}{En tant que visiteur, je souhaite visualiser le détail complet d'une offre afin d'évaluer mon intérêt avant de postuler.} & 2.1 Développement du composant LWC \texttt{jobDetail} (modale avec description, salaire, département). & 1 \\
+\cline{3-4}
+& & 2.2 Bouton « Postuler » intégré ouvrant le formulaire de candidature. & 0.5 \\
+
+\hline
+
+\multirow{4}{*}{\textbf{3}} & \multirow{4}{5.5cm}{En tant que visiteur, je souhaite soumettre ma candidature et téléverser mon CV (jusqu'à 10~Mo) via un formulaire intuitif.} & 3.1 Développement du composant LWC \texttt{applicationForm} (formulaire multi-champs avec validation). & 1.5 \\
+\cline{3-4}
+& & 3.2 Développement du contrôleur Apex \texttt{ApplicationController} (création Lead + upload chunké). & 1.5 \\
+\cline{3-4}
+& & 3.3 Mécanisme d'upload par fragments (chunks de 750~Ko pour respecter la limite Aura de 4~Mo). & 1 \\
+\cline{3-4}
+& & 3.4 Rattachement du CV via \texttt{ContentDocumentLink} et déclenchement du scoring IA. & 0.5 \\
+
+\hline
+
+%% ── Authentification ──
+\multicolumn{4}{|c|}{\cellcolor{green!8}\textbf{Authentification et sécurité}} \\
+\hline
+
+\multirow{3}{*}{\textbf{4}} & \multirow{3}{5.5cm}{En tant que candidat, je souhaite me connecter via mon adresse email afin d'accéder à mon espace personnel.} & 4.1 Développement du composant LWC \texttt{loginPage} (modale email/mot de passe). & 1 \\
+\cline{3-4}
+& & 4.2 Développement de la méthode \texttt{loginWithCredentials()} dans \texttt{QrLoginController} (résolution email~$\rightarrow$~username + \texttt{Site.login()}). & 1 \\
+\cline{3-4}
+& & 4.3 Configuration du profil \textit{Customer Community Login User} et des Sharing Sets. & 0.5 \\
+
+\hline
+
+\multirow{3}{*}{\textbf{5}} & \multirow{3}{5.5cm}{En tant que candidat, je souhaite réinitialiser mon mot de passe via un lien sécurisé reçu par email.} & 5.1 Développement du composant LWC \texttt{forgetMotDePasse} (saisie email + envoi token). & 1 \\
+\cline{3-4}
+& & 5.2 Développement du contrôleur Apex \texttt{PasswordResetController} (génération token SHA-256, expiration 24h, usage unique, 3~tentatives max). & 1.5 \\
+\cline{3-4}
+& & 5.3 Développement du composant LWC \texttt{setPassword} (validation du token + saisie nouveau mot de passe). & 1 \\
+
+\hline
+
+\multirow{2}{*}{\textbf{6}} & \multirow{2}{5.5cm}{En tant que candidat, je souhaite me connecter via un QR~code afin de bénéficier d'un accès rapide depuis mon mobile.} & 6.1 Développement du composant LWC \texttt{qrCodeAuth} (génération + scan QR). & 1 \\
+\cline{3-4}
+& & 6.2 Développement des méthodes \texttt{generateQrToken()} et \texttt{validateQrToken()} dans \texttt{QrLoginController}. & 1 \\
+
+\hline
+
+%% ── Espace candidat ──
+\multicolumn{4}{|c|}{\cellcolor{orange!8}\textbf{Espace candidat B2C}} \\
+\hline
+
+\multirow{3}{*}{\textbf{7}} & \multirow{3}{5.5cm}{En tant que candidat, je souhaite visualiser le pipeline de ma candidature en cinq étapes avec mon avancement actuel.} & 7.1 Développement du composant LWC \texttt{candidateDashboard} (pipeline visuel, scores, liens d'évaluation). & 2 \\
+\cline{3-4}
+& & 7.2 Développement du contrôleur Apex \texttt{CandidateDashboardController} (\texttt{@wire} données candidat). & 1 \\
+\cline{3-4}
+& & 7.3 Composant \texttt{myApplications} (historique des candidatures). & 1 \\
+
+\hline
+
+\multirow{2}{*}{\textbf{8}} & \multirow{2}{5.5cm}{En tant que candidat, je souhaite consulter et modifier mes informations personnelles.} & 8.1 Onglet « Profil » dans \texttt{candidateDashboard} (mode lecture/édition). & 1 \\
+\cline{3-4}
+& & 8.2 Mise à jour des champs Contact via méthode Apex dédiée. & 0.5 \\
+
+\hline
+
+%% ── Administration & Audit ──
+\multicolumn{4}{|c|}{\cellcolor{purple!8}\textbf{Audit et administration}} \\
+\hline
+
+\multirow{3}{*}{\textbf{9}} & \multirow{3}{5.5cm}{En tant que responsable RH, je souhaite que chaque opération sensible soit journalisée dans un audit trail.} & 9.1 Création de l'objet \texttt{Security\_Audit\_Log\_\_c} (Action, Email, Severity, Timestamp, Details). & 0.5 \\
+\cline{3-4}
+& & 9.2 Instrumentation des contrôleurs d'authentification (login, reset, QR) pour journaliser chaque action. & 1 \\
+\cline{3-4}
+& & 9.3 Niveaux de sévérité : INFO, WARNING, CRITICAL. & 0.5 \\
+
+\hline
+
+\multirow{3}{*}{\textbf{10}} & \multirow{3}{5.5cm}{En tant que responsable RH, je souhaite gérer les habilitations utilisateurs via des PermissionSets dédiés.} & 10.1 Création du PermissionSet \texttt{Candidate\_Portal\_Access} (FLS candidat B2C). & 0.5 \\
+\cline{3-4}
+& & 10.2 Création du PermissionSet \texttt{Security\_Objects\_Full\_Access} (objets de sécurité). & 0.5 \\
+\cline{3-4}
+& & 10.3 Configuration de l'accès Guest User aux classes Apex exposées (\texttt{@AuraEnabled}). & 0.5 \\
+
+\hline
+\end{longtable}
+
+\section{Analyse fonctionnelle du sprint 1}
+
+Pour ce premier sprint, nous avons raffiné le diagramme de cas d'utilisation global en isolant les fonctionnalités couvertes par les User Stories \no1 à \no10. Nous présentons ensuite les descriptions textuelles des cas d'utilisation principaux, suivies de diagrammes de séquence système.
+
+\subsection{Diagramme de cas d'utilisation raffiné du sprint 1}
+
+Le diagramme de cas d'utilisation raffiné du sprint~1 (figure~\ref{fig:uc_sprint1}) met en scène quatre acteurs : le \textbf{Visiteur} (consultation des offres, dépôt de candidature), le \textbf{Candidat} (authentification, tableau de bord, gestion du profil), le \textbf{Responsable RH} (administration des habilitations) et le \textbf{Système} (journalisation automatique des actions sensibles). Les relations \guillemotleft include\guillemotright{} traduisent les dépendances obligatoires --- notamment l'authentification comme prérequis d'accès à l'espace personnel.
+
+\begin{figure}[hbt!]
+  \centering
+ 
+   \fbox{\includegraphics[width=14cm]{images/usecaseSprint1.png}}
+  \caption{Diagramme de cas d'utilisation raffiné du sprint 1}
+  \label{fig:uc_sprint1}
+\end{figure}
+\FloatBarrier
+
+\subsection{Cas d'utilisation « Consulter les offres d'emploi »}
+
+\subsubsection{Description textuelle du cas d'utilisation « Consulter les offres d'emploi »}
+(Voir Tableau~\ref{tab:cu_consulter_offres})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : Consulter les offres d'emploi \\
+    \hline
+    \textbf{Acteur} : Visiteur \\
+    \hline
+    \textbf{Précondition} : Le visiteur accède au portail public Experience Cloud via son navigateur. \\
+    \hline
+    \textbf{Postcondition} : La liste des offres correspondant aux critères est affichée. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le visiteur accède à la page d'accueil du portail HR Talent Portal. \\
+    2. Le système affiche la liste des offres d'emploi ouvertes via le composant \texttt{jobList}, triées par date de création décroissante. \\
+    3. Le visiteur applique un ou plusieurs filtres (mot-clé, localisation, type de contrat, département) via le composant \texttt{jobFilter}. \\
+    4. Le système filtre les résultats en temps réel côté client (filtrage insensible à la casse). \\
+    5. Le visiteur sélectionne une offre pour en consulter le détail. \\
+    6. Le système affiche la modale \texttt{jobDetail} avec le titre, la description complète, le salaire proposé, le département et la localisation. \\
+    \hline
+    \textbf{Scénario alternatif} : \\
+    3.a Aucune offre ne correspond aux critères de filtrage. \\
+    \hspace{0.5cm} 3.a.1 Le système affiche un message indiquant qu'aucun résultat n'a été trouvé. \\
+    \hline
+\caption{Description textuelle du CU « Consulter les offres d'emploi »}
+\label{tab:cu_consulter_offres}
+\end{xltabular}
+
+\subsection{Cas d'utilisation « Soumettre une candidature »}
+
+\subsubsection{Description textuelle du cas d'utilisation « Soumettre une candidature »}
+(Voir Tableau~\ref{tab:cu_soumettre_candidature})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : Soumettre une candidature \\
+    \hline
+    \textbf{Acteur} : Visiteur \\
+    \hline
+    \textbf{Précondition} : Le visiteur a consulté le détail d'une offre d'emploi et cliqué sur « Postuler ». \\
+    \hline
+    \textbf{Postcondition} : Un objet \texttt{Lead} est créé avec le CV rattaché via \texttt{ContentDocumentLink}. Le scoring IA est déclenché automatiquement. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le système affiche le formulaire de candidature (\texttt{applicationForm}) pré-rempli avec l'identifiant de l'offre. \\
+    2. Le visiteur renseigne ses informations personnelles : nom, prénom, email, téléphone, adresse, code postal et un message de motivation. \\
+    3. Le visiteur joint son CV (formats acceptés : PDF, DOC, DOCX, TXT ; taille maximale : 10~Mo). \\
+    4. Le visiteur accepte les conditions générales et soumet le formulaire. \\
+    5. Le système crée un objet \texttt{Lead} via \texttt{ApplicationController.createCandidateForJob()} en mode \texttt{without sharing} (exécution en contexte Guest User). \\
+    6. Si le fichier dépasse 1~Mo, le système procède à un upload par fragments (chunks de 750~Ko) via les méthodes \texttt{initUpload()}, \texttt{uploadChunk()} et \texttt{finalizeUpload()}. Sinon, un upload direct via \texttt{uploadCv()} est effectué. \\
+    7. Le système rattache le document au Lead via \texttt{ContentDocumentLink}. \\
+    8. Le système déclenche le scoring IA via \texttt{triggerScoring()} (traitement asynchrone \texttt{CVScoringService}). \\
+    9. Le système affiche un message de confirmation (toast de succès). \\
+    \hline
+    \textbf{Scénario alternatif} : \\
+    4.a Le visiteur n'a pas rempli tous les champs obligatoires ou l'email est invalide. \\
+    \hspace{0.5cm} 4.a.1 Le système affiche les messages d'erreur sous les champs concernés. \\
+    3.a Le fichier dépasse 10~Mo ou son format n'est pas accepté. \\
+    \hspace{0.5cm} 3.a.1 Le système affiche un message d'erreur spécifiant les formats et la taille autorisés. \\
+    \hline
+\caption{Description textuelle du CU « Soumettre une candidature »}
+\label{tab:cu_soumettre_candidature}
+\end{xltabular}
+
+\subsection{Cas d'utilisation « S'authentifier »}
+
+\subsubsection{Description textuelle du cas d'utilisation « S'authentifier par email »}
+(Voir Tableau~\ref{tab:cu_authentifier})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : S'authentifier par email \\
+    \hline
+    \textbf{Acteur} : Candidat \\
+    \hline
+    \textbf{Précondition} : Le candidat dispose d'un compte portail Experience Cloud (créé automatiquement lors de la conversion du Lead). \\
+    \hline
+    \textbf{Postcondition} : Le candidat est authentifié et redirigé vers son tableau de bord. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le candidat clique sur « Se connecter » dans le header du portail. \\
+    2. Le système affiche la modale de connexion (\texttt{loginPage}). \\
+    3. Le candidat saisit son adresse email et son mot de passe. \\
+    4. Le système résout dynamiquement l'email vers le \texttt{Username} Salesforce correspondant en filtrant les profils portail (CspLitePortal, CustomerPortal, PowerCustomerSuccess, PowerPartner). \\
+    5. Le système invoque \texttt{Site.login(sfUsername, password, startUrl)} pour déclencher l'authentification native Salesforce. \\
+    6. Le candidat est redirigé vers \texttt{/s/dashboard}. \\
+    7. Le système journalise l'action de connexion dans \texttt{Security\_Audit\_Log\_\_c} (sévérité : INFO). \\
+    \hline
+    \textbf{Scénario alternatif} : \\
+    5.a L'email ou le mot de passe est incorrect. \\
+    \hspace{0.5cm} 5.a.1 Le système affiche un message générique : « Email ou mot de passe incorrect » (anti-énumération). \\
+    \hspace{0.5cm} 5.a.2 Le système journalise la tentative échouée (sévérité : WARNING). \\
+    \hline
+\caption{Description textuelle du CU « S'authentifier par email »}
+\label{tab:cu_authentifier}
+\end{xltabular}
+
+\subsubsection{Description textuelle du cas d'utilisation « S'authentifier par QR~code »}
+(Voir Tableau~\ref{tab:cu_qr_auth})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : S'authentifier par QR code \\
+    \hline
+    \textbf{Acteur} : Candidat \\
+    \hline
+    \textbf{Précondition} : Le candidat dispose d'un compte portail actif et accède au portail depuis un terminal mobile ou un second écran. \\
+    \hline
+    \textbf{Postcondition} : Le candidat est authentifié sans saisie manuelle d'identifiants. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le candidat sélectionne l'option « Connexion par QR Code » sur la page de login. \\
+    2. Le système génère un jeton cryptographique via \texttt{QrLoginController.generateQrToken()}, crée un enregistrement \texttt{QrLogin\_\_c} avec le hash SHA-256 du jeton et une expiration de 5~minutes. \\
+    3. Le composant \texttt{qrCodeAuth} affiche le QR~code encodant le jeton. \\
+    4. Le candidat scanne le QR~code avec son terminal mobile. \\
+    5. L'application mobile invoque \texttt{validateQrToken()} qui positionne \texttt{Is\_Validated\_\_c = true}. \\
+    6. Le navigateur, qui interroge périodiquement \texttt{checkQrTokenValidated()}, détecte la validation et complète la session. \\
+    \hline
+    \textbf{Scénario alternatif} : \\
+    6.a Le jeton expire avant le scan (délai de 5~minutes dépassé). \\
+    \hspace{0.5cm} 6.a.1 Le système affiche un message invitant le candidat à générer un nouveau QR~code. \\
+    \hline
+\caption{Description textuelle du CU « S'authentifier par QR code »}
+\label{tab:cu_qr_auth}
+\end{xltabular}
+
+\subsection{Cas d'utilisation « Réinitialiser le mot de passe »}
+
+\subsubsection{Description textuelle du cas d'utilisation « Réinitialiser le mot de passe »}
+(Voir Tableau~\ref{tab:cu_reset_password})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : Réinitialiser le mot de passe \\
+    \hline
+    \textbf{Acteur} : Candidat \\
+    \hline
+    \textbf{Précondition} : Le candidat possède un compte portail mais a oublié son mot de passe. \\
+    \hline
+    \textbf{Postcondition} : Le mot de passe est mis à jour et le candidat peut s'authentifier. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le candidat clique sur « Mot de passe oublié ? » depuis la modale de connexion. \\
+    2. Le système affiche le composant \texttt{forgetMotDePasse} demandant l'adresse email. \\
+    3. Le candidat saisit son email et soumet la demande. \\
+    4. Le système génère un token aléatoire de 256~bits via \texttt{Crypto.getRandomInteger()} (CSPRNG natif Salesforce), calcule son hash SHA-256 et persiste l'enregistrement \texttt{Password\_Reset\_Token\_\_c} avec : hash du token, email, expiration à 24~heures, compteur de tentatives à 0, indicateur \texttt{Is\_Used\_\_c = false}. \\
+    5. Le système envoie un email contenant un lien sécurisé avec le token en clair (usage unique). \\
+    6. Le système journalise la génération du token (sévérité : INFO). \\
+    7. Le candidat clique sur le lien reçu par email. \\
+    8. Le système affiche le composant \texttt{setPassword} et valide le token via \texttt{PasswordResetController.validateToken()} : vérification du hash, de l'expiration, de l'indicateur d'usage et du compteur de tentatives ($\leq 3$). \\
+    9. Le candidat saisit son nouveau mot de passe (contraintes : 8+ caractères, majuscule, minuscule, chiffre, caractère spécial). \\
+    10. Le système valide la robustesse via \texttt{validatePasswordStrength()}, applique le changement via \texttt{System.setPassword()} et marque le token comme utilisé. \\
+    11. Le système journalise le succès de la réinitialisation (sévérité : INFO). \\
+    \hline
+    \textbf{Scénario alternatif} : \\
+    8.a Le token est invalide, expiré ou déjà utilisé. \\
+    \hspace{0.5cm} 8.a.1 Le système affiche un message générique : « Lien invalide ou expiré » (anti-énumération). \\
+    \hspace{0.5cm} 8.a.2 Le système journalise la tentative (sévérité : WARNING). \\
+    8.b Le nombre de tentatives dépasse 3. \\
+    \hspace{0.5cm} 8.b.1 Le système invalide le token et journalise l'événement (sévérité : CRITICAL). \\
+    9.a Le mot de passe ne respecte pas les critères de robustesse. \\
+    \hspace{0.5cm} 9.a.1 Le système affiche les critères non satisfaits. \\
+    \hline
+\caption{Description textuelle du CU « Réinitialiser le mot de passe »}
+\label{tab:cu_reset_password}
+\end{xltabular}
+
+\subsection{Cas d'utilisation « Gérer les habilitations »}
+
+\subsubsection{Description textuelle du cas d'utilisation « Gérer les habilitations »}
+(Voir Tableau~\ref{tab:cu_gerer_habilitations})
+
+\begin{xltabular}{\linewidth}{|X|}
+    \hline
+    \textbf{Cas d'utilisation} : Gérer les habilitations \\
+    \hline
+    \textbf{Acteur} : Responsable RH \\
+    \hline
+    \textbf{Précondition} : Le responsable RH est authentifié dans l'interface Salesforce interne avec le profil administrateur. \\
+    \hline
+    \textbf{Postcondition} : Les PermissionSets sont attribués aux utilisateurs concernés ; l'accès Guest User est configuré. \\
+    \hline
+    \textbf{Scénario nominal} : \\
+    1. Le responsable RH accède à la page de gestion des PermissionSets dans Setup. \\
+    2. Le système affiche les PermissionSets existants : \texttt{Candidate\_Portal\_Access} et \texttt{Security\_Objects\_Full\_Access}. \\
+    3. Le responsable RH attribue \texttt{Candidate\_Portal\_Access} aux utilisateurs B2C (profil \textit{Customer Community Login User}). \\
+    4. Le responsable RH configure l'accès du profil Guest User du site Experience Cloud aux classes Apex exposées via \texttt{@AuraEnabled} (\texttt{JobPostingController}, \texttt{ApplicationController}, \texttt{QrLoginController}). \\
+    5. Le système enregistre les modifications. \\
+    \hline
+\caption{Description textuelle du CU « Gérer les habilitations »}
+\label{tab:cu_gerer_habilitations}
+\end{xltabular}
+
+\subsection{Diagrammes de séquence système du sprint 1}
+
+\subsubsection{Diagramme de séquence système du cas d'utilisation « Soumettre une candidature »}
+
+La figure~\ref{fig:seq_candidature} illustre le diagramme de séquence système du cas d'utilisation « Soumettre une candidature ». Le flux débute par la soumission du formulaire par le visiteur, transite par le composant LWC \texttt{applicationForm} qui invoque les méthodes \texttt{@AuraEnabled} du contrôleur \texttt{ApplicationController} en mode \texttt{without sharing}, puis aboutit à la création du Lead, au rattachement du CV par upload chunké et au déclenchement du scoring IA asynchrone.
+
+\begin{figure}[hbt!]
+  \centering
+ 
+   \fbox{\includegraphics[width=16cm]{images/diagSeqsoumettrecond.png}}
+  \caption{Diagramme de séquence système du CU « Soumettre une candidature »}
+  \label{fig:seq_candidature}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Diagramme de séquence système du cas d'utilisation « S'authentifier »}
+
+La figure~\ref{fig:seq_authentifier} présente le diagramme de séquence système du cas d'utilisation « S'authentifier par email ». Le composant \texttt{loginPage} transmet l'email et le mot de passe au contrôleur \texttt{QrLoginController}, qui résout dynamiquement l'email vers le username Salesforce (en filtrant les profils portail), puis invoque \texttt{Site.login()}. L'audit trail est alimenté à chaque étape (connexion réussie ou échouée).
+
+\begin{figure}[hbt!]
+  \centering
+ 
+   \fbox{\includegraphics[width=16cm]{images/diagSeqAuthentifier.png}}
+  \caption{Diagramme de séquence système du CU « S'authentifier par email »}
+  \label{fig:seq_authentifier}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Diagramme de séquence système du cas d'utilisation « Réinitialiser le mot de passe »}
+
+La figure~\ref{fig:seq_reset_password} illustre le flux complet de réinitialisation. Le processus implique deux interactions distinctes : la demande de réinitialisation (composant \texttt{forgetMotDePasse} $\rightarrow$ génération du token SHA-256 $\rightarrow$ envoi de l'email) et la validation (composant \texttt{setPassword} $\rightarrow$ vérification du hash, de l'expiration et du compteur $\rightarrow$ \texttt{System.setPassword()}).
+
+\begin{figure}[hbt!]
+  \centering
+
+   \fbox{\includegraphics[width=14cm]{images/diagSeqReset.png}}
+  \caption{Diagramme de séquence système du CU « Réinitialiser le mot de passe »}
+  \label{fig:seq_reset_password}
+\end{figure}
+\FloatBarrier
+
+\section{Conception du sprint 1}
+
+Cette section présente le diagramme de classes spécifique au sprint~1 ainsi que les diagrammes d'activité des processus clés.
+
+\subsection{Diagramme de classes du sprint 1}
+
+Le diagramme de classes du sprint~1 (figure~\ref{fig:diagclass_sprint1}) se concentre sur les entités mobilisées pour le socle applicatif et l'identité numérique. Il implique neuf objets issus du modèle de données global :
+
+\begin{itemize}
+    \item \textbf{Lead} : point d'entrée de toute candidature. Créé par \texttt{ApplicationController} lors de la soumission du formulaire, il porte les informations du visiteur (nom, prénom, email, téléphone, adresse, code postal) et les métadonnées de l'offre ciblée dans le champ \texttt{Description}.
+
+    \item \textbf{Opportunity} (Record Type \textit{Job\_Posting}) : représente les offres d'emploi publiées. Consultée en lecture seule par le composant \texttt{jobList} via \texttt{JobPostingController.getJobPostings()} avec un filtre sur \texttt{IsClosed = false} et le Record Type.
+
+    \item \textbf{RecordType} : spécialise l'objet \texttt{Opportunity} en \textit{Job\_Posting} (offre) et \textit{Application} (candidature). Seul le type \textit{Job\_Posting} est exploité dans ce sprint pour l'affichage public.
+
+    \item \textbf{ContentVersion} et \textbf{ContentDocumentLink} : gèrent le stockage et le rattachement des CV. Le mécanisme d'upload chunké crée d'abord un \texttt{ContentVersion} vide, le remplit par fragments successifs, puis établit le lien vers le Lead via \texttt{ContentDocumentLink}.
+
+    \item \textbf{Contact} et \textbf{Account} : créés lors de la conversion automatique du Lead (déclenchée au Sprint~2 par le scoring IA). Dans ce sprint, ils matérialisent les entités cibles de la conversion et supportent la création du compte portail.
+
+    \item \textbf{User} : représente le compte portail Experience Cloud du candidat. Relié au \texttt{Contact} via \texttt{ContactId}, il est exploité par les mécanismes d'authentification (\texttt{Site.login()}, résolution email~$\rightarrow$~username).
+
+    \item \textbf{Password\_Reset\_Token\_\_c} : gère les tokens de réinitialisation. Relié à \texttt{User} via un champ \texttt{Lookup}, chaque enregistrement porte le hash SHA-256, la date d'expiration, l'indicateur d'usage unique et le compteur de tentatives.
+
+    \item \textbf{Security\_Audit\_Log\_\_c} : journal d'audit enregistrant chaque opération sensible avec horodatage, email, sévérité et détails contextuels.
+
+    \item \textbf{QrLogin\_\_c} : gère les sessions d'authentification par QR~code. Chaque enregistrement porte un jeton haché, un indicateur de validation et une date d'expiration (5~minutes).
+\end{itemize}
+\begin{figure}[hbt!]
+  \centering
+  
+   \fbox{\includegraphics[width=17cm]{images/diagClassesprint1.png}}
+  \caption{Diagramme de classes du sprint 1}
+  \label{fig:diagclass_sprint1}
+\end{figure}
+\FloatBarrier
+
+\subsection{Diagrammes d'activité du sprint 1}
+
+\subsubsection{Diagramme d'activité « Soumettre une candidature avec upload chunké »}
+
+Le processus de soumission d'une candidature (figure~\ref{fig:act_candidature}) met en \oe{}uvre le mécanisme d'upload par fragments développé pour contourner la limite de 4~Mo imposée par le framework Aura. Le flux se décompose en trois phases :
+\begin{enumerate}
+    \item \textbf{Validation et création du Lead :} le composant \texttt{applicationForm} valide les champs côté client (email regex, champs obligatoires, accord des CGU), puis invoque \texttt{createCandidateForJob()} qui crée le Lead en mode \texttt{without sharing} avec \texttt{DMLOptions} permettant le \textit{bypass} des règles de doublons.
+    \item \textbf{Upload du CV :} si le fichier dépasse 1~Mo, le système découpe le contenu Base64 en fragments de 750~Ko. La méthode \texttt{initUpload()} crée un \texttt{ContentVersion} vide, puis \texttt{uploadChunk()} concatène chaque fragment au blob existant. Enfin, \texttt{finalizeUpload()} crée le \texttt{ContentDocumentLink} reliant le document au Lead. La barre de progression est mise à jour à chaque fragment.
+    \item \textbf{Déclenchement du scoring :} une fois l'upload terminé, \texttt{triggerScoring()} enfile le traitement asynchrone \texttt{CVScoringService} qui analysera le CV via l'API Groq (traitement détaillé au Sprint~2).
+\end{enumerate}
+
+\begin{figure}[hbt!]
+  \centering
+  
+  \fbox{\includegraphics[width=15cm]{images/activitéSoumettreCondi.png}}
+  \caption{Diagramme d'activité « Soumettre une candidature avec upload chunké »}
+  \label{fig:act_candidature}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Diagramme d'activité « Réinitialiser le mot de passe »}
+
+Le processus de réinitialisation (figure~\ref{fig:act_reset}) illustre les garde-fous de sécurité implémentés conformément aux recommandations OWASP~A07 (\textit{Identification and Authentication Failures}). Le flux comporte une double interaction candidat-système :
+\begin{enumerate}
+    \item \textbf{Demande :} le candidat fournit son email. Le système génère un aléa cryptographique de 256~bits via \texttt{Crypto.getRandomInteger()}, calcule le hash SHA-256 (le token en clair n'est jamais persisté) et envoie l'email contenant le lien sécurisé.
+    \item \textbf{Validation :} le candidat accède au lien. Le système vérifie quatre conditions : le hash correspond, le token n'est pas expiré ($< 24$h), il n'a pas été utilisé (\texttt{Is\_Used\_\_c = false}) et le nombre de tentatives n'excède pas 3. Si toutes les conditions sont satisfaites, le nouveau mot de passe est validé (robustesse) et appliqué via \texttt{System.setPassword()}.
+\end{enumerate}
+Chaque branche (succès ou échec) est journalisée dans \texttt{Security\_Audit\_Log\_\_c} avec le niveau de sévérité approprié.
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : Insérer le diagramme d'activité « Réinitialiser le mot de passe »
+   \fbox{\includegraphics[width=15cm]{images/activitéRest.png}}
+  \caption{Diagramme d'activité « Réinitialiser le mot de passe »}
+  \label{fig:act_reset}
+\end{figure}
+\FloatBarrier
+
+\section{Réalisation technique}
+
+Cette section présente les principaux livrables du sprint~1, en détaillant l'architecture des composants développés et leurs interfaces utilisateur.
+
+\subsection{Architecture technique des composants LWC}
+
+Le sprint~1 a produit \textbf{14~composants Lightning Web Components} organisés en trois couches fonctionnelles :
+
+\begin{itemize}
+    \item \textbf{Composants de structure :} \texttt{header} (barre de navigation avec bouton de connexion), \texttt{footer} (mentions légales et liens utiles), \texttt{startupHero} (bannière d'accueil avec appel à l'action), \texttt{searchBar} (barre de recherche globale).
+    
+    \item \textbf{Composants métier --- offres et candidature :} \texttt{jobList} (grille d'offres avec filtrage réactif), \texttt{jobFilter} (panneau de filtres multicritères émettant des événements personnalisés), \texttt{jobDetail} (modale de détail avec bouton « Postuler »), \texttt{applicationForm} (formulaire de candidature avec upload chunké et barre de progression).
+    
+    \item \textbf{Composants d'identité :} \texttt{loginPage} (modale d'authentification email/mot de passe avec événement global \texttt{open-login-modal}), \texttt{forgetMotDePasse} (demande de réinitialisation), \texttt{setPassword} (validation du token et saisie du nouveau mot de passe), \texttt{qrCodeAuth} (génération et validation du QR~code avec polling).
+    
+    \item \textbf{Composants d'espace personnel :} \texttt{candidateDashboard} (tableau de bord avec onglets Vue~d'ensemble / Candidatures / Profil, pipeline visuel en cinq étapes, badges de score), \texttt{myApplications} (historique des candidatures).
+\end{itemize}
+
+\medskip
+
+Côté serveur, cinq contrôleurs Apex assurent la logique métier :
+\begin{itemize}
+    \item \texttt{JobPostingController} : exposition des offres en lecture seule 
+    (\texttt{@AuraEnabled(cacheable=true)}, mode \texttt{without sharing}).
+    \item \texttt{ApplicationController} : création du Lead et gestion de l'upload chunké (\texttt{without sharing} pour le contexte Guest User).
+    \item \texttt{QrLoginController} : authentification par email (résolution dynamique) et par QR~code (\texttt{without sharing}).
+    \item \texttt{PasswordResetController} : gestion sécurisée des tokens de réinitialisation (\texttt{without sharing}, journalisation systématique).
+    \item \texttt{RegistrationController} : envoi de l'email de réinitialisation initiale via \texttt{System.resetPassword()} (\texttt{with sharing}).
+\end{itemize}
+
+\subsection{Interface « Page d'accueil du portail »}
+
+La page d'accueil du portail HR Talent Portal constitue le premier point de contact entre Talan et les talents externes. Construite sur le moteur \textbf{LWR (Lightning Web Runtime)} pour sa rapidité de chargement, elle se compose de trois zones :
+
+\begin{enumerate}
+    \item \textbf{Le header :} barre de navigation responsive intégrant le logo Talan, les liens de navigation et un bouton « Se connecter » qui déclenche l'événement global \texttt{open-login-modal}.
+    \item \textbf{La bannière hero :} composant \texttt{startupHero} présentant un message d'accroche avec un appel à l'action dirigeant vers la section des offres.
+    \item \textbf{Le catalogue d'offres :} composants \texttt{jobFilter} (panneau de filtres) et \texttt{jobList} (grille d'offres) fonctionnant en tandem. Le filtre émet un événement personnalisé \texttt{filter} contenant les critères (keyword, localisation, contrat, département) ; la liste réagit en filtrant les résultats en temps réel côté client, sans appel serveur supplémentaire.
+\end{enumerate}
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : Insérer capture de la page d'accueil
+   \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/Capture d'écran 2026-04-16 150916.png}}
+  \caption{Interface de la page d'accueil du portail HR Talent Portal}
+  \label{fig:accueil_portail}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Consulter les offres d'emploi »}
+
+Le composant \texttt{jobList} affiche les offres d'emploi sous forme de cartes (\textit{cards}) responsives. Chaque carte présente le titre du poste, le département, la localisation, le type de contrat et un extrait de la description. Un bouton « Voir plus » ouvre la modale \texttt{jobDetail} affichant la description complète (\texttt{Description\_Poste\_\_c}), le salaire proposé (\texttt{Salaire\_Propos\_\_c}) et un bouton « Postuler maintenant » qui ouvre directement le formulaire de candidature en lui transmettant l'identifiant de l'offre (\texttt{jobId}).
+
+\medskip
+
+Le composant \texttt{jobFilter} propose quatre filtres combinables :
+\begin{itemize}
+    \item \textbf{Recherche textuelle :} filtrage insensible à la casse sur le nom de l'offre et la description du poste.
+    \item \textbf{Localisation :} sélection parmi les localisations disponibles.
+    \item \textbf{Type de contrat :} CDI, CDD, Stage, Freelance, Alternance.
+    \item \textbf{Département :} départements Talan (IT, Consulting, Finance, etc.).
+\end{itemize}
+
+\begin{figure}[htp]
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/offres.png}}
+\caption{Interface de la liste des offres d'emploi}
+\label{fig:liste_offres}
+\end{minipage}
+\hspace{0.25cm}
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/detailleoffres.png}}
+\caption{Interface du détail d'une offre d'emploi}
+\label{fig:detail_offre}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Soumettre une candidature »}
+
+Le formulaire de candidature (\texttt{applicationForm}) est présenté sous forme de modale modale accessible depuis le détail d'une offre. Il comporte les champs suivants : prénom, nom, email (validation par expression régulière), téléphone, adresse, code postal et message de motivation. Un sélecteur de fichier permet de joindre le CV avec validation en temps réel du format (PDF, DOC, DOCX, TXT) et de la taille ($\leq$~10~Mo).
+
+\medskip
+
+Lors de l'upload d'un fichier volumineux, une barre de progression dynamique informe le candidat de l'avancement (pourcentage mis à jour à chaque fragment de 750~Ko). La soumission est conditionnée par l'acceptation des conditions générales via une case à cocher obligatoire. Un indicateur de chargement (\textit{spinner}) est affiché pendant le traitement.
+
+\begin{figure}[htp]
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/soumettreCondidature.png}}
+\caption{Interface du formulaire de candidature}
+\label{fig:form_candidature}
+\end{minipage}
+\hspace{0.25cm}
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/condidatureenvoyé.png}}
+\caption{Condidature Envoyée}
+\label{fig:upload_progress}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « S'authentifier »}
+
+Le composant \texttt{loginPage} se présente sous forme de modale avec deux champs de saisie (email et mot de passe) et trois actions : connexion classique, lien vers la réinitialisation du mot de passe (\texttt{/s/reset-mot-de-passe}) et option de connexion par QR~code. La modale peut être invoquée depuis n'importe quelle page du portail via l'événement global \texttt{open-login-modal}, ou s'affiche automatiquement lorsque le candidat accède directement à la route \texttt{/s/loginp}.
+
+\medskip
+
+Le composant \texttt{qrCodeAuth} affiche un QR~code généré dynamiquement à partir du jeton cryptographique. Un mécanisme de \textit{polling} côté client interroge périodiquement le serveur via \texttt{checkQrTokenValidated()} pour détecter la validation du jeton par le terminal mobile.
+
+\begin{figure}[htp]
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/authentification.png}}
+\caption{Interface de connexion (email / mot de passe)}
+\label{fig:login_page}
+\end{minipage}
+\hspace{0.25cm}
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/QRCode.png}}
+\caption{Interface de connexion par QR code}
+\label{fig:qr_login}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Réinitialiser le mot de passe »}
+
+Le processus de réinitialisation se déroule en deux écrans. Le premier (\texttt{forgetMotDePasse}) invite le candidat à saisir son adresse email ; après soumission, un message de confirmation est affiché indépendamment de l'existence du compte (principe anti-énumération). Le second écran (\texttt{setPassword}), accessible via le lien reçu par email, présente deux champs (nouveau mot de passe et confirmation) avec validation en temps réel des critères de robustesse : longueur minimale de 8~caractères, présence d'une majuscule, d'une minuscule, d'un chiffre et d'un caractère spécial.
+
+\begin{figure}[htp]
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+% TODO : Insérer capture de la page « Mot de passe oublié »
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/reset-mot-depasse.png}}
+\caption{Interface « Mot de passe oublié »}
+\label{fig:forget_password}
+\end{minipage}
+\hspace{0.25cm}
+\begin{minipage}[b]{0.5\linewidth}
+\centering
+
+ \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/RedefinerMDP.png}}
+\caption{Interface de définition du nouveau mot de passe}
+\label{fig:set_password}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Tableau de bord candidat »}
+
+Le composant \texttt{candidateDashboard} constitue l'espace personnel du candidat authentifié. Il est organisé en trois onglets :
+
+\begin{enumerate}
+    \item \textbf{Vue d'ensemble :} affiche le pipeline de recrutement sous forme d'une \textit{timeline} horizontale en cinq étapes (Screening~IA $\rightarrow$ Gaming $\rightarrow$ Technique $\rightarrow$ Architecture $\rightarrow$ Décision~RH). Chaque étape est visuellement distinguée par un code couleur (gris = à venir, bleu = en cours, vert = complété). Les scores obtenus et les liens vers les évaluations planifiées sont affichés sous le pipeline.
+    
+    \item \textbf{Candidatures :} composant \texttt{myApplications} listant l'ensemble des candidatures du candidat avec le statut actuel (\texttt{StageName}), la date de soumission, le nom de l'offre et un badge de score color\'{e} (rouge $<$ 10, orange 10--14, vert $\geq$ 15).
+    
+    \item \textbf{Profil :} affichage et modification des informations personnelles du candidat (nom, prénom, email, téléphone). Le mode édition est activé par un bouton « Modifier » et les changements sont persistés via un appel Apex dédié.
+\end{enumerate}
+
+Le tableau de bord détecte automatiquement si l'utilisateur est un Guest User (non authentifié) ; dans ce cas, il redirige vers la page de connexion.
+
+\begin{figure}[hbt!]
+  \centering
+  
+  \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/condidatdasboard.png}}
+  \caption{Interface du tableau de bord candidat (vue d'ensemble)}
+  \label{fig:dashboard_candidat}
+\end{figure}
+\FloatBarrier
+
+\subsection{Mécanismes de sécurité implémentés}
+
+La sécurité constitue un axe structurant de ce premier sprint, conformément aux recommandations OWASP. Le tableau~\ref{tab:securite_sprint1} synthétise les mécanismes mis en \oe{}uvre.
+
+\begin{longtable}{|p{4cm}|p{4cm}|p{6.5cm}|}
+\caption{Mécanismes de sécurité implémentés au sprint 1} \label{tab:securite_sprint1} \\
+\hline
+\rowcolor{gray!20} \textbf{Mécanisme} & \textbf{Composant} & \textbf{Détails d'implémentation} \\
+\hline
+\endfirsthead
+\endhead
+
+Token SHA-256 à usage unique & \texttt{PasswordReset
+Controller} & Génération via \texttt{Crypto.getRandomInteger()} (CSPRNG), seul le hash est persisté, expiration 24h, maximum 3~tentatives. \\
+\hline
+
+Anti-énumération & \texttt{loginPage}, \texttt{forgetMotDePasse} & Messages d'erreur génériques identiques quel que soit le motif d'échec (email inconnu, token expiré, token déjà utilisé). \\
+\hline
+
+Résolution email $\rightarrow$ username & \texttt{QrLoginController} & L'email saisi est résolu vers le username Salesforce sans jamais exposer ce dernier au client. Filtrage par types de licence portail. \\
+\hline
+
+QR~code éphémère & \texttt{QrLoginController} & Jetons de 5~minutes, hash SHA-256, validation par polling serveur. \\
+\hline
+
+Audit trail & \texttt{Security\_Audit\_Log\_\_c} & Journalisation de chaque action sensible (login, reset, échec) avec horodatage, email, sévérité (INFO / WARNING / CRITICAL) et contexte. \\
+\hline
+
+Contrôle d'accès & PermissionSets & \texttt{Candidate\_Portal\_Access} pour le B2C, \texttt{Security\_Objects\_Full\_Access} pour les objets sensibles. Profil Guest limité aux classes \texttt{@AuraEnabled} exposées. \\
+\hline
+
+Validation côté serveur & \texttt{ApplicationController} & Validation des types de fichier (PDF, DOC, DOCX, TXT) et de la taille ($\leq$~10~Mo) côté serveur, en complément de la validation client. \\
+\hline
+
+Partage des données & Sharing Sets & Le profil \textit{Customer Community Login User} n'accède qu'à ses propres données via les Sharing Sets Experience Cloud. \\
+\hline
+
+\end{longtable}
+
+\FloatBarrier
+
+\section{Conclusion}
+
+Ce premier sprint a permis d'établir les fondations opérationnelles du \textbf{HR Talent Portal}. Le portail Experience Cloud est désormais fonctionnel avec un catalogue d'offres filtrable, un formulaire de candidature supportant l'upload de CV jusqu'à 10~Mo par fragments, et un espace personnel candidat avec pipeline visuel. L'infrastructure d'identité numérique repose sur trois mécanismes d'authentification complémentaires --- email avec résolution dynamique, QR~code éphémère et réinitialisation par token cryptographique SHA-256 --- tous instrumentés par un journal d'audit sécurité conforme aux recommandations OWASP.
+
+\medskip
+
+Au total, ce sprint a produit \textbf{14~composants LWC}, \textbf{5~contrôleurs Apex}, \textbf{3~objets personnalisés} de sécurité (\texttt{Password\_Reset\_Token\_\_c}, \texttt{Security\_Audit\_Log\_\_c}, \texttt{QrLogin\_\_c}) et \textbf{2~PermissionSets}. Le candidat dispose désormais de son identité numérique au sein de l'écosystème Salesforce.
+
+\medskip
+
+Le prochain chapitre sera consacré au Sprint~2 : l'intégration du moteur d'intelligence artificielle pour le scoring automatique des CV, la conversion autonome des Leads qualifiés et la génération de descriptions d'offres par IA.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "isae-report-template"
+%%% End:

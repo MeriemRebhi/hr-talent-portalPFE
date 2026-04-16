@@ -1,0 +1,548 @@
+\chapter{Planification et spécification des besoins}
+\label{chap:planification}
+
+\section{Introduction}
+
+Avant d'écrire la moindre ligne de code, il est indispensable de comprendre ce que le système doit faire, pour qui il le fait, et dans quelles conditions il doit le faire. Ce chapitre traduit cette exigence en formalisant l'ensemble des spécifications du \textbf{HR Talent Portal} --- la plateforme de recrutement intelligent que nous développons sur Salesforce au profit de \textbf{Talan Tunisie}.
+
+\medskip
+
+La démarche que nous suivons dans ce chapitre est structurée en cinq temps. Nous commencerons par dresser la cartographie des acteurs qui gravitent autour du système, en distinguant les utilisateurs humains des composants automatisés. Nous formaliserons ensuite les exigences fonctionnelles --- c'est-à-dire les services concrets que la plateforme doit rendre --- en les organisant par profil d'acteur. Les contraintes non fonctionnelles (sécurité, performance, ergonomie) seront traitées dans une section dédiée, car elles conditionnent la qualité perçue et la robustesse technique de l'ensemble. La modélisation UML --- diagramme de cas d'utilisation global et diagramme de classes --- viendra formaliser graphiquement ces spécifications. Enfin, nous présenterons le backlog produit et la planification des quatre sprints qui structurent le développement.
+
+\section{Analyse des besoins}
+
+L'objectif de cette section est double : circonscrire le périmètre du système en identifiant les entités qui interagissent avec lui, puis spécifier les comportements attendus et les propriétés qualitatives que la plateforme doit satisfaire.
+
+\subsection{Identification des acteurs}
+
+Au sens UML, un acteur désigne toute entité externe --- personne physique, système tiers ou processus automatisé --- qui échange des stimuli avec le système. Identifier ces acteurs avec rigueur est un prérequis à toute modélisation des cas d'utilisation, car chaque acteur délimite un périmètre de responsabilité et un niveau d'habilitation distinct.
+
+\medskip
+
+Notre plateforme met en jeu cinq acteurs humains et un acteur système. Cette granularité, plus fine que le triptyque classique utilisateur/administrateur/système, s'explique par la nature du cycle de vie du candidat dans Salesforce : un même individu passe du statut de visiteur anonyme à celui de candidat authentifié, tandis que son dossier traverse une chaîne d'évaluation impliquant recruteur, manager et responsable RH. Le tableau~\ref{tab:acteurs} synthétise ces acteurs et leurs périmètres d'action.
+
+\begin{longtable}{|p{3.5cm}|p{11.5cm}|}
+\hline
+\textbf{Acteur} & \textbf{Rôle et périmètre d'interaction} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Acteur} & \textbf{Rôle et périmètre d'interaction} \\
+\hline
+\endhead
+
+\endfoot
+
+\hline
+\endlastfoot
+
+Visiteur \newline\textit{(Guest User)} & Utilisateur non authentifié naviguant sur le portail public Experience Cloud. Son périmètre se limite à trois actions : consulter le catalogue des offres d'emploi via le composant \texttt{jobList} (avec filtrage par mot-clé, localisation, type de contrat et département), visualiser le détail d'une offre dans le composant \texttt{jobDetail}, et soumettre une candidature à travers le formulaire \texttt{applicationForm}. Ce formulaire intègre un mécanisme d'upload de CV par découpage en fragments (\textit{chunked upload}) supportant des fichiers jusqu'à 10~Mo. En termes Salesforce, chaque candidature génère la création d'un objet \texttt{Lead} avec le CV rattaché via \texttt{ContentDocumentLink}. \\
+\hline
+
+Candidat \newline\textit{(Community User)} & Utilisateur authentifié sur l'espace B2C du portail, issu de la conversion automatique d'un Lead dont le score IA dépasse le seuil de 15/20. Le candidat accède à un tableau de bord personnel (\texttt{candidateDashboard}) qui lui offre une vue consolidée de sa candidature : pipeline visuel en cinq étapes (Screening~IA $\rightarrow$ Gaming $\rightarrow$ Technique $\rightarrow$ Architecture $\rightarrow$ Décision~RH), score de matching IA, lien vers le test gaming lorsque celui-ci est planifié, et historique de ses candidatures via \texttt{myApplications}. Il peut également passer le test gaming gamifié (\texttt{gamingTest}), participer aux entretiens techniques (\texttt{entretienTechnique}) et d'architecture (\texttt{architectureInterview}), et interagir avec le chatbot NLP contextuel (\texttt{agentforceChat}). Son compte portail est créé automatiquement lors de la conversion avec le profil \textit{Customer Community Login User}. \\
+\hline
+
+Recruteur \newline\textit{(Internal User)} & Utilisateur interne Salesforce opérant depuis le tableau de bord recruteur (\texttt{recruteurDashboard}). Ses responsabilités couvrent la gestion complète du cycle offre-candidature : publication et clôture des offres d'emploi (Record Type \textit{Job\_Posting} sur l'objet \texttt{Opportunity}), génération de descriptions professionnelles par IA via le modèle LLaMA~3.3~70B, déclenchement de la génération automatique de 25 questions gaming adaptées au poste (service \texttt{GamingQuestionService}) et de 5 exercices techniques (service \texttt{TechnicalQuestionService}), planification des sessions de test (individuelle ou en lot), avancement des candidats dans le pipeline avec notification email à chaque transition d'étape, et relance du scoring IA si nécessaire. \\
+\hline
+
+Manager \newline\textit{(Internal User)} & Expert technique intervenant lors de la phase d'évaluation. Le manager consulte les dossiers candidats enrichis par l'IA (score de compatibilité, recommandation textuelle, points forts et points faibles identifiés automatiquement) depuis le tableau de bord dédié. Il participe aux entretiens techniques et d'architecture via Jitsi Meet, consigne ses comptes-rendus d'évaluation dans les champs \texttt{Manager\_Notes\_\_c} des objets d'entretien, et formule une recommandation argumentée (embauche ou refus) à l'attention du responsable RH, en s'appuyant sur le score composite et l'ensemble des données collectées au cours du processus. \\
+\hline
+
+Responsable RH \newline\textit{(Admin)} & Acteur disposant du niveau d'habilitation le plus élevé. Le responsable RH supervise l'ensemble du processus via des tableaux de bord consolidés présentant les indicateurs clés : taux de conversion Lead~$\rightarrow$~Contact, score moyen par département, nombre de leads actifs, durée moyenne du cycle de recrutement (\textit{Time-to-Hire}). Il prononce la décision finale d'embauche ou de refus via l'objet \texttt{RH\_Decision\_\_c}, précisant le motif en cas de rejet. Lors d'une acceptation, il déclenche la création du contrat de travail (objet standard \texttt{Contract}) et son envoi pour signature électronique via \textbf{DocuSign for Salesforce}. Il administre les profils utilisateurs, les \texttt{PermissionSets} (notamment \texttt{Candidate\_Portal\_Access} et \texttt{Security\_Objects\_Full\_Access}), et veille au bon fonctionnement des automatisations (Flows, Triggers). \\
+\hline
+
+Système IA \newline\textit{(Acteur non humain)} & Sous-système automatisé reposant sur les APIs Groq. Il intervient sans intervention humaine à quatre niveaux : (1)~scoring NLP des CV via \texttt{CVScoringService} dès le rattachement d'un document à un Lead, (2)~génération dynamique de 25 questions gaming via \texttt{GamingQuestionService}, (3)~génération de 5 exercices techniques via \texttt{TechnicalQuestionService}, et (4)~transcription audio puis évaluation des entretiens architecture via \texttt{ArchitectureAudioProcessor}. Tous ces traitements sont implémentés en classes \texttt{Queueable} avec \texttt{AllowsCallouts} pour respecter les limites transactionnelles de Salesforce. \\
+
+\caption{Identification des acteurs du système et leurs périmètres d'interaction}
+\label{tab:acteurs}
+\end{longtable}
+
+\FloatBarrier
+
+\subsection{Spécification des exigences fonctionnelles}
+
+Les exigences fonctionnelles décrivent les services concrets que la plateforme doit rendre opérationnels pour couvrir l'intégralité du processus de recrutement chez Talan. Nous les présentons ci-dessous, organisées par profil d'acteur, en veillant à refléter fidèlement les flux réellement implémentés dans notre écosystème Salesforce.
+
+\subsubsection{Exigences du visiteur (utilisateur non authentifié)}
+
+\begin{enumerate}[label=\textbf{EF-V\arabic*}]
+    \item \textbf{Consulter les offres d'emploi.} Le visiteur parcourt le catalogue des postes vacants exposés sur le portail public. Un système de filtrage multicritère --- recherche textuelle, localisation géographique, nature du contrat (CDI, CDD, Stage, Freelance, Alternance) et département Talan --- permet d'affiner les résultats. Chaque offre est présentée dans une vue détaillée incluant le titre, la description complète, le salaire proposé et un bouton d'action pour postuler.
+    
+    \item \textbf{Déposer une candidature.} Le visiteur remplit le formulaire \texttt{applicationForm} et y joint son CV. Le mécanisme d'upload repose sur un découpage en fragments supportant des fichiers jusqu'à 10~Mo, avec création automatique d'un objet \texttt{Lead} côté Salesforce et rattachement du document via \texttt{ContentDocumentLink}. Ce rattachement déclenche immédiatement le trigger \texttt{CVScoringTrigger} qui lance l'analyse IA en arrière-plan.
+\end{enumerate}
+
+\subsubsection{Exigences du candidat (utilisateur authentifié B2C)}
+
+\begin{enumerate}[label=\textbf{EF-C\arabic*}]
+    \item \textbf{S'authentifier de manière sécurisée.} Le candidat se connecte via le composant \texttt{loginPage} en saisissant son adresse email. Le système résout dynamiquement le \texttt{username} Salesforce correspondant et déclenche l'authentification native via \texttt{Site.login()}. Un mécanisme alternatif par QR~code (\texttt{qrCodeAuth}) est également proposé. En cas d'oubli de mot de passe, le composant \texttt{forgetMotDePasse} génère un token cryptographique sécurisé (SHA-256, usage unique, expiration sous 24~heures) via le contrôleur \texttt{PasswordResetController}.
+    
+    \item \textbf{Suivre l'avancement de sa candidature.} Le tableau de bord \texttt{candidateDashboard} affiche un pipeline visuel en cinq étapes avec indicateur de progression. Le candidat identifie instantanément la phase courante de chaque candidature et accède aux liens de test lorsqu'ils sont planifiés. Le composant \texttt{myApplications} lui permet de consulter l'historique complet de ses candidatures.
+    
+    \item \textbf{Passer le test gaming gamifié.} Le candidat réalise une évaluation ludique via le composant \texttt{gamingTest}, composée de 10~questions sélectionnées aléatoirement côté serveur (via \texttt{Crypto.getRandomInteger()}) parmi un pool de 25~questions générées par l'IA et adaptées au poste visé. Trois types de questions sont proposés : QCM, puzzles logiques et exercices d'ordonnancement. Un minuteur dynamique s'adapte à la difficulté (30s pour facile, 25s pour moyen, 20s pour difficile, 35s pour ordonnancement). Les réponses correctes ne transitent jamais côté client --- chaque soumission est validée en temps réel par l'appel Apex \texttt{validateAnswer()}.
+    
+    \item \textbf{Participer aux entretiens techniques.} Via le composant \texttt{entretienTechnique}, le candidat résout 5~exercices (code, architecture, débogage) générés par l'IA et spécifiques au poste. Chaque réponse est soumise au modèle LLaMA pour évaluation automatique, produisant un score et un feedback détaillé stockés dans l'objet \texttt{Technical\_Question\_\_c}.
+    
+    \item \textbf{Participer à l'entretien architecture.} Le composant \texttt{architectureInterview} intègre une session Jitsi Meet avec enregistrement audio. L'audio capturé est envoyé au modèle Whisper pour transcription, puis à LLaMA pour évaluation sur quatre critères pondérés (Architecture/25, Raisonnement/25, Design Patterns/25, Communication/25). Les résultats sont persistés dans l'objet \texttt{Architecture\_Interview\_\_c}.
+    
+    \item \textbf{Interagir avec le chatbot NLP.} Un widget conversationnel flottant (\texttt{agentforceChat}) permet au candidat de poser des questions en langage naturel. Le système exploite trois classes Apex invocables --- \texttt{AgentGetOffresDisponibles}, \texttt{AgentGetCandidatureStatus} et \texttt{AgentGetAnalyseIA} --- pour retourner des réponses contextualisées depuis les données Salesforce (offres disponibles, statut de candidature, résultats du scoring IA).
+\end{enumerate}
+
+\subsubsection{Exigences du recruteur (back-office Salesforce)}
+
+\begin{enumerate}[label=\textbf{EF-R\arabic*}]
+    \item \textbf{Publier et gérer les offres d'emploi.} Le recruteur crée des offres en renseignant les champs métier --- département (\texttt{Departement\_\_c}), localisation (\texttt{Localisation\_\_c}), type de contrat (\texttt{Type\_de\_Contrat\_\_c}), salaire (\texttt{Salaire\_Propos\_\_c}), description --- sur des enregistrements \texttt{Opportunity} de Record Type \textit{Job\_Posting}. Il peut les clôturer ou les réouvrir depuis le tableau de bord \texttt{recruteurDashboard}.
+    
+    \item \textbf{Générer des descriptions d'offres par IA.} À partir d'un brouillon sommaire, le recruteur sollicite le contrôleur \texttt{InternalDashboardController} qui soumet le texte au modèle LLaMA~3.3~70B (température~0.7). Le modèle restructure le contenu en quatre sections normalisées --- introduction, missions, profil recherché, avantages --- tout en corrigeant la grammaire et l'orthographe.
+    
+    \item \textbf{Déclencher la génération de questions par IA.} Pour chaque offre, le recruteur peut lancer deux générations distinctes :
+    \begin{itemize}
+        \item \textbf{Questions gaming :} le service \texttt{GamingQuestionService} (classe \texttt{Queueable}) interroge l'API Groq avec un prompt système spécifiant la répartition souhaitée ($\sim$8~faciles, $\sim$10~moyennes, $\sim$7~difficiles ; $\sim$15~QCM, $\sim$5~puzzles, $\sim$5~ordonnancements). Les 25~questions sont persistées dans l'objet \texttt{Gaming\_Question\_\_c} avec un lien \texttt{Lookup} vers l'offre.
+        \item \textbf{Exercices techniques :} le service \texttt{TechnicalQuestionService} génère 5~exercices (code, architecture, débogage) persistés dans \texttt{Technical\_Question\_\_c} avec la solution attendue stockée exclusivement côté serveur.
+    \end{itemize}
+    
+    \item \textbf{Planifier les sessions de test gaming.} Le recruteur dispose de deux modes : planification individuelle (sélection d'une date, d'une durée) et planification en lot (créneaux consécutifs avec intervalle de pause configurable). Chaque planification déclenche l'envoi automatique d'un email d'invitation au candidat avec le lien vers la session.
+    
+    \item \textbf{Piloter le pipeline de recrutement.} Le recruteur fait progresser chaque candidat d'étape en étape via le champ \texttt{StageName} de l'Opportunity (Screening $\rightarrow$ Gaming $\rightarrow$ Technical $\rightarrow$ Architecture $\rightarrow$ HR~Decision). Chaque transition déclenche l'envoi automatique d'un email de notification au candidat concerné.
+\end{enumerate}
+
+\subsubsection{Exigences du manager (expert évaluateur)}
+
+\begin{enumerate}[label=\textbf{EF-M\arabic*}]
+    \item \textbf{Consulter les dossiers candidats enrichis.} Le manager accède à des fiches candidats intégrant le score de matching IA (champ \texttt{Score\_Matching\_\_c}, échelle 0--20), la recommandation textuelle (\texttt{AI\_Recommendation\_\_c}), les points forts (\texttt{AI\_Points\_Forts\_\_c}) et les axes d'amélioration (\texttt{AI\_Points\_Faibles\_\_c}) identifiés automatiquement, ainsi que le résultat du test gaming (\texttt{Gaming\_Test\_Score\_\_c}).
+    
+    \item \textbf{Saisir le feedback évaluateur.} À l'issue de chaque entretien, le manager consigne son compte-rendu dans le champ \texttt{Manager\_Notes\_\_c} de l'objet d'entretien correspondant (\texttt{Technical\_Interview\_\_c} ou \texttt{Architecture\_Interview\_\_c}) et valide le score final via \texttt{Manager\_Validated\_Score\_\_c}.
+    
+    \item \textbf{Formuler une recommandation d'embauche.} Au terme des entretiens, le manager rédige une synthèse évaluative en s'appuyant sur le score composite (\texttt{Composite\_Score\_\_c} : 50\,\%~technique + 25\,\%~gaming + 25\,\%~CV), les feedbacks IA et ses propres observations. Cette recommandation argumentée est transmise au responsable RH, qui prononcera la décision officielle via l'objet \texttt{RH\_Decision\_\_c}.
+\end{enumerate}
+
+\subsubsection{Exigences du responsable RH (gouvernance et pilotage)}
+
+\begin{enumerate}[label=\textbf{EF-H\arabic*}]
+    \item \textbf{Piloter via les tableaux de bord et KPIs.} Le responsable RH dispose de dashboards consolidés présentant les métriques essentielles : taux de conversion par étape du pipeline, score moyen des candidats par département, volume de leads actifs, durée moyenne du cycle de recrutement (\textit{Time-to-Hire}), et répartition des candidatures par source et par type de contrat.
+    
+    \item \textbf{Statuer sur la candidature.} Le responsable RH prononce la décision finale d'embauche ou de refus en créant un enregistrement \texttt{RH\_Decision\_\_c} rattaché à la candidature (\texttt{Opportunity}). Le champ \texttt{Decision\_\_c} porte la valeur \textit{Accepté} ou \textit{Refusé}, tandis que \texttt{Motif\_Refus\_\_c} documente la justification en cas de rejet. L'acceptation fait passer l'Opportunity en \textit{Closed Won} et déclenche la création du contrat ; le refus la passe en \textit{Closed Lost}.
+    
+    \item \textbf{Formaliser le contrat et la signature électronique.} Lorsque la décision est favorable, le responsable RH génère un objet standard \texttt{Contract} rattaché au compte du candidat (\texttt{AccountId}). Le contrat est ensuite envoyé pour signature électronique via \textbf{DocuSign for Salesforce} : un objet \texttt{dfsle\_\_Envelope\_\_c} encapsule le document, et les statuts de signature de chaque signataire sont suivis dans \texttt{dfsle\_\_EnvelopeStatus\_\_c}. Ce flux garantit une dématérialisation complète de l'acte contractuel.
+    
+    \item \textbf{Administrer la plateforme.} Il gère les habilitations utilisateurs, les \texttt{PermissionSets} (\texttt{Candidate\_Portal\_Access}, \texttt{Security\_Objects\_Full\_Access}), les profils Experience Cloud et veille au bon fonctionnement des automatisations (Flow de conversion automatique, triggers de scoring).
+\end{enumerate}
+
+\subsubsection{Exigences du système IA (acteur automatisé)}
+
+Bien que ne constituant pas un acteur humain, le sous-système d'intelligence artificielle joue un rôle central dans l'automatisation du pipeline. Il intervient à quatre niveaux, chacun implémenté comme une classe Apex \texttt{Queueable} avec \texttt{AllowsCallouts} :
+
+\begin{enumerate}[label=\textbf{EF-IA\arabic*}]
+    \item \textbf{Scoring NLP des CV.} Dès le rattachement d'un CV à un Lead (via le trigger \texttt{CVScoringTrigger}), le service \texttt{CVScoringService} extrait le contenu textuel du document, construit un prompt contextuel incluant les exigences du poste, et soumet l'ensemble au modèle LLaMA~3.3~70B (température~0.3 pour garantir la constance des résultats). L'IA retourne un score sur 20 stocké dans \texttt{Score\_Matching\_\_c}, une recommandation textuelle dans \texttt{AI\_Recommendation\_\_c}, et l'identification des points forts et faibles dans les champs dédiés. Si le score atteint ou dépasse le seuil de 15/20, le service déclenche automatiquement la conversion du Lead (création du Contact, de l'Account et de l'Opportunity) et la provision du compte portail avec envoi d'un email d'accès contenant un lien chiffré.
+    
+    \item \textbf{Génération dynamique de questions gaming.} Le service \texttt{GamingQuestionService} adresse un prompt structuré à l'API Groq (température~0.7) détaillant le poste cible, la répartition par type et par difficulté, ainsi que les contraintes de format (JSON strict, langue française, temps alloué par niveau de difficulté). Les 25~questions générées sont insérées dans l'objet \texttt{Gaming\_Question\_\_c} avec l'ensemble des métadonnées : intitulé, options A à E, réponse correcte, type, difficulté et temps imparti.
+    
+    \item \textbf{Génération d'exercices techniques.} Le service \texttt{TechnicalQuestionService} génère 5~exercices typés (code, architecture, débogage) via LLaMA~3.3~70B. Chaque exercice est persisté dans \texttt{Technical\_Question\_\_c} avec l'énoncé, les critères d'évaluation, la solution attendue (stockée exclusivement côté serveur) et le temps imparti.
+    
+    \item \textbf{Transcription et évaluation des entretiens architecture.} Le service \texttt{ArchitectureAudioProcessor} reçoit l'enregistrement audio capturé lors de la session Jitsi Meet, le soumet au modèle Whisper (\texttt{whisper-large-v3-turbo}) pour transcription, puis transmet le texte obtenu à LLaMA pour évaluation multicritère. Le score global, la transcription complète et le feedback IA sont persistés dans l'objet \texttt{Architecture\_Interview\_\_c}.
+\end{enumerate}
+
+\subsection{Spécification des exigences non fonctionnelles}
+
+Au-delà des services métier, la plateforme doit satisfaire un ensemble de propriétés qualitatives qui conditionnent l'expérience utilisateur, la robustesse et la pérennité du système. Ces exigences transversales ont guidé nos choix architecturaux tout au long du développement.
+
+\begin{enumerate}[label=\textbf{ENF-\arabic*}]
+
+    \item \textbf{Ergonomie et convivialité.} L'interface repose sur 21~composants Lightning Web Components conçus avec une attention particulière à la fluidité de navigation. Le portail candidat propose des micro-interactions (transitions CSS, barres de progression dynamiques, animations de feedback) visant à réduire la charge cognitive. Le test gaming intègre un compte à rebours visuel animé, une révélation progressive du score et des indicateurs colorés de réponse correcte ou incorrecte --- le tout sans rechargement de page grâce à la réactivité native des LWC.
+
+    \item \textbf{Disponibilité et fiabilité.} L'hébergement intégral sur l'infrastructure Salesforce Cloud garantit un taux de disponibilité conforme aux SLA de la plateforme (99,9\,\%). Les traitements lourds (scoring IA, génération de questions, transcription audio) sont implémentés en classes \texttt{Queueable} asynchrones, évitant tout blocage de l'interface utilisateur et respectant les \textit{Governor Limits} de Salesforce (100~callouts par transaction, 10\,000~enregistrements DML par transaction).
+
+    \item \textbf{Sécurité.} La sécurité constitue un axe structurant de notre architecture, avec une approche de défense en profondeur :
+    \begin{itemize}
+        \item \textbf{Authentification renforcée :} résolution dynamique email~$\rightarrow$~username via \texttt{Site.login()}, sans exposition du username Salesforce au candidat. Un mécanisme d'authentification par QR~code (\texttt{qrCodeAuth}) est proposé en complément.
+        \item \textbf{Réinitialisation par token sécurisé :} génération d'un aléa cryptographique via \texttt{Crypto.getRandomInteger()} (CSPRNG natif Salesforce). Seul le hash SHA-256 du token est persisté dans \texttt{Password\_Reset\_Token\_\_c} --- le token en clair n'existe qu'en mémoire lors de la génération. Chaque token est à usage unique (\texttt{Is\_Used\_\_c}), expire sous 24~heures (\texttt{Expiration\_\_c}) et tolère au maximum 3~tentatives (\texttt{Attempts\_\_c}).
+        \item \textbf{Anti-énumération :} les messages d'erreur affichés sont volontairement génériques (même réponse pour un token invalide, expiré ou déjà utilisé), empêchant un attaquant de déduire l'existence d'un compte.
+        \item \textbf{Audit et traçabilité :} chaque opération sensible (génération de token, tentative de connexion, échec de validation) est consignée dans l'objet \texttt{Security\_Audit\_Log\_\_c} avec horodatage, adresse email, niveau de sévérité (INFO, WARNING, CRITICAL) et détails contextuels.
+        \item \textbf{Protection du test gaming :} les réponses correctes ne sont jamais transmises au navigateur. La validation s'effectue exclusivement côté serveur via \texttt{validateAnswer()}, éliminant tout risque d'extraction par inspection du code source client.
+        \item \textbf{Contrôle d'accès granulaire :} deux \texttt{PermissionSets} dédiés gouvernent les habilitations : \texttt{Candidate\_Portal\_Access} pour les candidats B2C et \texttt{Security\_Objects\_Full\_Access} pour les objets sensibles. Le profil Guest du site Experience dispose d'un accès strictement limité aux classes Apex exposées via \texttt{@AuraEnabled}.
+    \end{itemize}
+
+    \item \textbf{Extensibilité et modularité.} L'architecture de la plateforme --- 21~composants LWC découplés, 24~classes Apex à responsabilité unique, 8~objets personnalisés extensibles, 2~objets DocuSign managés et 2~Record Types paramétrables --- favorise l'extension horizontale. L'ajout d'un nouveau type de test, d'un canal de recrutement ou d'un critère de scoring peut se faire sans modifier l'existant, en exploitant les mécanismes natifs Salesforce (nouveaux champs, Flows supplémentaires, composants LWC additionnels).
+
+    \item \textbf{Maintenabilité.} Le projet suit rigoureusement le format \textit{SFDX Project} avec une arborescence normalisée (\texttt{force-app/main/default/}). Le déploiement s'opère via \texttt{Salesforce CLI (sf)}, permettant des mises en production reproductibles et versionnées. La séparation claire entre couche de présentation (LWC), couche métier (Apex) et couche de données (Custom Objects + Standard Objects) facilite la localisation des anomalies et l'intégration de correctifs sans effets de bord.
+
+    \item \textbf{Performance.} Les appels à l'API Groq sont encapsulés dans des traitements \texttt{Queueable} asynchrones, libérant immédiatement l'interface utilisateur. Le tableau de bord recruteur implémente un mécanisme de \textit{polling} léger (intervalles de 3~secondes, maximum 15~tentatives) pour informer du statut de génération des questions IA, sans surcharger les ressources serveur. La sélection aléatoire des questions gaming repose sur \texttt{Crypto.getRandomInteger()} exécuté côté Apex, éliminant les allers-retours réseau superflus.
+\end{enumerate}
+
+\section{Modélisation fonctionnelle : diagramme de cas d'utilisation global}
+
+Le diagramme de cas d'utilisation constitue la pierre angulaire de notre spécification fonctionnelle. Son rôle est de circonscrire le périmètre du \textbf{HR Talent Portal} en représentant graphiquement les interactions entre les acteurs externes et les services du système. Comme l'illustre la figure~\ref{fig:use_case_global}, l'architecture fonctionnelle repose sur une articulation entre la gestion humaine des candidatures et l'automatisation pilotée par l'intelligence artificielle.
+
+\subsection{Périmètre d'intervention des acteurs}
+
+L'analyse systémique nous a permis de catégoriser les parties prenantes selon deux dimensions : l'engagement externe (vision B2C) et la gouvernance interne (gestion CRM).
+
+\begin{itemize}
+    \item \textbf{Visiteur :} point d'entrée anonyme du système. Sa navigation se limite à la consultation du catalogue d'offres et à l'initiation du flux de candidature.
+    \item \textbf{Candidat :} acteur central de la solution, il interagit avec les modules de suivi, de gaming, d'entretien technique et d'entretien architecture. Il représente l'évolution du visiteur après authentification.
+    \item \textbf{Recruteur :} pilote le cycle opérationnel. Il est responsable de la publication des offres, de la génération des contenus d'évaluation par IA et de la coordination du tunnel de recrutement.
+    \item \textbf{Manager :} intervient ponctuellement pour apporter l'expertise technique lors des entretiens et saisir ses comptes-rendus qualitatifs.
+    \item \textbf{Responsable RH :} assure le pilotage stratégique via l'analyse des indicateurs clés, prononce la décision finale d'embauche via \texttt{RH\_Decision\_\_c} et pilote la contractualisation via DocuSign.
+    \item \textbf{Système IA :} exécute les tâches automatisées de scoring NLP, de génération de questions, de transcription et d'évaluation sans intervention humaine directe.
+\end{itemize}
+
+\subsection{Dépendances entre cas d'utilisation}
+
+La cohérence du système repose sur une structuration rigoureuse des dépendances entre les services :
+
+\begin{enumerate}
+    \item \textbf{Inclusions (\guillemotleft include\guillemotright) :} l'accès aux espaces personnels ou décisionnels impose systématiquement l'invocation du cas \textbf{S'authentifier}. Par ailleurs, la soumission d'une candidature déclenche de manière atomique le scoring IA du CV, garantissant une analyse immédiate de chaque candidature reçue.
+    
+    \item \textbf{Extensions (\guillemotleft extend\guillemotright) :} le cas de décision finale (Valider/Refuser) est enrichi par l'extension \textbf{Consulter le score composite}. Cette configuration permet au décideur de s'appuyer sur une synthèse IA sans que cette consultation ne soit bloquante pour la prise de décision.
+\end{enumerate}
+
+\begin{landscape}
+\begin{figure}[p]
+  \centering
+  % \includegraphics[width=\linewidth,height=\textheight,keepaspectratio]{images/usecasev4.png}
+  \caption{Diagramme de cas d'utilisation global du HR Talent Portal}
+  \label{fig:use_case_global}
+\end{figure}
+\end{landscape}
+\FloatBarrier
+
+\section{Modélisation statique : diagramme de classes}
+
+Le diagramme de classes (figure~\ref{fig:diagrameclasse}) représente la structure de données au sein de la plateforme Salesforce, en mettant en évidence les interactions entre les objets natifs du CRM et les composants personnalisés développés pour modéliser le pipeline de recrutement intelligent.
+
+\subsection{Dictionnaire des entités}
+
+Le modèle de données repose sur une hybridation entre des objets \textbf{standards} (fournis nativement par Salesforce), des objets \textbf{personnalisés} (conçus sur mesure pour le métier RH) et des objets \textbf{managés} issus du package DocuSign for Salesforce. Le tableau~\ref{table:objets_rh} détaille le rôle de chaque entité.
+
+\begin{longtable}{|p{4.2cm}|p{10.8cm}|}
+\hline
+\textbf{Objet} & \textbf{Rôle et description} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Objet} & \textbf{Rôle et description} \\
+\hline
+\endhead
+
+\endfoot
+
+\hline
+\endlastfoot
+
+\textbf{Lead} \newline\textit{(Standard)} & Point d'entrée de tout candidat dans le système. Centralise les données brutes de la candidature et porte les résultats du scoring IA : \texttt{Score\_Matching\_\_c} (note sur 20), \texttt{AI\_Recommendation\_\_c} (recommandation textuelle), \texttt{AI\_Points\_Forts\_\_c} et \texttt{AI\_Points\_Faibles\_\_c} (analyse qualitative). Le CV est rattaché via \texttt{ContentDocumentLink}. \\
+\hline
+
+\textbf{Account} \newline\textit{(Standard)} & Matérialise l'identité B2C du candidat. Créé automatiquement lors de la conversion du Lead, le nom du compte est indexé sur l'adresse email pour garantir l'unicité de l'identité numérique dans l'environnement Experience Cloud. \\
+\hline
+
+\textbf{Contact} \newline\textit{(Standard)} & Stocke les informations nominatives et les coordonnées pérennes du candidat après sa validation initiale par l'IA. C'est l'objet consulté par les recruteurs et managers tout au long du processus d'évaluation. \\
+\hline
+
+\textbf{Opportunity} \newline\textit{(Standard, 2 Record Types)} & Objet dual exploité via deux Record Types distincts :
+\begin{itemize}[nosep,leftmargin=*]
+    \item \textit{Job\_Posting} : définition du besoin (titre, \texttt{Description\_Poste\_\_c}, \texttt{Salaire\_Propos\_\_c}, \texttt{Departement\_\_c}, \texttt{Localisation\_\_c}, \texttt{Type\_de\_Contrat\_\_c}).
+    \item \textit{Application} : suivi de la candidature avec \texttt{StageName} reflétant l'étape du pipeline, \texttt{Score\_Matching\_\_c}, \texttt{Gaming\_Test\_Score\_\_c}, et les liens vers les sessions de test.
+\end{itemize} \\
+\hline
+
+\textbf{Gaming\_Question\_\_c} \newline\textit{(Personnalisé)} & Stocke les questions du test gaming (25 par offre). Chaque enregistrement contient l'intitulé, cinq options (A à E), la réponse correcte, le type (QCM/Puzzle/Ordonnancement), la difficulté et le temps imparti. Lié à l'offre via \texttt{Job\_Posting\_\_c} (Lookup). \\
+\hline
+
+\textbf{Technical\_Question\_\_c} \newline\textit{(Personnalisé)} & Stocke les exercices techniques (5 par offre) avec l'énoncé, le type (code/architecture/débogage), les critères d'évaluation, la solution attendue (côté serveur uniquement), et après soumission : la réponse du candidat, le score IA et le feedback. Lié à l'offre et à la candidature. \\
+\hline
+
+\textbf{Technical\_Interview\_\_c} \newline\textit{(Personnalisé)} & Modélise l'entretien technique : date planifiée, durée, lien Jitsi Meet, score, notes du manager, score composite (50\%~technique + 25\%~gaming + 25\%~CV), et statut. Lié à l'Opportunity (candidature) via \texttt{Opportunity\_\_c}. \\
+\hline
+
+\textbf{Architecture\_Interview\_\_c} \newline\textit{(Personnalisé)} & Modélise l'entretien architecture : session Jitsi Meet avec enregistrement audio, transcription Whisper, feedback IA LLaMA, score global, notes du manager, et statut. Porte l'identifiant du fichier audio (\texttt{Audio\_ContentVersion\_Id\_\_c}) pour traçabilité. \\
+\hline
+
+\textbf{Password\_Reset\_Token\_\_c} \newline\textit{(Personnalisé, Sécurité)} & Gère les tokens de réinitialisation de mot de passe : hash SHA-256 (\texttt{Token\_Hash\_\_c}), date d'expiration (\texttt{Expiration\_\_c}), indicateur d'usage unique (\texttt{Is\_Used\_\_c}), compteur de tentatives (\texttt{Attempts\_\_c}) et lien vers l'utilisateur. \\
+\hline
+
+\textbf{Security\_Audit\_Log\_\_c} \newline\textit{(Personnalisé, Conformité)} & Journal d'audit sécurité enregistrant chaque opération sensible : action (Login, PasswordReset, FileUpload), horodatage, email, niveau de sévérité (INFO/WARNING/CRITICAL) et détails contextuels. \\
+\hline
+
+\textbf{QrLogin\_\_c} \newline\textit{(Personnalisé, Sécurité)} & Gère les sessions d'authentification par QR~code. Chaque enregistrement porte un jeton unique (\texttt{Token\_\_c}), un indicateur de validation (\texttt{Is\_Validated\_\_c}) et une date d'expiration (\texttt{Expiration\_\_c}). Ce mécanisme offre une alternative rapide à la saisie manuelle d'identifiants, particulièrement adaptée à un usage depuis un terminal mobile. \\
+\hline
+
+\textbf{RH\_Decision\_\_c} \newline\textit{(Personnalisé)} & Matérialise la décision officielle du responsable RH à l'issue du processus d'évaluation. L'enregistrement est rattaché à la candidature (\texttt{Opportunity\_\_c}) et au décideur (\texttt{Responsable\_RH\_\_c}). Le champ \texttt{Decision\_\_c} porte la valeur \textit{Accepté} ou \textit{Refusé}, la date de prononcé est horodatée dans \texttt{Date\_Decision\_\_c}, et le motif de refus éventuel est documenté dans \texttt{Motif\_Refus\_\_c}. \\
+\hline
+
+\textbf{User} \newline\textit{(Standard)} & Représente un utilisateur Salesforce --- interne (recruteur, manager, responsable RH) ou externe (candidat B2C). L'association \texttt{ContactId} établit le lien avec le Contact correspondant, permettant la création du compte portail Experience Cloud lors de la conversion automatique du Lead. \\
+\hline
+
+\textbf{ContentVersion} \newline\textit{(Standard)} & Stocke le contenu binaire des fichiers versionnés dans Salesforce (CV des candidats, enregistrements audio des entretiens architecture). Chaque version est identifiée par son \texttt{ContentDocumentId} et donne accès au flux binaire via \texttt{VersionData}. \\
+\hline
+
+\textbf{ContentDocumentLink} \newline\textit{(Standard, Junction)} & Objet de jonction reliant un document (\texttt{ContentDocumentId}) à un enregistrement Salesforce (\texttt{LinkedEntityId}). Dans notre contexte, il rattache le CV au Lead et l'enregistrement audio à l'objet \texttt{Architecture\_Interview\_\_c}, déclenchant automatiquement le scoring IA dès l'upload. \\
+\hline
+
+\textbf{RecordType} \newline\textit{(Standard, Métadonnée)} & Spécialise l'objet \texttt{Opportunity} en deux variantes métier : \textit{Job\_Posting} (définition de l'offre d'emploi) et \textit{Application} (suivi de la candidature). Ce mécanisme natif permet de réutiliser un même objet tout en isolant les processus et les mises en page associées. \\
+\hline
+
+\textbf{Contract} \newline\textit{(Standard)} & Objet standard Salesforce représentant le contrat de travail proposé au candidat retenu. Rattaché au compte (\texttt{AccountId}) issu de la conversion, il porte la date de début (\texttt{StartDate}), la durée (\texttt{ContractTerm}) et le descriptif des conditions. Sa création est déclenchée par une décision favorable dans \texttt{RH\_Decision\_\_c}. \\
+\hline
+
+\textbf{dfsle\_\_Envelope\_\_c} \newline\textit{(DocuSign, Managed)} & Objet du package managé \textbf{DocuSign for Salesforce}. Chaque enveloppe encapsule un ou plusieurs documents à signer, référence le contrat source (\texttt{dfsle\_\_SourceId\_\_c}), et suit le cycle de vie de la signature : envoi (\texttt{dfsle\_\_SentDateTime\_\_c}), complétion (\texttt{dfsle\_\_CompletedDateTime\_\_c}) et statut courant (\texttt{dfsle\_\_Status\_\_c}). \\
+\hline
+
+\textbf{dfsle\_\_EnvelopeStatus\_\_c} \newline\textit{(DocuSign, Managed)} & Enregistrement fils de l'enveloppe DocuSign, traçant le statut de signature de chaque signataire individuellement. Le champ \texttt{dfsle\_\_Signer\_\_c} identifie le destinataire, \texttt{dfsle\_\_Status\_\_c} indique l'état courant (Envoyé, Signé, Refusé) et \texttt{dfsle\_\_SignedDateTime\_\_c} horodate l'apposition de la signature. \\
+
+\caption{Dictionnaire des entités de la plateforme HR Talent Portal}
+\label{table:objets_rh}
+\end{longtable}
+
+\FloatBarrier
+
+\subsection{Relations et mécanismes d'intégrité}
+
+La cohérence des données est assurée par une combinaison de mécanismes relationnels propres à l'architecture Salesforce :
+
+\begin{itemize}
+    \item \textbf{Spécialisation par Record Types.} L'objet \texttt{Opportunity} est spécialisé en deux sous-entités (\textit{Job\_Posting} et \textit{Application}) via le mécanisme de Record Types natif. Cette approche permet de réutiliser le moteur d'opportunité de Salesforce (gestion des étapes, reporting natif, workflows) tout en isolant les processus de publication d'offres et de suivi de candidature.
+    
+    \item \textbf{Relations Lookup.} Les objets d'entretien (\texttt{Technical\_Interview\_\_c}, \texttt{Architecture\_Interview\_\_c}) et de questions (\texttt{Gaming\_Question\_\_c}, \texttt{Technical\_Question\_\_c}) sont liés aux Opportunities via des champs \texttt{Lookup}. Ce type de relation offre la souplesse nécessaire : un entretien peut exister de manière autonome (par exemple, lorsqu'il est planifié avant la création complète du dossier), tout en étant rattachable à une candidature.
+    
+    \item \textbf{Conversion Lead $\rightarrow$ Contact + Account + Opportunity.} Le mécanisme de conversion natif de Salesforce, déclenché automatiquement par le \texttt{CVScoringService} lorsque le score IA franchit le seuil de 15/20, garantit l'atomicité de la transformation : les trois objets (Account, Contact, Opportunity) sont créés dans une seule transaction, éliminant tout risque d'incohérence.
+    
+    \item \textbf{Gouvernance par énumérations (Picklists).} Les champs \texttt{StageName} (étapes du pipeline), \texttt{Status\_\_c} (statut des entretiens), \texttt{Difficulty\_\_c} (difficulté des questions), \texttt{Question\_Type\_\_c} (type de question) et \texttt{Action\_\_c} (type d'action d'audit) sont implémentés sous forme de listes déroulantes contrôlées. Cette normalisation garantit la cohérence des données et facilite le reporting.
+    
+    \item \textbf{Décision RH et contractualisation.} L'objet \texttt{RH\_Decision\_\_c} formalise le verdict du responsable RH à l'issue du processus d'évaluation. Il est relié à la candidature (\texttt{Opportunity\_\_c}) et au décideur (\texttt{Responsable\_RH\_\_c}) par des relations \texttt{Lookup}. Lorsque la décision est favorable, un objet standard \texttt{Contract} est créé et rattaché au compte du candidat. Le contrat est ensuite transmis pour signature électronique via le package managé \textbf{DocuSign for Salesforce} : l'enveloppe (\texttt{dfsle\_\_Envelope\_\_c}) encapsule le document et le statut de chaque signataire est suivi individuellement dans \texttt{dfsle\_\_EnvelopeStatus\_\_c}.
+    
+    \item \textbf{Gestion documentaire.} Les fichiers (CV, enregistrements audio) sont stockés dans l'objet \texttt{ContentVersion} et rattachés aux enregistrements métier (Lead, entretien architecture) via l'objet de jonction \texttt{ContentDocumentLink}. Ce mécanisme natif de Salesforce assure le versionnage des documents et permet de déclencher des traitements automatiques (scoring IA, transcription audio) dès le rattachement d'un fichier.
+    
+    \item \textbf{Portail et authentification.} L'objet \texttt{User} est relié au \texttt{Contact} via le champ \texttt{ContactId}, matérialisant l'accès au portail Experience Cloud pour les candidats B2C. Les mécanismes d'authentification complémentaires sont supportés par \texttt{Password\_Reset\_Token\_\_c} (réinitialisation sécurisée) et \texttt{QrLogin\_\_c} (connexion par QR~code), tandis que chaque opération sensible est journalisée dans \texttt{Security\_Audit\_Log\_\_c}.
+\end{itemize}
+
+\begin{figure}[hbt!]
+  \centering
+  % \includegraphics[width=1.0\textwidth]{images/class-diagram.png}
+  \caption{Diagramme de classes : modèle de données du HR Talent Portal}
+  \label{fig:diagrameclasse}
+\end{figure}
+
+\FloatBarrier
+
+\section{Architecture globale du système}
+
+Cette section expose l'architecture technique retenue pour le HR Talent Portal, en distinguant l'architecture physique (infrastructure de déploiement) de l'architecture logique (organisation des couches applicatives).
+
+\subsection{Architecture physique}
+
+L'architecture adoptée suit un modèle trois tiers, composée d'un client web, d'un serveur d'application et d'un serveur de données. Le diagramme de déploiement (figure~\ref{fig:ArchitecturePhysique}) illustre les relations entre ces composants.
+
+\begin{itemize}
+    \item \textbf{Couche client (navigateur web) :} le candidat et le recruteur accèdent à la plateforme via un navigateur standard. Les composants LWC sont exécutés côté client, assurant une expérience réactive de type \textit{Single Page Application}. Les appels serveur sont effectués via le mécanisme \texttt{@AuraEnabled} qui encapsule les requêtes HTTP dans le protocole sécurisé de Salesforce.
+    
+    \item \textbf{Couche applicative (Salesforce Cloud) :} le cloud Salesforce héberge l'application, les métadonnées des workflows, les classes Apex et les traitements asynchrones (\texttt{Queueable}). C'est cette couche qui orchestre les appels sortants vers l'API Groq pour le scoring IA, la génération de questions et la transcription audio.
+    
+    \item \textbf{Couche de persistance (Database.com) :} la base de données multi-tenant de Salesforce assure le stockage de l'ensemble des enregistrements (Leads, Contacts, Opportunities, entretiens, questions, logs d'audit) avec cloisonnement logique par organisation.
+\end{itemize}
+
+\begin{figure}[hbt!]
+  \centering
+  % \includegraphics[width=12cm]{images/Architecture_Physique.png}
+  \caption{Diagramme de déploiement du HR Talent Portal}
+  \label{fig:ArchitecturePhysique}
+\end{figure}
+\FloatBarrier
+
+\subsection{Architecture logique}
+
+Le framework Lightning Web Components structure l'application selon un modèle en quatre couches (Vue, Contrôleur client, Contrôleur serveur, Modèle), réparties entre le navigateur et le serveur Salesforce.
+
+\medskip
+
+Côté client, la vue HTML interagit avec le contrôleur JavaScript du composant LWC. Lorsqu'une opération nécessite un accès aux données, le contrôleur JavaScript invoque une méthode \texttt{@AuraEnabled} du contrôleur Apex côté serveur. Ce dernier accède aux données via des requêtes SOQL sur les objets SObject, assurant les opérations CRUD dans le respect des \textit{Governor Limits}.
+
+\medskip
+
+Cette séparation des responsabilités entre les couches garantit trois propriétés architecturales fondamentales : la modularité (chaque composant LWC est autonome et réutilisable), la maintenabilité (une modification de la logique métier en Apex n'affecte pas la couche de présentation) et la testabilité (les contrôleurs Apex peuvent être testés unitairement via les classes de test Salesforce, comme \texttt{CVScoringServiceTest}).
+
+\begin{figure}[hbt!]
+  \centering
+  % \includegraphics[width=12cm]{images/Architecture_Logique2.png}
+  \caption{Architecture logique du HR Talent Portal}\parencite{URL29}
+  \label{fig:Architecturelogique}
+\end{figure}
+\FloatBarrier
+
+\section{Backlog produit}
+
+Le backlog produit constitue le référentiel ordonné des exigences fonctionnelles du \textbf{HR Talent Portal}. Conformément à la méthodologie Scrum, chaque exigence est formulée sous forme de \textit{User Story} selon le format canonique : \og En tant que [acteur], je souhaite [action] afin de [bénéfice] \fg{}. Le tableau~\ref{tab:backlog_detaille} présente l'ensemble des items, hiérarchisés par priorité et rattachés au sprint dans lequel ils seront implémentés.
+
+\begin{longtable}{|p{0.6cm}|p{2.5cm}|p{7.5cm}|p{1.3cm}|p{1.3cm}|}
+\caption{Backlog produit détaillé du HR Talent Portal} \label{tab:backlog_detaille} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{Module} & \textbf{User Story} & \textbf{Priorité} & \textbf{Sprint} \\
+\hline
+\endfirsthead
+
+\multicolumn{5}{c}{\textit{(Suite du tableau \ref{tab:backlog_detaille})}} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{Module} & \textbf{User Story} & \textbf{Priorité} & \textbf{Sprint} \\
+\hline
+\endhead
+
+\hline
+\endlastfoot
+
+%% ---- SPRINT 1 : Socle applicatif & Identité ----
+\multicolumn{5}{|c|}{\cellcolor{blue!10}\textbf{Sprint 1 --- Socle applicatif, identité numérique et portail d'offres}} \\
+\hline
+
+1 & Portail public & En tant que visiteur, je souhaite consulter la liste des offres d'emploi de Talan avec des filtres multicritères (mot-clé, localisation, type de contrat, département) afin de trouver rapidement les postes correspondant à mon profil. & Élevée & S1 \\
+\hline
+
+2 & Portail public & En tant que visiteur, je souhaite visualiser le détail complet d'une offre (titre, description, salaire, département) afin d'évaluer mon intérêt avant de postuler. & Élevée & S1 \\
+\hline
+
+3 & Candidature & En tant que visiteur, je souhaite soumettre ma candidature et téléverser mon CV (jusqu'à 10~Mo) via un formulaire intuitif afin d'intégrer le vivier de talents de Talan. & Critique & S1 \\
+\hline
+
+4 & Authentification & En tant que candidat, je souhaite me connecter à mon espace personnel via mon adresse email afin d'accéder à mon tableau de bord et à mes évaluations. & Critique & S1 \\
+\hline
+
+5 & Authentification & En tant que candidat, je souhaite réinitialiser mon mot de passe via un lien sécurisé reçu par email afin de récupérer l'accès à mon compte en toute sécurité. & Élevée & S1 \\
+\hline
+
+6 & Authentification & En tant que candidat, je souhaite me connecter via un QR code afin de bénéficier d'un accès rapide depuis mon mobile. & Moyenne & S1 \\
+\hline
+
+7 & Tableau de bord & En tant que candidat, je souhaite visualiser le pipeline de ma candidature en cinq étapes avec mon avancement actuel afin de savoir où j'en suis dans le processus. & Élevée & S1 \\
+\hline
+
+8 & Profil B2C & En tant que candidat, je souhaite consulter et modifier mes informations personnelles depuis mon espace afin de maintenir mon profil à jour. & Moyenne & S1 \\
+\hline
+
+9 & Sécurité & En tant que responsable RH, je souhaite que chaque opération sensible (connexion, réinitialisation, upload) soit journalisée dans un audit trail afin de garantir la traçabilité et la conformité. & Élevée & S1 \\
+\hline
+
+10 & Administration & En tant que responsable RH, je souhaite gérer les habilitations utilisateurs via des PermissionSets dédiés afin de contrôler finement l'accès aux données sensibles. & Élevée & S1 \\
+\hline
+
+%% ---- SPRINT 2 : Moteur IA & Scoring ----
+\multicolumn{5}{|c|}{\cellcolor{green!10}\textbf{Sprint 2 --- Moteur d'intelligence artificielle et scoring de CV}} \\
+\hline
+
+11 & Scoring IA & En tant que recruteur, je souhaite que chaque CV déposé soit automatiquement analysé par l'IA afin d'obtenir un score de matching et une recommandation sans intervention manuelle. & Critique & S2 \\
+\hline
+
+12 & Scoring IA & En tant que recruteur, je souhaite consulter les points forts et les axes d'amélioration identifiés par l'IA pour chaque candidat afin de préparer mes entretiens avec des données objectives. & Élevée & S2 \\
+\hline
+
+13 & Conversion auto & En tant que système, je souhaite convertir automatiquement un Lead en Contact + Account + Opportunity lorsque son score IA atteint le seuil de 15/20 afin d'accélérer le passage en phase d'évaluation. & Critique & S2 \\
+\hline
+
+14 & Provisioning & En tant que système, je souhaite créer automatiquement un compte portail Experience Cloud pour chaque candidat converti et lui envoyer un email d'accès avec un lien chiffré afin de lui donner accès à son espace personnel. & Critique & S2 \\
+\hline
+
+15 & Offres IA & En tant que recruteur, je souhaite générer une description d'offre professionnelle structurée à partir d'un brouillon via l'IA afin de publier des annonces attractives et normalisées. & Moyenne & S2 \\
+\hline
+
+16 & Scoring IA & En tant que recruteur, je souhaite pouvoir relancer manuellement le scoring IA d'un candidat afin de réévaluer un profil après mise à jour de son CV. & Moyenne & S2 \\
+\hline
+
+%% ---- SPRINT 3 : Pipeline d'évaluation ----
+\multicolumn{5}{|c|}{\cellcolor{orange!10}\textbf{Sprint 3 --- Pipeline d'évaluation : Gaming, Technique et Architecture}} \\
+\hline
+
+17 & Gaming & En tant que recruteur, je souhaite déclencher la génération automatique de 25~questions gaming adaptées à une offre afin de disposer d'un jeu d'évaluation calibré par l'IA. & Élevée & S3 \\
+\hline
+
+18 & Gaming & En tant que candidat, je souhaite passer un test gaming de 10~questions avec un minuteur dynamique et trois types de questions (QCM, puzzle, ordonnancement) afin de démontrer mes aptitudes cognitives de manière ludique. & Élevée & S3 \\
+\hline
+
+19 & Gaming & En tant que recruteur, je souhaite planifier des sessions de test gaming (individuellement ou en lot) avec envoi automatique d'invitations email afin d'organiser les évaluations efficacement. & Élevée & S3 \\
+\hline
+
+20 & Technique & En tant que recruteur, je souhaite déclencher la génération de 5~exercices techniques (code, architecture, débogage) adaptés au poste afin de disposer d'un jeu d'évaluation technique calibré. & Élevée & S3 \\
+\hline
+
+21 & Technique & En tant que candidat, je souhaite résoudre des exercices techniques avec évaluation IA automatique de chaque réponse afin de recevoir un score et un feedback détaillé objectifs. & Élevée & S3 \\
+\hline
+
+22 & Architecture & En tant que candidat, je souhaite participer à un entretien architecture via Jitsi Meet avec enregistrement audio afin d'être évalué sur un cas de conception réaliste. & Élevée & S3 \\
+\hline
+
+23 & Architecture & En tant que système, je souhaite transcrire automatiquement l'audio de l'entretien via Whisper puis l'évaluer via LLaMA sur quatre critères pondérés afin de produire un score objectif et un feedback structuré. & Critique & S3 \\
+\hline
+
+24 & Pipeline & En tant que recruteur, je souhaite faire progresser un candidat d'étape en étape dans le pipeline avec notification email automatique afin de maintenir le candidat informé de son avancement. & Élevée & S3 \\
+\hline
+
+25 & Entretiens & En tant que manager, je souhaite consigner mes notes et mon évaluation qualitative après chaque entretien afin de compléter le dossier candidat avec une analyse humaine. & Élevée & S3 \\
+\hline
+
+26 & Décision RH & En tant que responsable RH, je souhaite prononcer la décision finale d'embauche ou de refus via l'objet RH\_Decision\_\_c, en m'appuyant sur le score composite et les recommandations du manager, afin de formaliser officiellement le verdict. & Élevée & S3 \\
+\hline
+
+
+%% ---- SPRINT 4 : Pilotage & Support ----
+\multicolumn{5}{|c|}{\cellcolor{purple!10}\textbf{Sprint 4 --- Dashboards analytiques, chatbot et pilotage}} \\
+\hline
+
+27 & Dashboards & En tant que responsable RH, je souhaite accéder à des tableaux de bord consolidés (taux de conversion, score moyen, Time-to-Hire, répartition par département) afin de piloter la stratégie de recrutement avec des indicateurs fiables. & Élevée & S4 \\
+\hline
+
+28 & Dashboards & En tant que recruteur, je souhaite visualiser sur mon tableau de bord le nombre de candidats par étape du pipeline et par offre afin de prioriser mes actions quotidiennes. & Élevée & S4 \\
+\hline
+
+29 & Chatbot & En tant que candidat, je souhaite poser des questions en langage naturel au chatbot du portail (offres disponibles, statut de ma candidature, résultat de mon scoring) afin d'obtenir des réponses instantanées sans attendre un interlocuteur humain. & Moyenne & S4 \\
+\hline
+
+30 & Reporting & En tant que recruteur, je souhaite générer un rapport PDF récapitulatif du test gaming d'un candidat afin de le partager avec les parties prenantes de la décision. & Moyenne & S4 \\
+\hline
+
+31 & Historique & En tant que candidat, je souhaite consulter l'historique complet de mes candidatures passées et en cours afin de garder une trace de mes interactions avec Talan. & Moyenne & S4 \\
+\hline
+
+32 & Contrat & En tant que responsable RH, je souhaite générer un contrat de travail et l'envoyer pour signature électronique via DocuSign afin de formaliser l'embauche sans échange de documents papier. & Élevée & S4 \\
+\hline
+
+33 & Onboarding & En tant que responsable RH, je souhaite déclencher le processus d'intégration du candidat retenu (attribution du poste, affectation à l'équipe, communication interne) une fois le contrat signé afin de garantir une prise de fonction fluide au sein de Talan. & Élevée & S4 \\
+\hline
+
+\end{longtable}
+
+\FloatBarrier
+
+\section{Planification des sprints}
+
+Le développement du HR Talent Portal est segmenté en quatre sprints de durées variables, calibrées selon la complexité technique de chaque incrément --- les sprints intégrant l'intelligence artificielle et le pipeline d'évaluation nécessitant un effort plus important que les sprints de configuration et de reporting. Le tableau~\ref{tab:sprints_planification} présente la feuille de route chronologique du projet.
+
+\begin{table}[hbt!]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|p{9.5cm}|l|l|}
+\hline
+\rowcolor{gray!15} \textbf{Sprint} & \textbf{Objectifs et livrables clés} & \textbf{Durée} & \textbf{Items} \\ \hline
+
+\textbf{Sprint 1} & \textbf{Socle applicatif et identité numérique.} Configuration de l'environnement SFDX, mise en place du portail Experience Cloud, développement des composants d'authentification (login, QR, reset password), déploiement du catalogue d'offres et du formulaire de candidature, implémentation du journal d'audit sécurité. & 2 sem. & 1--10 \\ \hline
+
+\textbf{Sprint 2} & \textbf{Moteur d'intelligence artificielle.} Intégration de l'API Groq, développement du \texttt{CVScoringService} et du trigger de scoring automatique, implémentation de la conversion auto Lead~$\rightarrow$~Contact avec provisioning du compte portail, génération de descriptions d'offres par IA. & 4 sem. & 11--16 \\ \hline
+
+\textbf{Sprint 3} & \textbf{Pipeline d'évaluation complet.} Développement des modules de test gaming (génération + passage), d'entretien technique (génération + évaluation IA) et d'entretien architecture (Jitsi + Whisper + LLaMA), gestion des transitions d'étapes avec notifications, saisie des feedbacks managers, calcul du score composite et implémentation de la décision RH (\texttt{RH\_Decision\_\_c}). & 4 sem. & 17--26 \\ \hline
+
+\textbf{Sprint 4} & \textbf{Pilotage, contractualisation et onboarding.} Mise en \oe{}uvre des tableaux de bord analytiques pour le recruteur et le responsable RH, intégration du chatbot NLP contextuel, génération de rapports PDF, contractualisation avec signature électronique DocuSign, historique candidat et déclenchement du processus d'onboarding. & 2 sem. & 27--33 \\ \hline
+\end{tabular}
+\caption{Calendrier prévisionnel de réalisation des sprints}
+\label{tab:sprints_planification}
+\end{table}
+
+\FloatBarrier
+
+\section{Conclusion}
+
+Ce chapitre de planification a permis de poser un cadre rigoureux pour le développement du HR Talent Portal. L'identification des six acteurs du système --- du visiteur anonyme au sous-système IA automatisé --- a délimité les périmètres de responsabilité de chaque partie prenante. La formalisation de 33~User Stories, organisées en quatre sprints thématiques, traduit les besoins métier de Talan en spécifications techniques actionnables. La modélisation UML --- diagramme de cas d'utilisation et diagramme de classes regroupant 19~entités (8~objets standards, 8~objets personnalisés, 2~objets DocuSign managés et 1~métadonnée RecordType) --- a permis de valider la couverture fonctionnelle et la cohérence du modèle de données, tandis que l'architecture trois tiers garantit la séparation des responsabilités entre présentation, logique métier et persistance.
+
+\medskip
+
+Le chapitre suivant sera consacré à la réalisation du premier sprint, centré sur la mise en place du socle applicatif : portail Experience Cloud, système d'authentification sécurisé et catalogue d'offres d'emploi.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "isae-report-template"
+%%% End:

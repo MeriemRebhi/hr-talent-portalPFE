@@ -1,0 +1,446 @@
+\chapter{Étude préliminaire}
+\label{chap:etude_preliminaire}
+\setlength{\fboxsep}{1pt}
+\setlength{\fboxrule}{0.4pt}
+
+\section{Introduction}
+
+Ce chapitre pose les fondations de notre projet de fin d'études en délimitant le cadre organisationnel, technologique et méthodologique dans lequel s'inscrit la conception du \textbf{HR Talent Portal}. Nous commencerons par présenter \textbf{Talan Tunisie}, l'entreprise au sein de laquelle ce projet a été mené, en précisant son positionnement dans le paysage du conseil IT. La deuxième partie sera consacrée à l'exploration des briques technologiques de l'écosystème \textbf{Salesforce} que nous avons mobilisées --- d'Experience Cloud pour le portail candidat, jusqu'aux couches Apex et LWC pour la logique métier. Nous aborderons ensuite le contexte opérationnel : la problématique du recrutement chez Talan, l'audit des outils existants sur le marché des ATS, et la solution que nous proposons. Enfin, nous justifierons le choix du cadre agile \textbf{Scrum} retenu pour piloter les quatre sprints de réalisation.
+
+\section{Présentation de l'organisme d'accueil}
+\subsection{Talan Tunisie Consulting}
+
+Fondé en 2002, le groupe Talan s'est construit autour d'une ambition précise : accompagner les grandes organisations dans leur mutation numérique en combinant conseil stratégique et expertise technique pointue. En deux décennies, cette ESN (Entreprise de Services du Numérique) a étendu son empreinte sur quatre continents, mobilisant aujourd'hui plus de 5\,000 collaborateurs répartis entre la France, le Canada, l'Afrique du Nord et le Moyen-Orient. Sa particularité réside dans un investissement soutenu dans les domaines à forte valeur ajoutée : Big Data, Internet des objets, Blockchain, et plus récemment l'intelligence artificielle appliquée aux processus métiers.\parencite{URL1}.
+
+\medskip
+
+Le pôle tunisien, opérationnel depuis 2008, fonctionne selon un modèle \textit{Nearshore} : une équipe d'ingénieurs basée à Tunis intervient en étroite collaboration avec les bureaux européens du groupe, tout en bénéficiant d'une autonomie technique sur les phases de conception et de développement. Ce centre a acquis une spécialisation reconnue dans la mise en œuvre de projets Salesforce de bout en bout --- de la configuration CRM standard jusqu'au développement d'applications sur mesure en Apex et Lightning Web Components. C'est dans ce contexte que notre stage de fin d'études a été réalisé, au sein de l'équipe Salesforce du bureau de Tunis.
+
+\FloatBarrier
+
+\subsection{Secteurs d'activités de Talan}
+
+L'une des forces de Talan est sa capacité à transposer son savoir-faire technologique dans des secteurs aux contraintes métier très différentes. Voici les principaux domaines dans lesquels le groupe intervient :
+
+\begin{itemize}
+    \item \textbf{Assurance :} conception de parcours de souscription digitaux et accompagnement dans la conformité réglementaire (Solvabilité~II, RGPD). Talan aide les assureurs à moderniser leurs systèmes de gestion de sinistres et à exploiter la donnée client pour personnaliser les offres.\parencite{URL2}.
+    
+    \item \textbf{Finance et Banque :} intervention sur les architectures transactionnelles à haute disponibilité --- systèmes de paiement, plateformes de trading, conformité bâloise. Le groupe accompagne également la migration vers le cloud des établissements financiers soumis à des exigences strictes de sécurité.\parencite{URL3}.
+    
+    \item \textbf{Énergie et Environnement :} appui à la transition énergétique par la mise en place de solutions de pilotage de la consommation, de Smart Grids et de tableaux de bord de suivi environnemental exploitant le Cloud et le Big Data.\parencite{URL4}.
+    
+    \item \textbf{Transport et Logistique :} digitalisation des chaînes d'approvisionnement, optimisation du suivi de flotte en temps réel et automatisation des processus de planification via des outils de simulation et d'IA.\parencite{URL5}.
+    
+    \item \textbf{Secteur Public :} modernisation des SI étatiques, dématérialisation des démarches administratives et mise en conformité des portails citoyens avec les normes d'accessibilité.\parencite{URL6}.
+    
+    \item \textbf{Télécommunications :} automatisation des workflows de provisioning réseau, amélioration de l'expérience abonné et déploiement de solutions de self-care omnicanal.\parencite{URL7}.
+\end{itemize}
+
+\subsection{Talan et Salesforce}
+
+Le partenariat entre Talan et Salesforce, formalisé en 2012, a constitué un tournant stratégique pour le groupe. Aujourd'hui, Talan compte plus de 150 consultants certifiés sur les différents modules de la plateforme : Sales Cloud, Service Cloud, Experience Cloud, Marketing Cloud et Platform.\parencite{URL8}.
+
+\medskip
+
+Ce partenariat revêt une importance particulière pour notre projet. L'équipe Salesforce de Talan Tunisie dispose d'une maîtrise opérationnelle du cycle complet : de la modélisation des objets métier jusqu'au déploiement sur des environnements de production multi-tenant. Notre \textit{Talent Intelligence Platform} s'inscrit directement dans cette lignée, en exploitant trois axes que Talan cherche à consolider :
+
+\begin{itemize}
+    \item \textbf{L'exploitation de l'IA au service du recrutement :} intégrer des modèles de langage (LLM) directement dans les workflows Salesforce pour automatiser le scoring de candidatures --- une capacité que les modules natifs d'Einstein ne couvrent pas encore de manière granulaire pour les processus RH.
+    \item \textbf{L'engagement candidat via un portail B2C :} construire un espace interactif sur Experience Cloud où le talent ne se contente pas de postuler, mais participe activement à son évaluation à travers des tests Gaming, des entretiens techniques et des sessions d'architecture.
+    \item \textbf{L'accélération du cycle de recrutement :} réduire le \textit{Time-to-Hire} en enchaînant automatiquement les étapes d'évaluation (screening IA, gaming, technique, architecture) sans attendre les validations manuelles intermédiaires.
+\end{itemize}
+
+\FloatBarrier
+
+\section{Concepts fondamentaux du projet}
+
+\subsection{Présentation de Salesforce}
+
+\subsubsection{Le CRM : une stratégie avant d'être un outil}
+
+Le terme CRM (\textit{Customer Relationship Management}) désigne à la fois une philosophie de gestion et une catégorie de logiciels destinés à centraliser l'ensemble des interactions entre une organisation et ses interlocuteurs --- clients, partenaires, ou dans notre cas, candidats. L'objectif premier d'un CRM est de fournir une vision consolidée (souvent qualifiée de \og vue à 360 degrés \fg{}) qui unifie les données dispersées entre les canaux de communication (email, téléphone, portail web, réseaux sociaux). Cette consolidation permet de réduire les traitements redondants, d'automatiser les tâches à faible valeur ajoutée et d'alimenter la prise de décision par des indicateurs fiables.\parencite{URL9}.
+
+\medskip
+
+Dans le contexte RH qui est le nôtre, nous avons \textbf{détourné le paradigme CRM classique} : au lieu de gérer des clients commerciaux, nous l'appliquons à la gestion du cycle de vie des candidats. Chaque postulant est traité comme un \textit{Lead} Salesforce à son arrivée, puis converti en \textit{Contact} associé à une \textit{Opportunity} (représentant sa candidature) une fois son score IA validé. Ce détournement n'est pas anecdotique : il nous permet de bénéficier de toute la mécanique native de Salesforce (workflows, automatisations, tableaux de bord) sans développer un moteur de suivi sur mesure.
+
+\subsubsection{Positionnement de Salesforce sur le marché du CRM}
+
+Salesforce conserve en 2025 sa position de leader mondial du CRM cloud, avec une part de marché estimée à plus de 23\,\%, loin devant ses concurrents directs (Microsoft Dynamics, SAP, Oracle). Cette domination s'est renforcée ces dernières années par l'intégration de capacités d'IA générative au cœur de la plateforme. La figure~\ref{fig:marche} illustre cette répartition.
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=8cm]{images/salesforcecrm.png}}
+  \caption{Répartition du marché mondial du Cloud CRM}\parencite{URL10}
+  \label{fig:marche}
+\end{figure}
+\FloatBarrier
+
+Pour notre projet, le choix de Salesforce ne relève pas d'une simple tendance technologique. Il répond à trois contraintes concrètes imposées par Talan : (1)~le centre tunisien dispose déjà d'une licence DevOrg et d'un pool de compétences certifiées, (2)~Experience Cloud offre un cadre prêt à l'emploi pour exposer un portail candidat sans infrastructure web distincte, et (3)~le modèle de données relationnel de Salesforce se prête naturellement à la modélisation d'un pipeline de recrutement multi-étapes.
+
+\subsubsection{La plateforme Salesforce : un PaaS orienté métier}
+
+Salesforce fonctionne selon un modèle \textbf{PaaS} (\textit{Platform as a Service}) : plutôt que de fournir uniquement une application figée, la plateforme met à disposition un ensemble d'outils de développement --- langages (Apex, SOQL), frameworks front-end (LWC, Aura), APIs REST/SOAP, moteur de flux déclaratifs (Flow Builder) --- permettant de construire des applications métier complètes sans gérer l'infrastructure sous-jacente.\parencite{URL11}.
+
+\medskip
+\textbf{Hybridation des modèles commerciaux dans notre solution :}
+
+\medskip
+
+Bien que Salesforce soit historiquement associé à la gestion de la relation client B2B, notre projet repose sur une articulation de deux modèles distincts, chacun correspondant à une facette du recrutement chez Talan :
+
+\begin{itemize}
+    \item \textbf{Dimension B2B --- Coordination interne :} 
+    Dans cette optique, le CRM sert de plaque tournante entre l'équipe RH centrale et les départements techniques du groupe (Cloud, Data, Cybersécurité). Chaque \textit{Business Unit} exprime ses besoins en compétences sous forme d'offres de postes (\textit{Job Postings}), stockées comme des enregistrements \texttt{Opportunity} dans Salesforce. Le recruteur y accède via un tableau de bord interne (développé en LWC) qui agrège les demandes et permet de prioriser le sourcing. Cette centralisation élimine les échanges informels par email et garantit une traçabilité complète des besoins.
+
+    \item \textbf{Dimension B2C --- Expérience Candidat :} 
+    C'est le pilier distinctif de notre solution. Nous avons conçu le portail Experience Cloud comme un espace dans lequel le candidat n'est pas un simple formulaire à remplir, mais un utilisateur à part entière disposant de son propre tableau de bord. Cette approche repose sur trois mécanismes :
+    \begin{itemize}
+        \item \textbf{Le parcours de conversion (\textit{Candidate Journey}) :} nous avons structuré le recrutement comme un tunnel à cinq étapes mesurables --- Screening IA, Gaming, Technique, Architecture, RH --- chacune produisant un score qui alimente un composite final. Ce tunnel est entièrement visible par le candidat depuis son espace personnel.
+        \item \textbf{Le self-service :} le candidat peut à tout moment consulter son avancement, télécharger de nouveaux documents, demander un report d'entretien ou échanger avec le chatbot IA intégré au portail, sans solliciter un interlocuteur humain.
+        \item \textbf{La transparence comme levier d'engagement :} en rendant chaque score (Gaming, Technique, Architecture) visible en temps réel, nous réduisons l'effet \og boîte noire \fg{} souvent reproché aux processus de recrutement classiques. Cette transparence vise à diminuer le taux d'abandon et à renforcer l'image de marque employeur de Talan auprès des profils technologiques.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Composants technologiques et briques SaaS mobilisées}
+
+L'écosystème Salesforce est structuré en modules applicatifs spécialisés (appelés \textit{Clouds}). Parmi la vingtaine de modules disponibles, nous avons retenu deux briques fondamentales pour bâtir l'architecture de notre solution :
+
+\begin{itemize}
+    \item \textbf{Salesforce Experience Cloud :} 
+    Ce module permet de projeter les données du CRM interne vers un site web accessible au public --- dans notre cas, le portail candidat hébergé à l'adresse \texttt{*.my.site.com}. Contrairement à un site web classique, chaque interaction du candidat (dépôt de CV, passage de test, soumission de formulaire) est directement synchronisée avec les objets Salesforce (\textit{Lead}, \textit{Contact}, \textit{Opportunity}). Cette synchronisation bidirectionnelle supprime toute étape d'import/export manuel et garantit l'intégrité en temps réel des données.
+    \begin{itemize}
+        \item \textbf{Cas d'usage dans notre projet :} le candidat se connecte au portail, accède à son tableau de bord personnel (composant LWC \texttt{candidateDashboard}), visualise les cinq étapes de son évaluation, lance ses tests Gaming et ses entretiens Architecture (via Jitsi Meet), et consulte le chatbot IA --- le tout sans quitter l'environnement Experience Cloud.
+    \end{itemize}
+
+    \item \textbf{Intelligence artificielle externe (Groq LLaMA \& Whisper) :}
+    Plutôt que de nous appuyer uniquement sur Einstein AI (la couche IA native de Salesforce), nous avons fait le choix d'intégrer des modèles de langage externes plus performants pour nos cas d'usage spécifiques. Concrètement :
+    \begin{itemize}
+        \item \textbf{Scoring de CV :} le modèle \texttt{llama-3.3-70b-versatile} hébergé par Groq analyse le contenu textuel du curriculum vitae et le compare aux exigences du poste pour produire un score sur 100, accompagné de recommandations détaillées.
+        \item \textbf{Transcription audio :} le modèle \texttt{whisper-large-v3-turbo} convertit les enregistrements audio des entretiens architecture (format WebM/Opus) en texte exploitable, qui est ensuite soumis à LLaMA pour évaluation.
+        \item \textbf{Analyse des réponses :} lors des entretiens techniques et d'architecture, LLaMA évalue les réponses du candidat selon des grilles de critères pondérés (par exemple : Architecture/25, Raisonnement/25, Design Patterns/25, Communication/25 pour l'entretien architecture).
+    \end{itemize}
+    Ces appels sont orchestrés depuis Apex via des classes \texttt{Queueable} avec l'annotation \texttt{AllowsCallouts}, ce qui permet un traitement asynchrone sans bloquer l'interface utilisateur.
+\end{itemize}
+
+\medskip
+La combinaison de ces deux briques --- Experience Cloud pour l'engagement front-end et les APIs Groq pour l'intelligence back-end --- transforme le CRM Salesforce en un véritable moteur de décision RH capable de traiter, évaluer et scorer une candidature de bout en bout avec une intervention humaine minimale.
+
+\subsection{Architecture Salesforce}
+
+L'infrastructure technique de Salesforce repose sur trois principes architecturaux qui conditionnent directement la manière dont nous avons conçu notre solution (Figure~\ref{fig:Architecture salesforce}).
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=10cm]{images/architecturesales (1).png}}
+  \caption{Architecture multicouche de Salesforce}\parencite{URL12}
+  \label{fig:Architecture salesforce}
+\end{figure}
+\FloatBarrier
+
+\begin{enumerate}
+    \item \textbf{Multi-tenancy (infrastructure partagée) :} toutes les organisations clientes coexistent sur la même infrastructure physique, mais Salesforce assure un cloisonnement logique strict. Chaque \textit{Org} dispose de son propre espace de données, de ses propres métadonnées et de ses propres règles de sécurité. Pour notre projet, cela signifie que les données des candidats (CV, scores, enregistrements audio) sont isolées dans notre DevOrg sans risque d'interférence avec d'autres tenants.
+    
+    \item \textbf{Architecture pilotée par les métadonnées (\textit{Metadata-Driven}) :} chaque composant de l'application --- structure d'un objet personnalisé (\texttt{Technical\_Interview\_\_c}), règle de validation, composant LWC, permission set --- est défini sous forme de métadonnées XML. Le moteur d'exécution de Salesforce interprète ces métadonnées à la volée. Ce modèle nous a permis de versionner l'intégralité de notre solution dans un dépôt Git et de la déployer via la commande \texttt{sf project deploy start}, sans toucher au noyau de la plateforme.
+    
+    \item \textbf{Interopérabilité via les APIs :} Salesforce expose des APIs REST et SOAP robustes qui permettent d'échanger des données avec des systèmes tiers. Dans notre cas, ces APIs sont exploitées dans le sens \textit{sortant} : nos classes Apex envoient des requêtes HTTP POST vers l'endpoint \texttt{https://api.groq.com} pour soumettre les CV et les transcriptions audio aux modèles LLaMA et Whisper. Les réponses (scores, recommandations) sont ensuite stockées dans les champs des objets Salesforce correspondants.\parencite{URL12}.
+\end{enumerate}
+
+\subsection{Modélisation des données dans Salesforce}
+
+La base de données Salesforce suit un schéma relationnel où les données sont organisées en trois niveaux hiérarchiques (Figure~\ref{fig:metadonne}) :
+
+\begin{itemize}
+    \item \textbf{Objets :} équivalents des tables dans une base relationnelle classique. Salesforce distingue les objets \textit{standards} (fournis nativement : \texttt{Lead}, \texttt{Contact}, \texttt{Account}, \texttt{Opportunity}) et les objets \textit{personnalisés} (créés pour les besoins du projet, identifiables par le suffixe \texttt{\_\_c} : \texttt{Technical\_Interview\_\_c}, \texttt{Architecture\_Interview\_\_c}, \texttt{Gaming\_Question\_\_c}).
+    \item \textbf{Enregistrements :} chaque ligne d'un objet constitue un enregistrement --- par exemple, le profil complet d'un candidat donné dans l'objet \texttt{Contact}.
+    \item \textbf{Champs :} colonnes de chaque objet, typés (Text, Number, Picklist, Lookup, etc.). Par exemple, le champ \texttt{AI\_Score\_\_c} sur l'objet \texttt{Lead} stocke le résultat du scoring LLaMA.
+\end{itemize}
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=14cm]{images/opportunity.png}}
+  \caption{Organisation des données Candidats dans le modèle Salesforce}\parencite{URL13}
+  \label{fig:metadonne}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Les principaux objets standards exploités}
+
+Notre pipeline de recrutement s'appuie sur quatre objets standards de Salesforce, chacun jouant un rôle précis dans le cycle de vie de la candidature :
+
+\begin{itemize}
+    \item \textbf{Lead (Piste) :} c'est le point d'entrée de tout candidat dans le système. Lorsqu'un visiteur dépose son CV sur le portail, un enregistrement Lead est créé automatiquement. C'est sur cet objet que le trigger de scoring IA se déclenche : dès qu'un fichier \texttt{ContentDocumentLink} est associé au Lead, le processus d'extraction et d'analyse par LLaMA démarre en arrière-plan.
+    \item \textbf{Account (Compte) :} dans un contexte B2C, le compte représente l'identité numérique du candidat. Il est créé automatiquement lors de la conversion du Lead et est nommé d'après l'adresse email du candidat, servant de conteneur parent pour le Contact et les Opportunités.
+    \item \textbf{Contact :} centralise les données personnelles et professionnelles du candidat qualifié (nom, compétences, coordonnées). C'est l'objet qui sera consulté par les recruteurs et managers tout au long du processus d'évaluation.
+    \item \textbf{Opportunity (Opportunité) :} détournée de son usage commercial habituel, l'Opportunité modélise ici la candidature elle-même. Son champ \texttt{StageName} reflète l'étape courante du pipeline (Screening, Gaming, Technical, Architecture, HR Decision), et elle porte les relations vers les objets d'entretien personnalisés.
+\end{itemize}
+
+\subsubsection{Relation et Conversion B2C}
+
+Le modèle \textbf{B2C} (\textit{Business to Consumer}) désigne un schéma dans lequel les services numériques s'adressent directement aux utilisateurs finaux, sans intermédiaire. Dans le secteur du recrutement, ce paradigme se justifie par la nature même de l'interaction : le candidat est un individu autonome qui consomme un service (postuler, passer un test, suivre son évaluation) de manière personnelle, à l'image d'un client sur une plateforme e-commerce.
+
+\medskip
+
+Nous avons retenu cette approche B2C pour structurer notre portail Experience Cloud, car les candidats de Talan sont des utilisateurs individuels --- et non des entités organisationnelles --- qui nécessitent un espace personnel, une identité numérique propre et un accès sécurisé à leurs données d'évaluation. Concrètement, une fois le score IA validé, le prospect (\textit{Lead}) est converti vers un compte utilisateur sécurisé composé de trois enregistrements : un \texttt{Account} (identité B2C), un \texttt{Contact} (profil candidat) et une \texttt{Opportunity} (suivi de candidature) (Figure~\ref{fig: Conversionpiste}).
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=12cm]{images/conversion.png}}
+  \caption{Processus de conversion du Lead en Contact, Account et Opportunity}\parencite{URL16}
+  \label{fig: Conversionpiste}
+\end{figure}
+\FloatBarrier
+
+\subsection{Outils de développement et environnement technologique}
+
+La construction du \textit{HR Talent Portal} repose sur l'articulation entre deux approches complémentaires offertes par Salesforce : le \textbf{Low-code} (configuration déclarative via l'interface graphique) pour les automatisations simples, et le \textbf{Pro-code} (développement programmatique en Apex et LWC) pour la logique complexe --- notamment les appels aux APIs d'IA externe et la gestion asynchrone des évaluations.
+
+\subsubsection{Experience Cloud : passerelle vers le candidat}
+\hypertarget{ExperienceCloud}{}
+
+Anciennement nommé Community Cloud, \textbf{Experience Cloud} est le module qui nous a permis de publier le portail candidat sans déployer d'infrastructure web séparée. Concrètement, il s'agit d'un site généré par Salesforce, hébergé sur un sous-domaine \texttt{*.my.site.com}, dont les pages sont composées de composants LWC.
+
+\begin{itemize}
+    \item \textbf{Experience Builder :} interface graphique de type glisser-déposer (\textit{WYSIWYG}) utilisée pour assembler les pages du portail. Nous y avons placé nos composants personnalisés (\texttt{candidateDashboard}, \texttt{architectureInterview}, \texttt{gamingTest}) sur les routes correspondantes.
+    \item \textbf{Gestion des accès Guest et Authentifié :} Experience Cloud distingue le profil \textit{Guest} (visiteur non connecté, qui peut consulter les offres et déposer une candidature) du profil \textit{Authentifié} (candidat connecté, qui accède à son tableau de bord personnel, ses tests et ses entretiens). Nous avons configuré des \texttt{PermissionSets} spécifiques pour chaque profil afin de contrôler finement l'accès aux objets et aux classes Apex.\parencite{URL17}.
+\end{itemize}
+
+\subsubsection{Développement Backend : Apex et Triggers}
+
+Le cœur logique de toute application Salesforce repose sur \textbf{Apex}, le langage de programmation propriétaire de la plateforme. Orienté objet et fortement typé, Apex est compilé et exécuté directement sur les serveurs multi-tenant de Salesforce. Sa syntaxe, volontairement proche de Java, facilite la prise en main par les développeurs issus de l'écosystème JVM.
+
+\begin{itemize}
+    \item \textbf{Langage Apex :} Apex permet d'implémenter des processus métiers que les outils déclaratifs (Flow Builder, Process Builder) ne peuvent pas traiter --- notamment les appels asynchrones (\textit{Callouts}) vers des APIs externes, la manipulation complexe de collections d'enregistrements et la gestion transactionnelle avancée. Les méthodes exposées aux composants front-end sont annotées \texttt{@AuraEnabled}, et les traitements longs sont délégués à des classes implémentant l'interface \texttt{Queueable} avec \texttt{AllowsCallouts} pour les exécuter en arrière-plan.
+    
+    \item \textbf{Apex Triggers (Déclencheurs) :} les Triggers sont des scripts qui s'exécutent automatiquement avant ou après des événements DML (\textit{Data Manipulation Language}) --- insertion, mise à jour, suppression d'un enregistrement. Ils permettent de capturer un événement métier et d'y réagir instantanément sans intervention manuelle, ce qui est fondamental pour automatiser les pipelines de traitement de données.\parencite{URL18}.
+\end{itemize}
+
+\subsubsection{Développement Frontend : Lightning Web Components (LWC)}
+\hypertarget{LWC}{}
+
+Pour le développement des interfaces utilisateur sur la plateforme Salesforce, le framework \textbf{Lightning Web Components (LWC)} représente l'approche moderne, privilégiée au détriment de l'ancien modèle Aura. LWC repose sur trois technologies fondamentales du web :
+
+\begin{itemize}
+    \item \textbf{Standards du Web :} LWC s'appuie nativement sur les Web Components (\texttt{Custom Elements}, \texttt{Shadow DOM}) et les modules ES6+. Cette conformité aux standards garantit des composants légers et performants, exécutés directement par le navigateur sans couche d'abstraction intermédiaire.
+    \item \textbf{Réactivité et Data Binding :} les décorateurs \texttt{@wire} et \texttt{@api} assurent une communication fluide entre la couche JavaScript (logique frontend) et le serveur Apex (logique backend). Le décorateur \texttt{@wire} établit un lien réactif avec les données serveur, tandis que \texttt{@api} gère la communication inter-composants.
+    \item \textbf{HTML templating :} les templates LWC utilisent un système de directives (\texttt{if:true}, \texttt{for:each}, \texttt{iterator}) pour le rendu conditionnel et les boucles, offrant un modèle déclaratif proche des frameworks web modernes.\parencite{URL20}.
+\end{itemize}
+
+\subsubsection{Langages de requête : SOQL et SOSL}
+
+L'interrogation de la base de données Salesforce passe par deux langages spécialisés :
+
+\begin{itemize}
+    \item \textbf{SOQL} (\textit{Salesforce Object Query Language}) : similaire au \texttt{SELECT} SQL, il permet de récupérer des enregistrements dans un objet et ses relations parent-enfant. Nous l'utilisons massivement pour extraire les candidatures d'un recruteur, les résultats d'entretien d'un candidat ou les questions d'un test Gaming.
+    \item \textbf{SOSL} (\textit{Salesforce Object Search Language}) : moteur de recherche textuelle transversal capable de scanner simultanément plusieurs objets. Utile pour la recherche de candidats par mots-clés dans les CV ou les notes d'entretien.\parencite{URL21}.
+\end{itemize}
+
+\subsubsection{Flow Builder : automatisation déclarative}
+
+Flow Builder est l'outil No-Code de Salesforce permettant de modéliser des automatisations sous forme de diagrammes visuels. Dans notre projet, nous avons implémenté un \textit{Record-Triggered Flow} qui se déclenche à chaque mise à jour d'un Lead qualifié. Ce flow orchestre deux actions séquentielles : (1)~l'invocation d'une action Apex de conversion automatique (création du Contact, de l'Account et de l'Opportunity), puis (2)~l'envoi d'une notification email au responsable RH pour l'informer de la nouvelle candidature qualifiée. Ce mécanisme garantit un pipeline entièrement automatisé, de la validation IA jusqu'à la notification de l'équipe de recrutement (Figure~\ref{fig: flow}).
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=10cm]{images/flow.png}}
+  \caption{Record-Triggered Flow : conversion automatique du Lead et notification RH}
+  \label{fig: flow}
+\end{figure}
+\FloatBarrier
+
+\section{Contexte du projet}
+
+Après avoir posé les bases technologiques, cette section aborde le volet opérationnel : pourquoi ce projet existe, quel problème il résout, et en quoi les solutions actuellement disponibles sur le marché ne répondent pas aux besoins spécifiques de Talan.
+
+\subsection{Problématique}
+
+Le recrutement de profils technologiques au sein d'une ESN multi-spécialités comme Talan génère un volume de candidatures que les processus manuels ne parviennent plus à absorber efficacement. Nous avons identifié quatre tensions structurelles à l'origine de ce projet :
+
+\begin{enumerate}
+    \item \textbf{Un goulet d'étranglement au niveau du tri initial :} chaque offre publiée par Talan génère en moyenne plusieurs dizaines de candidatures. Les CV arrivent sous des formats hétérogènes (PDF à mise en page variable, documents Word, images scannées). Le tri manuel de ces documents par le recruteur mobilise un temps disproportionné par rapport à la valeur ajoutée de l'opération. Ce délai allonge le \textit{Time-to-Hire} et accroît le risque de perdre les profils les plus sollicités, qui acceptent souvent la première offre reçue.
+    
+    \item \textbf{L'absence de critères d'évaluation quantifiables et reproductibles :} sans outil de \textit{matching} automatisé, la première évaluation d'un CV repose sur l'appréciation subjective du recruteur. Deux recruteurs évaluant le même CV peuvent aboutir à des conclusions différentes. Cette variabilité nuit à l'équité du processus et rend impossible la comparaison objective entre candidats issus de départements techniques distincts (Cloud, Data, Cybersécurité).
+    
+    \item \textbf{Une expérience candidat fragmentée et opaque :} dans le processus existant, le candidat n'a aucune visibilité sur l'avancement de son dossier. Les échanges se font par email, les résultats des entretiens ne sont pas communiqués en temps réel, et il n'existe pas d'espace centralisé où le candidat puisse interagir avec le processus de manière autonome. Cette opacité affecte l'image de marque employeur de Talan et contribue à un taux d'abandon non négligeable entre les étapes.
+    
+    \item \textbf{Un temps de réponse élevé qui érode la motivation :} les candidats attendent souvent plusieurs jours, voire plusieurs semaines, avant de recevoir un retour sur leur candidature. Ce délai prolongé nuit directement à leur motivation et à leur perception de l'entreprise. Dans un marché de l'emploi technologique où les profils qualifiés reçoivent simultanément plusieurs sollicitations, un temps de réponse excessif pousse les meilleurs talents à accepter des offres concurrentes. Cette lenteur constitue un facteur de détérioration de l'image de Talan en tant qu'employeur réactif et moderne.
+\end{enumerate}
+
+\begin{figure}[hbt!]
+    \centering
+    \fbox{\includegraphics[width=0.8\textwidth]{images/Problématiquemodélisation.png}}
+    \caption{Modélisation des goulots d'étranglement du processus de recrutement actuel}
+    \label{fig:problematique}
+\end{figure}
+\FloatBarrier
+
+\subsection{Étude de l'existant}
+
+Avant de concevoir notre solution, nous avons mené un audit approfondi de trois plateformes de gestion du recrutement (\textit{Applicant Tracking Systems --- ATS}) largement adoptées dans l'industrie. L'objectif n'était pas de dresser un simple inventaire, mais d'identifier précisément, pour chaque outil, les capacités exploitables et les lacunes structurelles au regard des exigences de Talan.
+
+\hypertarget{LinkedIn Talent}{}
+\subsubsection{LinkedIn Talent Solutions}
+
+\textbf{Présentation.} LinkedIn Talent Solutions est la suite de recrutement adossée au réseau professionnel mondial LinkedIn (plus de 1~milliard de membres). Elle se compose principalement de trois produits : \textit{LinkedIn Recruiter} (recherche avancée de profils), \textit{LinkedIn Jobs} (publication d'offres) et \textit{LinkedIn Talent Insights} (données analytiques sur le marché de l'emploi).
+
+\medskip
+\textbf{Points forts identifiés :}
+\begin{itemize}
+    \item \textbf{Capacité de sourcing inégalée :} l'accès à la base de profils LinkedIn permet d'identifier des candidats passifs (non activement en recherche) à l'aide de filtres granulaires : compétences, expérience, localisation, entreprise actuelle, certifications. Cette fonctionnalité est particulièrement pertinente pour les profils technologiques rares que Talan recrute (architectes cloud, data engineers).
+    \item \textbf{InMail et engagement :} la messagerie intégrée permet de contacter directement les candidats ciblés, avec un taux de réponse généralement supérieur aux emails classiques, grâce au contexte professionnel de la plateforme.
+    \item \textbf{Données de marché :} LinkedIn Talent Insights fournit des indicateurs macro (nombre de profils disponibles par compétence et par zone géographique, tendances de mobilité) utiles pour calibrer les offres.
+\end{itemize}
+
+\textbf{Lacunes critiques par rapport à nos besoins :}
+\begin{itemize}
+    \item \textbf{Absence totale de pipeline d'évaluation :} LinkedIn se positionne en amont du processus (identification et attraction des candidats) mais ne propose aucun mécanisme d'évaluation technique. Il n'est pas possible d'intégrer un test de gaming, un entretien technique scoré ou une évaluation d'architecture au sein de la plateforme. Le candidat identifié sur LinkedIn doit être transféré manuellement vers un autre outil pour être évalué, ce qui crée une rupture dans le flux de données.
+    \item \textbf{Pas de scoring IA natif sur les CV :} bien que LinkedIn utilise l'IA pour recommander des profils, il ne propose pas de scoring automatisé du CV par rapport à une fiche de poste spécifique. Le recruteur doit toujours évaluer manuellement l'adéquation entre le profil et le besoin.
+    \item \textbf{Données non synchronisées avec le CRM interne :} les informations collectées sur LinkedIn (échanges InMail, notes de sourcing, statut du candidat) restent cloisonnées dans l'écosystème LinkedIn. L'intégration avec Salesforce nécessite des connecteurs tiers (comme LinkedIn Recruiter System Connect), dont la mise en place est complexe et dont la synchronisation reste unidirectionnelle pour certaines données.
+    \item \textbf{Aucun portail candidat :} LinkedIn n'offre pas d'espace dédié où le candidat pourrait suivre son avancement, consulter ses scores ou interagir de manière autonome avec le processus de recrutement de Talan.\parencite{URL24}.
+\end{itemize}
+
+\begin{figure}[hbt!]
+    \centering
+    \caption{Interface de gestion des candidats sur LinkedIn Talent Solutions}
+    \label{fig:existant_linkedin}
+\end{figure}
+
+\hypertarget{Workday}{}
+\subsubsection{Workday Recruiting}
+
+\textbf{Présentation.} Module de recrutement intégré à la suite Workday HCM (\textit{Human Capital Management}), Workday Recruiting cible les grandes entreprises ayant besoin d'un système unifié couvrant l'ensemble du cycle de vie du collaborateur : du recrutement initial jusqu'à la gestion de la paie, des congés et des évaluations annuelles.
+
+\medskip
+\textbf{Points forts identifiés :}
+\begin{itemize}
+    \item \textbf{Centralisation administrative complète :} une fois le candidat recruté, ses données migrent naturellement vers les modules de gestion RH (onboarding, paie, formation) sans ressaisie. Cette continuité est un atout majeur pour les organisations de la taille de Talan.
+    \item \textbf{Conformité et reporting :} Workday excelle dans la production de rapports conformes aux exigences réglementaires (droit du travail, RGPD, diversité). Les tableaux de bord de recrutement offrent une vue consolidée sur les KPIs standard : délai moyen de recrutement, taux de conversion par source, coût par embauche.
+    \item \textbf{Parsing de CV structuré :} Workday intègre un moteur de \textit{parsing} capable d'extraire les informations structurelles d'un CV (nom, expériences, formations) pour pré-remplir les fiches candidat.
+\end{itemize}
+
+\textbf{Lacunes critiques par rapport à nos besoins :}
+\begin{itemize}
+    \item \textbf{Rigidité du tunnel de candidature :} le parcours candidat dans Workday suit un schéma linéaire et standardisé (postuler → présélection → entretien → offre) qui ne peut pas être enrichi par des étapes d'évaluation sur mesure sans développement spécifique. L'insertion d'une phase de Gaming interactif ou d'un entretien architecture avec enregistrement audio et analyse IA n'est pas prévue nativement.
+    \item \textbf{Interface candidat perçue comme austère :} plusieurs études UX sectorielles relèvent que le portail de candidature de Workday, bien que fonctionnel, offre une expérience utilisateur en retrait par rapport aux standards actuels du web. Les formulaires multi-étapes et la navigation parfois contre-intuitive génèrent un taux d'abandon élevé, particulièrement chez les profils technologiques habitués à des interfaces modernes.
+    \item \textbf{Absence de gamification :} Workday ne propose aucune mécanique ludique dans le processus de recrutement. L'intégration de tests interactifs (type \textit{Gaming Assessment}) nécessiterait le recours à des éditeurs tiers (Codility, HackerRank) avec des connecteurs dédiés, ajoutant une couche de complexité et de coût.
+    \item \textbf{IA limitée au parsing :} le moteur d'analyse de Workday se cantonne à l'extraction de données structurées depuis les CV. Il ne propose pas de scoring sémantique mesurant l'adéquation entre les compétences du candidat et les exigences techniques d'un poste donné --- capacité centrale de notre solution via LLaMA.\parencite{URL25}.
+\end{itemize}
+
+\begin{figure}[hbt!]
+    \centering
+    \caption{Tunnel de candidature standard sur la plateforme Workday}
+    \label{fig:existant_workday}
+\end{figure}
+
+\hypertarget{Greenhouse}{}
+\subsubsection{Greenhouse}
+
+\textbf{Présentation.} Greenhouse est un ATS de nouvelle génération, particulièrement populaire auprès des entreprises technologiques nord-américaines (startups et scale-ups). Son positionnement repose sur la structuration des entretiens et la prise de décision collaborative entre les différents évaluateurs impliqués dans le processus de recrutement.
+
+\medskip
+\textbf{Points forts identifiés :}
+\begin{itemize}
+    \item \textbf{Entretiens structurés et \textit{Scorecards} :} Greenhouse impose une discipline d'évaluation en associant à chaque entretien une grille de critères prédéfinis (\textit{Scorecard}). Chaque évaluateur attribue un score par critère, ce qui réduit la variabilité inter-évaluateurs et facilite la comparaison entre candidats.
+    \item \textbf{Écosystème d'intégrations riche :} le marketplace Greenhouse propose plus de 500 intégrations tierces --- outils de visioconférence (Zoom, Teams), plateformes de tests techniques (HackerRank, CodeSignal), vérification des références et solutions de signature électronique.
+    \item \textbf{Reporting analytique avancé :} Greenhouse offre des tableaux de bord détaillés permettant d'identifier les goulots d'étranglement dans le pipeline (étapes où les candidats restent bloqués le plus longtemps, sources de candidature les plus performantes).
+\end{itemize}
+
+\textbf{Lacunes critiques par rapport à nos besoins :}
+\begin{itemize}
+    \item \textbf{Pas d'intelligence artificielle prédictive native :} malgré la richesse de ses intégrations, Greenhouse ne propose pas de moteur d'IA intégré capable de scorer automatiquement un CV ou d'analyser les réponses d'un entretien via un modèle de langage. Le calcul d'un \textit{Match Score} algorithmique nécessite l'ajout de modules externes (comme Eightfold ou Pymetrics), dont l'intégration reste superficielle --- les scores produits ne sont pas directement exploitables dans les \textit{Scorecards} de Greenhouse.
+    \item \textbf{Absence de portail candidat autonome :} Greenhouse est principalement orienté recruteur. Le candidat n'a pas d'espace personnel où il pourrait visualiser son avancement dans le pipeline, consulter ses résultats ou interagir avec un chatbot. La communication reste essentiellement unidirectionnelle (le recruteur envoie, le candidat reçoit).
+    \item \textbf{Pas de synchronisation native avec Salesforce :} bien qu'un connecteur Greenhouse-Salesforce existe, il se limite à la synchronisation des données candidat vers Salesforce. Il ne permet pas d'exploiter les objets personnalisés, les flows ou les automatisations Salesforce comme partie intégrante du processus d'évaluation.
+    \item \textbf{Pas de gestion d'entretiens audio/vidéo avec analyse automatisée :} Greenhouse gère la planification des entretiens mais ne fournit pas d'outil d'enregistrement audio avec transcription et analyse IA intégrée --- une capacité que nous avons implémentée dans notre module d'entretien Architecture via Jitsi Meet, Whisper et LLaMA.\parencite{URL26}.
+\end{itemize}
+
+\begin{figure}[hbt!]
+    \centering
+    \caption{Tableau de bord de suivi des entretiens sur Greenhouse}
+    \label{fig:existant_greenhouse}
+\end{figure}
+
+\FloatBarrier
+
+\subsubsection{Synthèse critique et positionnement de notre solution}
+
+Le tableau~\ref{tab:tab-existant} récapitule les capacités de chaque plateforme sur neuf critères que nous avons définis à partir des exigences fonctionnelles de Talan. Le signe \textbf{+} indique une couverture satisfaisante du critère, le signe \textbf{--} signale une absence ou une insuffisance nécessitant un outillage tiers.
+
+\begin{table}[ht]
+  \begin{center}
+    \begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+      \hline
+      \textbf{Solution} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} & \textbf{C6} & \textbf{C7} & \textbf{C8} & \textbf{C9} \\
+      \hline
+      \hyperlink{LinkedIn Talent}{LinkedIn Talent} & + & -- & -- & -- & + & -- & -- & -- & -- \\
+      \hline
+      \hyperlink{Workday}{Workday Recruiting} & -- & + & -- & + & -- & -- & + & -- & -- \\
+      \hline
+      \hyperlink{Greenhouse}{Greenhouse} & -- & + & + & -- & -- & + & -- & + & -- \\
+      \hline
+      \textbf{HR Talent Portal} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} & \textbf{+} \\
+      \hline
+    \end{tabular}
+    \caption{Comparatif des solutions de recrutement existantes}
+    \label{tab:tab-existant}
+  \end{center}
+\end{table}
+\FloatBarrier
+
+\textbf{Légende des critères :}
+\begin{enumerate}[label=\textbf{C\arabic*}]
+    \item \textbf{Sourcing IA :} capacité à identifier et recommander automatiquement des candidats pertinents via l'intelligence artificielle.
+    \item \textbf{Centralisation CRM :} intégration native des données candidat dans un CRM unifié, sans import/export manuel.
+    \item \textbf{Portail candidat interactif :} existence d'un espace personnel où le candidat suit son avancement, passe des tests et consulte ses scores.
+    \item \textbf{Parsing NLP du CV :} extraction automatisée des compétences et expériences par traitement du langage naturel.
+    \item \textbf{Matching dynamique :} calcul automatique d'un score d'adéquation entre le profil du candidat et les exigences du poste.
+    \item \textbf{Entretiens multi-évaluateurs :} gestion structurée d'entretiens impliquant plusieurs évaluateurs avec grilles de critères.
+    \item \textbf{Tests Gaming :} intégration native de tests ludiques et interactifs dans le parcours de recrutement.
+    \item \textbf{Analyse prédictive :} capacité à exploiter les données historiques pour prédire la performance future d'un candidat.
+    \item \textbf{Transcription et analyse IA des entretiens :} enregistrement des entretiens techniques et conversion automatique de l'audio en texte exploitable, avec analyse sémantique par l'IA pour le scoring et le suivi.
+\end{enumerate}
+
+\medskip
+
+\textbf{Constat :} aucune des trois solutions analysées ne couvre simultanément l'ensemble des neuf critères. LinkedIn excelle en sourcing mais reste exogène au pipeline d'évaluation et ne propose aucune transcription automatisée. Workday centralise les données RH de bout en bout mais manque de souplesse sur l'expérience candidat et l'IA avancée. Greenhouse structure efficacement les entretiens collaboratifs mais ne propose ni intelligence artificielle prédictive native, ni portail candidat autonome, ni module de gaming, ni enregistrement d'entretiens avec analyse IA.
+
+Notre solution, le \textbf{HR Talent Portal}, se positionne comme une plateforme intégrée couvrant les neuf critères grâce à la combinaison de Salesforce (centralisation CRM, portail Experience Cloud, automatisations Flow) et d'APIs d'IA externes (Groq LLaMA 3.3 pour le scoring et l'analyse, Whisper pour la transcription audio en texte). Le pipeline à cinq étapes --- Screening IA, Gaming, Technique, Architecture, Décision RH --- est entièrement géré au sein de l'écosystème Salesforce, sans rupture de flux ni outil tiers additionnel.
+
+\subsection{Solution proposée}
+
+Pour répondre aux quatre tensions identifiées dans la problématique, nous proposons la mise en place du \textbf{HR Talent Portal} --- une plateforme de recrutement intelligent construite nativement sur Salesforce. Sa conception repose sur trois piliers :
+
+\begin{enumerate}
+    \item \textbf{Automatisation du tri par l'IA :} dès le dépôt d'un CV sur le portail, un trigger Apex déclenche l'extraction du contenu textuel et son envoi à l'API Groq LLaMA 3.3-70b. Le modèle produit un score sur 100 et une analyse détaillée des forces et lacunes du profil par rapport au poste. Ce scoring remplace le tri manuel et réduit le temps de présélection de plusieurs jours à quelques secondes.
+    
+    \item \textbf{Digitalisation complète du parcours candidat :} le portail Experience Cloud offre au candidat un espace immersif où il progresse à travers cinq étapes, chacune pilotée par un composant LWC dédié. Le test Gaming évalue les aptitudes cognitives et la réactivité. L'entretien technique soumet des questions spécifiques au poste avec analyse IA des réponses. L'entretien architecture confronte le candidat à un cas de conception évalué via Jitsi Meet (vidéo), Whisper (transcription) et LLaMA (scoring sur quatre critères : architecture, raisonnement, design patterns, communication).
+    
+    \item \textbf{Centralisation et aide à la décision :} toutes les données d'évaluation convergent vers des tableaux de bord Salesforce accessibles au recruteur, au manager et au responsable RH. Un score composite pondéré est calculé automatiquement, permettant un classement objectif des candidats et une prise de décision rapide, fondée sur des données quantifiées plutôt que sur des impressions.
+\end{enumerate}
+
+\section{Organisation du projet}
+
+\subsection{Méthodologie Scrum}
+
+Le développement du \textit{HR Talent Portal} a été conduit selon le cadre agile \textbf{Scrum}, structuré en sprints de deux semaines. Ce choix se justifie par la nature itérative du projet : chaque sprint livrait un incrément fonctionnel testable (un module du pipeline de recrutement), permettant d'ajuster les priorités en fonction des retours de l'équipe encadrante et des contraintes techniques découvertes en cours de route --- notamment les limitations de l'API LWC version~62 et les restrictions de déploiement de champs sur les objets standards de notre DevOrg.\parencite{URL28}.
+
+\subsubsection{Rôles Scrum}
+\begin{itemize}
+    \item \textbf{Product Owner :} Madame Imen SEBEI --- responsable de la définition des besoins fonctionnels RH et de la priorisation du backlog.
+    \item \textbf{Scrum Master :} Madame Eya Eljery --- garante du respect du cadre Scrum et facilitatrice lors des cérémonies (daily, sprint review, rétrospective).
+    \item \textbf{Équipe de développement :} en charge de la conception, du développement Apex/LWC, de l'intégration des APIs Groq et du déploiement sur l'environnement Salesforce DevOrg.
+\end{itemize}
+
+\subsection{Diagramme de Gantt}
+
+Le diagramme de Gantt (Figure~\ref{fig:diaggannt}) visualise la répartition chronologique des activités du stage. On y distingue quatre phases principales : l'étude préliminaire et la planification (semaines~1-2), le développement itératif réparti sur quatre sprints (semaines~3-14), les phases de test et d'intégration continue, et enfin la rédaction du rapport.
+
+\begin{figure}[hbt!]
+  \centering
+  \fbox{\includegraphics[width=14cm]{images/Diagramme de Gantt.png}}
+  \caption{Diagramme de Gantt du projet HR Talent Portal}
+  \label{fig:diaggannt}
+\end{figure}
+\FloatBarrier
+
+\section{Conclusion}
+
+Ce chapitre préliminaire a permis de circonscrire les contours de notre projet. Nous avons présenté Talan Tunisie et son expertise Salesforce, exploré les briques technologiques de la plateforme qui soutiennent notre solution, et analysé les limites des outils de recrutement existants. L'audit comparatif de LinkedIn Talent Solutions, Workday Recruiting et Greenhouse a confirmé qu'aucune solution du marché ne couvre simultanément les neuf critères fonctionnels requis par Talan --- justifiant ainsi la conception du HR Talent Portal. Dans le chapitre suivant, nous détaillerons la planification du projet et la spécification des besoins fonctionnels et non fonctionnels.

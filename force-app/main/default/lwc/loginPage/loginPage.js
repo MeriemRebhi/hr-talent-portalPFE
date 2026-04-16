@@ -5,12 +5,22 @@ export default class LoginPage extends LightningElement {
     @api isStandalonePage = false;
     handlerRef = null;
 
+    /** True si on est en mode validation QR mobile (paramètre ?qrtoken=xxx dans l'URL) */
+    @track isQrMobileValidation = false;
+
     connectedCallback() {
         this.handlerRef = this.handleOpenModal.bind(this);
         window.addEventListener('open-login-modal', this.handlerRef);
 
-        // Auto-detect: si on est sur la page /loginp, afficher le formulaire directement
+        // Détecter si on est sur la page /loginp
         if (window.location.pathname.toLowerCase().includes('loginp')) {
+            this.isStandalonePage = true;
+        }
+
+        // Détecter si on est en mode validation QR mobile
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('qrtoken')) {
+            this.isQrMobileValidation = true;
             this.isStandalonePage = true;
         }
     }

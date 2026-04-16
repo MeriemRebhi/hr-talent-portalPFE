@@ -1,0 +1,178 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam classFontSize 11
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam linetype ortho
+hide circle
+
+title Diagramme de classes — Sprint 1
+
+' ══════════════════════════════════════
+'  Objets standard
+' ══════════════════════════════════════
+
+class Lead <<Standard Object>> {
+    + Id : Id
+    + FirstName : String
+    + LastName : String
+    + Email : Email
+    + Phone : Phone
+    + Company : String
+    + LeadSource : Picklist
+    + Status : Picklist
+    + Description : LongTextArea
+    + IsConverted : Boolean
+    --
+    + Score_Matching__c : Number(3,0)
+    + AI_Recommendation__c : LongTextArea
+    + AI_Points_Forts__c : LongTextArea
+    + AI_Points_Faibles__c : LongTextArea
+    + Adresse_exacte__c : Text
+    + Code_postale__c : Text
+}
+
+class Opportunity <<Standard Object>> {
+    + Id : Id
+    + Name : String
+    + StageName : Picklist
+    + CloseDate : Date
+    + Description : LongTextArea
+    + RecordTypeId : Id
+    + IsClosed : Boolean
+    --
+    + Is_Candidature__c : Boolean
+    + Score_Matching__c : Number(3,0)
+    + Description_Poste__c : LongTextArea
+    + Departement__c : Picklist
+    + Localisation__c : Text
+    + Type_de_Contrat__c : Text
+    + Salaire_Propos__c : Currency
+}
+
+class Contact <<Standard Object>> {
+    + Id : Id
+    + FirstName : String
+    + LastName : String
+    + Email : Email
+    + AccountId : Id
+}
+
+class Account <<Standard Object>> {
+    + Id : Id
+    + Name : String
+}
+
+class User <<Standard Object>> {
+    + Id : Id
+    + Username : String
+    + Email : Email
+    + FirstName : String
+    + LastName : String
+    + IsActive : Boolean
+    + ContactId : Id
+    + ProfileId : Id
+    + CommunityNickname : String
+}
+
+class ContentVersion <<Standard Object>> {
+    + Id : Id
+    + Title : String
+    + PathOnClient : String
+    + VersionData : Blob
+    + ContentDocumentId : Id
+    + FileType : String
+}
+
+class ContentDocumentLink <<Standard Object>> {
+    + Id : Id
+    + ContentDocumentId : Id
+    + LinkedEntityId : Id
+    + ShareType : Picklist
+    + Visibility : Picklist
+}
+
+' ══════════════════════════════════════
+'  Record Types (stéréotypes)
+' ══════════════════════════════════════
+
+class "<<RecordType>>\nJob_Posting" as RT_JP {
+    Offre d'emploi publiée
+    sur le portail
+}
+
+class "<<RecordType>>\nApplication" as RT_APP {
+    Candidature soumise
+    (issu de la conversion Lead)
+}
+
+' ══════════════════════════════════════
+'  Objets personnalisés
+' ══════════════════════════════════════
+
+class Password_Reset_Token__c <<Custom Object>> {
+    + Id : Id (Auto : PRT-{0000})
+    + Token_Hash__c : Text(64) {unique}
+    + User__c : Lookup(User)
+    + Email__c : Email
+    + Expiration__c : DateTime
+    + Is_Used__c : Boolean
+    + Attempts__c : Number(2,0)
+}
+
+class Security_Audit_Log__c <<Custom Object>> {
+    + Id : Id (Auto : SEC-{00000})
+    + Action__c : Text(50)
+    + Email__c : Email
+    + Severity__c : Text(10)
+    + Timestamp__c : DateTime
+    + Details__c : LongTextArea
+}
+
+class QrLogin__c <<Custom Object>> {
+    + Id : Id
+    + Token__c : Text
+    + Is_Validated__c : Boolean
+    + Expiration__c : DateTime
+}
+
+class AI_Configuration__c <<Custom Setting>> {
+    + Groq_API_Key__c : Text(255)
+}
+
+' ══════════════════════════════════════
+'  Relations
+' ══════════════════════════════════════
+
+' Conversion Lead → Contact + Account + Opportunity
+Lead "1" ..> "0..1" Contact : « conversion »
+Lead "1" ..> "0..1" Account : « conversion »
+Lead "1" ..> "0..1" Opportunity : « conversion »
+
+' Relations standard
+Contact "0..*" -- "1" Account : AccountId
+User "0..1" -- "0..1" Contact : ContactId
+
+' CV attaché au Lead
+ContentDocumentLink "0..*" -- "1" Lead : LinkedEntityId
+ContentDocumentLink "0..*" -- "1" ContentVersion : ContentDocumentId
+
+' Record Types liés à Opportunity
+Opportunity -- RT_JP
+Opportunity -- RT_APP
+
+' Password Reset Token → User
+Password_Reset_Token__c "0..*" -- "1" User : User__c
+
+' Dépendances conceptuelles (écritures Apex, pas de FK Salesforce)
+Security_Audit_Log__c .left.> User : « journalise les\nactions de »
+Security_Audit_Log__c ..> Password_Reset_Token__c : « trace les\ntentatives »
+QrLogin__c ..> User : « authentifie »
+
+' AI Configuration utilisée par le scoring CV
+AI_Configuration__c .. Lead : « CVScoringService\nlit la clé API »
+
+@enduml

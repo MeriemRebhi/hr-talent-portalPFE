@@ -1,12 +1,80 @@
 <template>
-    <div class="qr-container">
-        <h3>Vérification par QR Code</h3>
-        <canvas lwc:dom="manual" class="qr-canvas"></canvas>
-        <div class="qr-instructions">
-            <p>Scannez ce QR code avec votre mobile pour valider la connexion.</p>
+    <!-- ═══ MODE DESKTOP : Affichage du QR Code ═══ -->
+    <template if:true={showDesktopMode}>
+        <div class="qr-container">
+            <h3>Vérification par QR Code</h3>
+
+            <!-- Chargement -->
+            <template if:true={isLoading}>
+                <div class="qr-loading">
+                    <div class="spinner"></div>
+                    <p>Génération du QR code...</p>
+                </div>
+            </template>
+
+            <!-- QR Code affiché -->
+            <template if:true={showQrCode}>
+                <img src={qrImageUrl} alt="QR Code de connexion" class="qr-image" width="200" height="200" />
+                <div class="qr-instructions">
+                    <p>Scannez ce QR code avec votre mobile pour valider la connexion.</p>
+                    <p class="qr-timer">Expire dans 5 minutes</p>
+                </div>
+            </template>
+
+            <!-- Validation réussie -->
+            <template if:true={isValidated}>
+                <div class="qr-success">
+                    <span class="success-icon">&#10003;</span>
+                    <p>Validation réussie !</p>
+                    <p class="qr-redirect">Redirection en cours...</p>
+                </div>
+            </template>
+
+            <!-- QR expiré -->
+            <template if:true={isExpired}>
+                <div class="qr-expired">
+                    <p>QR code expiré.</p>
+                    <button class="qr-regenerate-btn" onclick={handleRegenerate}>
+                        Générer un nouveau QR code
+                    </button>
+                </div>
+            </template>
+
+            <!-- Erreur -->
+            <template if:true={hasError}>
+                <div class="qr-error">
+                    <p>{errorMessage}</p>
+                    <button class="qr-regenerate-btn" onclick={handleRegenerate}>
+                        Réessayer
+                    </button>
+                </div>
+            </template>
         </div>
-        <template if:true={isValidated}>
-            <div class="qr-success">✅ Validation réussie !</div>
-        </template>
-    </div>
+    </template>
+
+    <!-- ═══ MODE MOBILE : Validation du token scanné ═══ -->
+    <template if:false={showDesktopMode}>
+        <div class="qr-container qr-mobile">
+            <template if:true={isLoading}>
+                <div class="qr-loading">
+                    <div class="spinner"></div>
+                    <p>Validation en cours...</p>
+                </div>
+            </template>
+
+            <template if:true={mobileValidationSuccess}>
+                <div class="qr-success">
+                    <span class="success-icon">&#10003;</span>
+                    <p>QR code validé avec succès !</p>
+                    <p class="qr-mobile-hint">Vous pouvez fermer cette page. La connexion se poursuit sur votre ordinateur.</p>
+                </div>
+            </template>
+
+            <template if:true={hasError}>
+                <div class="qr-error">
+                    <p>{errorMessage}</p>
+                </div>
+            </template>
+        </div>
+    </template>
 </template>

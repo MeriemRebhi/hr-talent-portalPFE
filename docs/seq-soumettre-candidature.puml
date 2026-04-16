@@ -1,0 +1,88 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam sequenceMessageAlign center
+skinparam backgroundColor white
+skinparam sequenceLifeLineBorderColor black
+skinparam sequenceParticipantBackgroundColor white
+
+title Diagramme de séquence — Soumettre une candidature
+
+actor "Visiteur" as V
+participant "applicationForm\n(LWC)" as LWC
+participant "ApplicationController\n(Apex)" as AC
+database "Salesforce\n(Lead, ContentVersion,\nContentDocumentLink)" as DB
+participant "CVScoringService\n(Queueable)" as AI
+
+V -> LWC : Remplir le formulaire\n(nom, email, téléphone, CV...)
+activate LWC
+
+LWC -> LWC : Valider les champs\n(email regex, champs obligatoires,\nformat CV, taille ≤ 10 Mo)
+
+alt Validation échouée
+    LWC --> V : Afficher les erreurs\nsous les champs
+else Validation OK
+
+    LWC -> AC : createCandidateForJob()\n[without sharing]
+    activate AC
+    AC -> DB : INSERT Lead\n(nom, email, jobId dans Description)
+    DB --> AC : leadId
+    AC --> LWC : leadId
+    deactivate AC
+
+    alt Fichier > 1 Mo (upload chunké)
+        LWC -> AC : initUpload(leadId, fileName)
+        activate AC
+        AC -> DB : INSERT ContentVersion\n(placeholder vide)
+        DB --> AC : contentVersionId
+        AC --> LWC : contentVersionId
+        deactivate AC
+
+        loop Pour chaque chunk de 750 Ko
+            LWC -> LWC : Découper Base64\nen fragments
+            LWC -> AC : uploadChunk(cvId, base64Chunk,\nchunkIndex, totalChunks)
+            activate AC
+            AC -> DB : UPDATE ContentVersion\n(concaténer VersionData)
+            AC --> LWC : OK
+            deactivate AC
+            LWC -> V : Mettre à jour la\nbarre de progression
+        end
+
+        LWC -> AC : finalizeUpload(cvId, leadId)
+        activate AC
+        AC -> DB : INSERT ContentDocumentLink\n(CV → Lead)
+        AC --> LWC : OK
+        deactivate AC
+
+    else Fichier ≤ 1 Mo (upload direct)
+        LWC -> AC : uploadCv(leadId, fileName, base64Data)
+        activate AC
+        AC -> DB : INSERT ContentVersion\n+ ContentDocumentLink
+        AC --> LWC : OK
+        deactivate AC
+    end
+
+    LWC -> AC : triggerScoring(leadId)
+    activate AC
+    AC -> AI : System.enqueueJob()\n[Queueable + AllowsCallouts]
+    activate AI
+    AI --> AC : Job enfilé
+    deactivate AI
+    AC --> LWC : OK
+    deactivate AC
+
+    LWC --> V : Toast de succès :\n« Candidature envoyée ! »
+
+end
+
+deactivate LWC
+
+note right of AI
+    Le scoring IA s'exécute
+    de manière asynchrone
+    (détaillé au Sprint 2)
+end note
+
+@enduml

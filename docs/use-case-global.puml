@@ -1,5 +1,5 @@
 @startuml
-title Diagramme de cas d'utilisation — HR Talent Portal
+
 
 left to right direction
 skinparam packageStyle rectangle
@@ -14,7 +14,7 @@ actor "Candidat" as C
 actor "Recruteur" as R
 actor "Manager" as M
 actor "Responsable RH" as RRH
-actor "Système IA" as IA <<System>>
+rectangle "Système IA" as IA <<System>>
 
 V <|-- C
 
@@ -35,7 +35,7 @@ rectangle "HR Talent Portal — Salesforce Experience Cloud" {
         usecase "Demander un report" as UC_REPORT
         usecase "Suivre l'avancement" as UC_SUIVI
         usecase "Gérer profil / CV" as UC_PROFIL
-        usecase "Chatbot NLP" as UC_CHAT
+        usecase "Consulter le Chatbot\nIA (NLP)" as UC_CHAT
     }
 
     package "Espace recruteur" {

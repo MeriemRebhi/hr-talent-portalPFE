@@ -1,0 +1,69 @@
+@startuml
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 10
+
+skinparam activity {
+    BackgroundColor #F5F5F5
+    BorderColor #444444
+    FontColor #222222
+    DiamondBackgroundColor #E8E8E8
+    DiamondBorderColor #444444
+    ArrowColor #444444
+}
+
+skinparam partition {
+    BackgroundColor #FAFAFA
+    BorderColor #999999
+    FontColor #333333
+    FontStyle bold
+}
+
+skinparam swimlane {
+    BorderColor #666666
+    TitleFontSize 11
+    TitleFontStyle bold
+}
+
+title <size:13>Diagramme d'activité — Soumettre une candidature</size>
+
+|#FAFAFA| Visiteur |
+start
+:Cliquer « Postuler »;
+:Remplir le formulaire\n(nom, email, téléphone, adresse);
+:Sélectionner le CV\n(PDF / DOC / DOCX);
+
+|#F2F2F2| LWC applicationForm |
+if (Taille > 750 KB ?) then (oui)
+    :Découper en chunks\nde 750 KB;
+    repeat
+        :Envoyer chunk N\nvia uploadChunk();
+    repeat while (Chunks restants ?) is (oui)
+    -> non;
+    :Assembler via\nbase64Decode();
+else (non)
+    :Encoder en Base64;
+endif
+
+:Appeler submitApplication();
+
+|#EBEBEB| Apex Controller |
+:Créer Lead\n(Status='New', LeadSource='Web');
+:Créer ContentVersion\n+ ContentDocumentLink;
+:CVScoringTrigger déclenché;
+
+fork
+    :Enqueue CVScoringService;
+    :Appel Groq API\n(LLaMA 3.3 70B);
+    :Mettre à jour Lead\n(Score, Recommandation,\nForces, Faiblesses);
+fork again
+    :Retourner réponse\nau frontend;
+end fork
+
+|#FAFAFA| Visiteur |
+#DDDDDD:« Candidature soumise\navec succès ! »;
+stop
+
+@enduml

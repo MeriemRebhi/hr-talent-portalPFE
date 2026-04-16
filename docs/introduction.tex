@@ -1,0 +1,62 @@
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+\markboth{Introduction générale}{Introduction générale}
+\label{chap:introduction}
+
+Chez Talan Tunisie, le processus de recrutement repose encore largement sur des
+étapes manuelles : lecture de CV un par un, coordination d'entretiens par email,
+évaluation des candidats sur des grilles papier. Face à un flux de candidatures
+en constante augmentation, les recruteurs consacrent une part significative de
+leur temps à des tâches répétitives, au détriment de l'analyse qualitative des
+profils.
+
+\medskip
+Partant de ce constat, ce projet de fin d'études propose de concevoir et de
+développer le \textbf{HR Talent Portal}, un portail de recrutement intelligent
+construit sur \textbf{Salesforce Experience Cloud}. La particularité de cette
+solution réside dans l'intégration de trois modèles d'intelligence artificielle
+au c\oe{}ur du processus : \textbf{Groq LLaMA 3.3} pour le scoring automatique des
+CV et l'analyse des entretiens d'architecture, et \textbf{Groq Whisper} pour la
+transcription vocale en temps réel des visioconférences \textbf{Jitsi Meet}.
+
+\medskip
+Le portail couvre l'intégralité du cycle de recrutement, depuis le dépôt de
+candidature jusqu'à la décision d'embauche, en passant par cinq étapes
+automatisées : le screening IA du CV, un test de logique gamifié, un entretien
+technique avec évaluation par IA, un entretien d'architecture avec
+enregistrement audio et analyse automatique, puis la validation managériale.
+Chaque acteur --- candidat, recruteur, manager et responsable RH --- dispose
+de son propre tableau de bord avec une visibilité en temps réel sur l'avancement
+du pipeline.
+
+\medskip
+Ce projet a été réalisé au sein du \textbf{centre d'excellence Salesforce de
+Talan Tunisie}, en adoptant une méthodologie \textbf{Scrum} découpée en quatre
+sprints. Le rapport s'organise en six chapitres :
+
+\medskip
+Le \textbf{premier chapitre} présente Talan Tunisie, l'écosystème Salesforce et
+la problématique métier à l'origine du projet.
+
+\medskip
+Le \textbf{deuxième chapitre} détaille la planification : analyse des besoins
+fonctionnels, modélisation UML et architecture technique retenue.
+
+\medskip
+Les quatre chapitres suivants correspondent aux sprints de réalisation :
+\begin{itemize}
+    \item \textbf{Sprint 1 :} Mise en place du portail Experience Cloud, gestion
+    de l'identité candidat (inscription, authentification, reset mot de passe)
+    et publication des offres d'emploi.
+    \item \textbf{Sprint 2 :} Développement du scoring automatique des CV par
+    Groq LLaMA, conversion des leads en candidatures et création automatique
+    des comptes utilisateurs.
+    \item \textbf{Sprint 3 :} Implémentation du test gaming, de l'entretien
+    technique avec évaluation IA, et de l'entretien architecture avec
+    visioconférence Jitsi, enregistrement audio, transcription Whisper et
+    analyse LLaMA.
+    \item \textbf{Sprint 4 :} Conception des tableaux de bord analytiques
+    (recruteur, manager, RH), intégration du chatbot NLP via Agentforce,
+    génération de rapports PDF, historique des candidatures et
+    déclenchement du processus d'onboarding.
+\end{itemize}

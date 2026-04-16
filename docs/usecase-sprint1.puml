@@ -1,0 +1,94 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam packageFontSize 12
+skinparam actorFontSize 11
+skinparam usecaseFontSize 10
+skinparam backgroundColor white
+skinparam packageBackgroundColor white
+skinparam linetype ortho
+
+left to right direction
+
+actor "Visiteur\n(Guest User)" as Visiteur
+actor "Candidat\n(Community User)" as Candidat
+actor "Responsable RH\n(Admin)" as RH
+actor "Système" as Systeme
+
+rectangle "HR Talent Portal — Sprint 1" {
+
+    ' ── Portail public ──
+    package "Portail public" {
+        usecase "Consulter les offres\nd'emploi" as UC1
+        usecase "Visualiser le détail\nd'une offre" as UC2
+        usecase "Soumettre une\ncandidature" as UC3
+        usecase "Téléverser un CV\n(upload chunké)" as UC3b
+    }
+
+    ' ── Authentification ──
+    package "Authentification" {
+        usecase "S'authentifier\npar email" as UC4
+        usecase "S'authentifier\npar QR code" as UC6
+        usecase "Réinitialiser le\nmot de passe" as UC5
+    }
+
+    ' ── Espace candidat B2C ──
+    package "Espace candidat B2C" {
+        usecase "Consulter le pipeline\nde candidature" as UC7
+        usecase "Consulter l'historique\ndes candidatures" as UC7b
+        usecase "Gérer son profil" as UC8
+    }
+
+    ' ── Administration ──
+    package "Administration" {
+        usecase "Gérer les\nhabilitations" as UC10
+    }
+
+    ' ── Sécurité automatisée ──
+    package "Sécurité automatisée" {
+        usecase "Journaliser les\nactions sensibles" as UC9
+        usecase "Déclencher le\nscoring IA" as UC_IA
+    }
+}
+
+' ── Associations Visiteur ──
+Visiteur -- UC1
+Visiteur -- UC2
+Visiteur -- UC3
+
+' ── Associations Candidat ──
+Candidat -- UC4
+Candidat -- UC5
+Candidat -- UC6
+Candidat -- UC7
+Candidat -- UC7b
+Candidat -- UC8
+
+' ── Associations Responsable RH ──
+RH -- UC10
+
+' ── Associations Système ──
+Systeme -- UC9
+Systeme -- UC_IA
+
+' ── Relations include ──
+UC3 ..> UC3b : <<include>>
+UC3 ..> UC_IA : <<include>>
+UC7 ..> UC4 : <<include>>
+UC7b ..> UC4 : <<include>>
+UC8 ..> UC4 : <<include>>
+UC4 ..> UC9 : <<include>>
+UC5 ..> UC9 : <<include>>
+UC6 ..> UC9 : <<include>>
+
+' ── Relations extend ──
+UC1 ..> UC2 : <<extend>>
+UC2 ..> UC3 : <<extend>>
+UC4 ..> UC6 : <<extend>>
+
+' ── Héritage ──
+Visiteur <|-- Candidat
+
+@enduml

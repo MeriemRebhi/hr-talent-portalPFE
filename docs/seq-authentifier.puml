@@ -1,0 +1,63 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam sequenceMessageAlign center
+skinparam backgroundColor white
+skinparam sequenceLifeLineBorderColor black
+skinparam sequenceParticipantBackgroundColor white
+
+title Diagramme de séquence — S'authentifier par email
+
+actor "Candidat" as C
+participant "loginPage\n(LWC)" as LWC
+participant "QrLoginController\n(Apex)" as QRC
+database "Salesforce\n(User, Security_Audit_Log__c)" as DB
+participant "Site.login()\n(Authentification native)" as SL
+
+C -> LWC : Cliquer « Se connecter »
+activate LWC
+LWC --> C : Afficher la modale\n(email + mot de passe)
+
+C -> LWC : Saisir email + mot de passe
+LWC -> QRC : loginWithCredentials(email, password)
+activate QRC
+
+QRC -> DB : SELECT Username FROM User\nWHERE Email = :email\nAND UserType IN ('CspLitePortal',\n'CustomerPortal', ...)
+DB --> QRC : sfUsername (ou vide)
+
+alt Utilisateur trouvé
+    QRC -> SL : Site.login(sfUsername,\npassword, '/s/dashboard')
+    activate SL
+
+    alt Authentification réussie
+        SL --> QRC : PageReference (URL)
+        deactivate SL
+        QRC -> DB : INSERT Security_Audit_Log__c\n(Action='Login', Severity='INFO')
+        QRC --> LWC : URL de redirection
+        deactivate QRC
+        LWC -> C : Redirection vers\n/s/dashboard
+    else Mot de passe incorrect
+        SL --> QRC : null
+        deactivate SL
+        QRC -> DB : INSERT Security_Audit_Log__c\n(Action='LoginFailed', Severity='WARNING')
+        QRC --> LWC : AuraHandledException\n« Email ou mot de passe incorrect »
+        deactivate QRC
+        LWC --> C : Afficher message d'erreur\n(générique, anti-énumération)
+    end
+
+else Aucun utilisateur trouvé
+    QRC -> SL : Site.login(email, password, ...)\n(tentative avec l'email brut)
+    activate SL
+    SL --> QRC : null
+    deactivate SL
+    QRC -> DB : INSERT Security_Audit_Log__c\n(Action='LoginFailed', Severity='WARNING')
+    QRC --> LWC : AuraHandledException\n« Email ou mot de passe incorrect »
+    deactivate QRC
+    LWC --> C : Afficher message d'erreur
+end
+
+deactivate LWC
+
+@enduml
