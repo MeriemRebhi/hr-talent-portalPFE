@@ -1,0 +1,52 @@
+@startuml seq-scoring-cv
+
+title Scoring IA, conversion et provisioning
+
+actor Visiteur as V
+participant "Portail" as Portal
+participant "Trigger" as Trigger
+participant "Service IA" as Queue
+participant "API Groq" as Groq
+database "Lead" as Lead
+participant "Conversion" as Conv
+participant "Provisioning" as Prov
+actor Candidat as Cand
+
+== 1. Dépôt du CV ==
+
+V -> Portal : Soumettre CV
+Portal -> Trigger : CV rattaché au Lead
+
+== 2. Scoring IA ==
+
+Trigger -> Queue : Lancer scoring
+activate Queue
+Queue -> Lead : Extraire texte du CV
+Queue -> Groq : Analyser CV (LLaMA 3.3)
+Groq --> Queue : Score + Recommandation
+Queue -> Lead : Enregistrer score et analyse
+deactivate Queue
+
+alt Score > 15 (qualifié)
+
+  == 3. Conversion ==
+
+  Queue -> Conv : Convertir le Lead
+  activate Conv
+  Conv -> Lead : Créer Account + Contact + Opportunity
+  deactivate Conv
+
+  == 4. Création du compte portail ==
+
+  Conv -> Prov : Créer compte candidat
+  activate Prov
+  Prov --> Cand : Email de bienvenue
+  deactivate Prov
+
+else Score ≤ 15 (non qualifié)
+
+  Queue -> Lead : Statut = Refusée
+
+end
+
+@enduml

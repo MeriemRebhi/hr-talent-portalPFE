@@ -1,0 +1,33 @@
+@startuml seq-genoffre
+
+title Générer une description d'offre par IA
+
+actor Recruteur as REC
+participant "Dashboard\nRecruteur" as Dash
+participant "InternalDashboard\nController" as Ctrl
+participant "API Groq" as Groq
+database "Opportunity\n(Job_Posting)" as Opp
+
+REC -> Dash : Saisir titre, département,\nlocalisation, contrat, salaire, brouillon
+REC -> Dash : Cliquer "Générer par IA"
+
+Dash -> Ctrl : generateJobDescription(brouillon)
+activate Ctrl
+Ctrl -> Groq : Appel LLaMA 3.3\n(temp=0.7, 1000 tokens)
+Groq --> Ctrl : Description structurée\n(intro, missions, profil, avantages)
+deactivate Ctrl
+
+Ctrl --> Dash : Afficher description générée
+
+REC -> Dash : Relire et éditer si nécessaire
+REC -> Dash : Cliquer "Publier"
+
+Dash -> Ctrl : createJobPosting(données)
+activate Ctrl
+Ctrl -> Opp : insert Opportunity\n(RecordType = Job_Posting)
+Opp --> Ctrl : OK
+deactivate Ctrl
+
+Ctrl --> Dash : Confirmation de publication
+
+@enduml

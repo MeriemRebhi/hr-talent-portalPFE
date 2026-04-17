@@ -1,0 +1,373 @@
+\chapter{Sprint 2 : Moteur d'Intelligence Artificielle et Scoring de CV}
+\label{chap:sprint2}
+\setlength{\fboxsep}{1pt}
+\setlength{\fboxrule}{0.4pt}
+
+\section{Introduction}
+
+Le premier sprint a posé les fondations du portail : catalogue d'offres, authentification sécurisée et espace candidat. Ce deuxième sprint marque un tournant en introduisant le \textbf{moteur d'intelligence artificielle} qui transforme chaque CV brut en décision exploitable, ainsi que le mécanisme de \textbf{conversion autonome} qui fait passer le candidat du statut de simple piste (\textit{Lead}) à celui d'utilisateur authentifié du portail.
+
+\medskip
+
+Le périmètre couvre quatre axes : (1)~le scoring IA des CV via l'API Groq
+ \\
+ (\texttt{llama-3.3-70b-versatile}), (2)~la conversion automatique Lead $\rightarrow$ Contact + Account + Opportunity lorsque le score franchit le seuil de qualification, (3)~le provisioning du compte portail avec email de bienvenue sécurisé, et (4)~la génération de descriptions d'offres par IA.
+
+\section{Backlog du sprint 2}
+
+Le backlog (Tableau~\ref{tab:Backlog_sprint2}) couvre les User Stories \no11 à \no16.
+
+\begin{longtable}{|c|p{5.5cm}|p{6cm}|c|}
+\caption{Backlog du sprint 2 : Moteur IA et scoring de CV} \label{tab:Backlog_sprint2} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{User Story} & \textbf{Tâches techniques} & \textbf{Est. (j)} \\
+\hline
+\endfirsthead
+
+\multicolumn{4}{c}{\textit{(Suite du backlog du sprint 2)}} \\
+\hline
+\rowcolor{gray!20} \textbf{ID} & \textbf{User Story} & \textbf{Tâches techniques} & \textbf{Est. (j)} \\
+\hline
+\endhead
+
+\hline
+\endlastfoot
+
+\multicolumn{4}{|c|}{\cellcolor{green!8}\textbf{Scoring IA --- Analyse automatique des CV}} \\
+\hline
+
+\multirow{3}{*}{\textbf{11}} & \multirow{3}{5.5cm}{En tant que recruteur, je souhaite que chaque CV soit automatiquement analysé par l'IA afin d'obtenir un score et une recommandation.} & 11.1 Custom Setting \texttt{AI\_Configuration\_\_c} pour la clé API Groq. & 0.5 \\
+\cline{3-4}
+ & & 11.2 Trigger \texttt{CVScoringTrigger} sur \texttt{ContentDocumentLink} + guard anti-récursion. & 1.5 \\
+\cline{3-4}
+ & & 11.3 Service \texttt{CVScoringService} (\texttt{Queueable} + \texttt{AllowsCallouts}) : extraction CV, appel Groq, persistance. & 3 \\
+\hline
+
+\textbf{12} & Consulter les points forts et axes d'amélioration IA de chaque candidat. & 12.1 Champs \texttt{AI\_Points\_Forts/Faibles\_\_c} + affichage dans le dashboard recruteur. & 1.5 \\
+\hline
+
+\multicolumn{4}{|c|}{\cellcolor{green!8}\textbf{Conversion automatique et provisioning}} \\
+\hline
+
+\multirow{3}{*}{\textbf{13}} & \multirow{3}{5.5cm}{Convertir automatiquement un Lead en Contact + Account + Opportunity quand le score $>$ 15/20.} & 13.1 Méthode \texttt{convertLeadsAsync()} (\texttt{@future}) + \texttt{executeFullConversion()}. & 2 \\
+\cline{3-4}
+ & & 13.2 Trigger \texttt{LeadConversionTrigger} pour les conversions manuelles. & 1 \\
+\cline{3-4}
+ & & 13.3 Mapping des champs Lead $\rightarrow$ Opportunity. & 0.5 \\
+\hline
+
+\multirow{2}{*}{\textbf{14}} & \multirow{2}{5.5cm}{Créer automatiquement un compte portail et envoyer un email de bienvenue sécurisé.} & 14.1 Méthode \texttt{createPortalUserAsync()} (\texttt{@future}) : profil portail, username unique, token SHA-256. & 2.5 \\
+\cline{3-4}
+ & & 14.2 Templates email bienvenue + notification admin (HTML, branding Talan). & 2 \\
+\hline
+
+\multicolumn{4}{|c|}{\cellcolor{green!8}\textbf{Offres IA et rescoring}} \\
+\hline
+
+\multirow{2}{*}{\textbf{15}} & \multirow{2}{5.5cm}{Générer une description d'offre professionnelle à partir d'un brouillon via l'IA.} & 15.1 Méthode \texttt{generateJobDescription()} (Groq, température 0.7, 1\,000 tokens). & 2 \\
+\cline{3-4}
+ & & 15.2 Intégration dans l'onglet \textit{Offres} du dashboard recruteur. & 1 \\
+\hline
+
+\textbf{16} & Relancer manuellement le scoring IA d'un candidat. & 16.1 Méthode \texttt{rescoreCandidat()} + bouton dans la fiche candidat. & 1.5 \\
+\hline
+
+\multicolumn{3}{|r|}{\textbf{Total estimé}} & \textbf{19} \\
+
+\end{longtable}
+
+\FloatBarrier
+
+\section{Analyse fonctionnelle du sprint 2}
+
+\subsection{Diagramme de cas d'utilisation raffiné du sprint 2}
+
+Le diagramme (figure~\ref{fig:uc_sprint2}) met en jeu trois acteurs : le \textbf{Recruteur}, le \textbf{Système IA} (API Groq) et le \textbf{Système Salesforce} (automatisations internes).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer le diagramme de cas d'utilisation du sprint 2
+  \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/usecaseSprint2.png}}
+  \caption{Diagramme de cas d'utilisation raffiné du sprint 2}
+  \label{fig:uc_sprint2}
+\end{figure}
+\FloatBarrier
+
+\subsection{Description textuelle « Scorer automatiquement un CV »}
+
+\begin{longtable}{|p{4cm}|p{10.5cm}|}
+\hline
+\rowcolor{gray!15} \textbf{Rubrique} & \textbf{Description} \\
+\hline
+\endfirsthead
+\endhead
+
+\textbf{Acteurs} & Système IA (principal), Système Salesforce (secondaire) \\
+\hline
+\textbf{Pré-conditions} & Un CV est rattaché à un Lead via \texttt{ContentDocumentLink}. La clé API Groq est configurée. \\
+\hline
+\textbf{Post-conditions} & Le Lead porte un score (0--100), une recommandation, les points forts/faibles. Son statut est mis à jour. \\
+\hline
+\textbf{Scénario nominal} &
+\begin{enumerate}[nosep,leftmargin=*]
+    \item Le trigger \texttt{CVScoringTrigger} détecte l'insertion du \texttt{ContentDocumentLink} et transmet le Lead au service.
+    \item Le \texttt{CVScoringQueue} (Queueable) extrait le texte du CV (max 3\,000 car.) et la description du poste.
+    \item Appel API Groq (\texttt{llama-3.3-70b-versatile}, température~0.3, 600 tokens). L'IA retourne un JSON : score, recommandation, points forts, points faibles.
+    \item Le service persiste les résultats et classifie le Lead : \textit{Hot} ($\geq$~80), \textit{Warm} ($>$~15), \textit{Cold} ($\leq$~15).
+    \item Si score $>$ 15 : enchaînement automatique avec la conversion (cas suivant). Sinon : statut \textit{«~Refusée~»}.
+\end{enumerate} \\
+\hline
+\textbf{Exceptions} & CV illisible $\rightarrow$ log d'erreur, Lead en attente. API indisponible $\rightarrow$ \texttt{Security\_Audit\_Log\_\_c} niveau CRITICAL, rescoring possible. \\
+\hline
+\end{longtable}
+\FloatBarrier
+
+\subsection{Description textuelle « Convertir et provisionner le compte »}
+
+\begin{longtable}{|p{4cm}|p{10.5cm}|}
+\hline
+\rowcolor{gray!15} \textbf{Rubrique} & \textbf{Description} \\
+\hline
+\endfirsthead
+\endhead
+
+\textbf{Acteurs} & Système Salesforce (principal) \\
+\hline
+\textbf{Pré-conditions} & Score IA $>$ 15. Le profil \textit{Customer Community Login User} existe. \\
+\hline
+\textbf{Post-conditions} & Contact + Account + Opportunity créés. Utilisateur portail créé. Email de bienvenue envoyé. \\
+\hline
+\textbf{Scénario nominal} &
+\begin{enumerate}[nosep,leftmargin=*]
+    \item \texttt{convertLeadsAsync()} (\texttt{@future}) crée atomiquement Account (nommé par email), Contact et Opportunity (Record Type \textit{Application}, \texttt{StageName} = \textit{Gaming}).
+    \item \texttt{createPortalUserAsync()} (\texttt{@future}) crée un \texttt{User} portail (profil \textit{Customer Community Login User}, fuseau \textit{Africa/Tunis}, locale \textit{fr\_FR}, username \texttt{email.timestamp}).
+    \item Token de réinitialisation SHA-256 (24h, usage unique) + email de bienvenue HTML + email notification admin.
+    \item Log d'audit \texttt{ACCOUNT\_CREATED}.
+\end{enumerate} \\
+\hline
+\textbf{Alternative} & Utilisateur portail existant : réactivation si inactif, nouveau token et email renvoyé. \\
+\hline
+\end{longtable}
+\FloatBarrier
+
+\subsection{Description textuelle « Générer une description d'offre par IA »}
+
+\begin{longtable}{|p{4cm}|p{10.5cm}|}
+\hline
+\rowcolor{gray!15} \textbf{Rubrique} & \textbf{Description} \\
+\hline
+\endfirsthead
+\endhead
+
+\textbf{Acteurs} & Recruteur (principal), Système IA (secondaire) \\
+\hline
+\textbf{Pré-conditions} & Le recruteur accède à l'onglet \textit{Offres} du tableau de bord. Il dispose d'un brouillon de description. \\
+\hline
+\textbf{Post-conditions} & Description structurée en quatre sections (introduction, missions, profil, avantages) prête à être publiée. \\
+\hline
+\textbf{Scénario nominal} &
+\begin{enumerate}[nosep,leftmargin=*]
+    \item Le recruteur saisit le titre, département, localisation, contrat, salaire et brouillon.
+    \item Il clique sur « Générer par IA ». Le composant invoque \texttt{generateJobDescription()} (Groq, température~0.7, 1\,000 tokens).
+    \item L'IA restructure le contenu en quatre sections avec correction grammaticale.
+    \item Le recruteur relit, édite si nécessaire et publie via \texttt{createJobPosting()}.
+\end{enumerate} \\
+\hline
+\textbf{Exception} & API indisponible $\rightarrow$ message d'erreur. Le recruteur rédige manuellement. \\
+\hline
+\end{longtable}
+\FloatBarrier
+
+\subsection{Diagrammes de séquence système}
+
+\subsubsection{Diagramme de séquence « Scoring CV et conversion automatique »}
+
+Le diagramme (figure~\ref{fig:seq_scoring}) illustre le flux complet en quatre étapes : (1)~le visiteur dépose son CV, (2)~le service IA analyse le CV via l'API Groq et enregistre le score, (3)~si le score dépasse le seuil de qualification, le Lead est automatiquement converti en Account, Contact et Opportunity, et (4)~un compte portail est créé pour le candidat avec envoi d'un email de bienvenue.
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer le diagramme de séquence du scoring CV
+  \fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/diagSeqconversionIA.png}}
+  \caption{Diagramme de séquence : scoring IA, conversion et provisioning}
+  \label{fig:seq_scoring}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Diagramme de séquence « Générer une description d'offre par IA »}
+
+\begin{figure}[hbt!]
+  \centering
+  
+\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/diagseqgénéreroffres.png}}
+  \caption{Diagramme de séquence : génération d'une description d'offre par IA}
+  \label{fig:seq_genoffre}
+\end{figure}
+\FloatBarrier
+
+\section{Conception du sprint 2}
+
+\subsection{Diagramme de classes du sprint 2}
+
+Le diagramme (figure~\ref{fig:class_sprint2}) présente les entités exploitées par le moteur IA : \textbf{Lead} (enrichi des champs \texttt{Score\_Matching\_\_c}, \texttt{AI\_Recommendation\_\_c}, \texttt{AI\_Points\_Forts/Faibles\_\_c}), \textbf{Account} et \textbf{Contact} (créés lors de la conversion), \textbf{Opportunity} (Record Types \textit{Application} et \textit{Job\_Posting}), \textbf{User} (portail B2C), \textbf{ContentVersion/ContentDocumentLink} (CV), et \textbf{AI\_Configuration\_\_c} (Custom Setting, clé API).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer le diagramme de classes du sprint 2
+  %\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/class-sprint2.png}}
+  \caption{Diagramme de classes du sprint 2}
+  \label{fig:class_sprint2}
+\end{figure}
+\FloatBarrier
+
+\subsection{Diagramme d'activité « Scoring IA et conversion automatique »}
+
+Le diagramme (figure~\ref{fig:act_scoring}) modélise le flux en trois couloirs : \textbf{Trigger} (détection CV, enqueuing), \textbf{Service IA} (extraction texte, appel Groq, décision de qualification) et \textbf{Provisioning} (conversion Lead, création User, envoi emails).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer le diagramme d'activité
+  %\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/act-scoring-conversion.png}}
+  \caption{Diagramme d'activité : scoring IA et conversion automatique}
+  \label{fig:act_scoring}
+\end{figure}
+\FloatBarrier
+
+\section{Réalisation technique}
+
+\subsection{Architecture asynchrone en cascade}
+
+Le défi technique majeur de ce sprint réside dans l'enchaînement de \textbf{cinq contextes transactionnels} imposé par les \textit{Governor Limits} de Salesforce :
+
+\begin{enumerate}
+    \item \textbf{Trigger synchrone :} \texttt{CVScoringTrigger} détecte le \texttt{ContentDocumentLink} (pas de callout possible).
+    \item \textbf{Queueable :} \texttt{CVScoringQueue} exécute le callout vers Groq, persiste le score et décide de la qualification.
+    \item \textbf{@future (conversion) :} \texttt{convertLeadsAsync()} crée Contact + Account + Opportunity.
+    \item \textbf{@future (provisioning) :} \texttt{createPortalUserAsync()} crée l'User portail et envoie l'email de bienvenue.
+    \item \textbf{@future (notification) :} \texttt{sendAdminEmailAsync()} envoie le résumé HTML à l'administrateur.
+\end{enumerate}
+
+Le guard statique \texttt{isProcessing} et l'ensemble \texttt{processedLeadIds} préviennent les boucles infinies entre triggers. Le tableau~\ref{tab:apex_sprint2} détaille les classes développées.
+
+\begin{longtable}{|p{4.5cm}|p{2.5cm}|p{7.5cm}|}
+\caption{Classes et services Apex du sprint 2} \label{tab:apex_sprint2} \\
+\hline
+\rowcolor{gray!20} \textbf{Classe / Trigger} & \textbf{Type} & \textbf{Responsabilité} \\
+\hline
+\endfirsthead
+\endhead
+
+\texttt{CVScoringTrigger} & Trigger & Intercepte l'insertion de \texttt{ContentDocumentLink} sur un Lead. \\
+\hline
+\texttt{CVScoringService} & Classe Apex & Service central : extraction CV (3\,000 car. max), appel Groq (temp.~0.3, 600 tokens), classification, orchestration conversion + provisioning. \\
+\hline
+\texttt{CVScoringQueue} & Queueable & Job asynchrone permettant les callouts HTTP. \\
+\hline
+\texttt{LeadConversion\-Trigger} & Trigger & Gère les conversions manuelles (UI standard). \\
+\hline
+\texttt{InternalDashboard\-Controller} & Classe Apex & 9 méthodes \texttt{@AuraEnabled} : \texttt{getRecruteurData()}, \texttt{generateJobDescription()}, \texttt{createJobPosting()}, \texttt{rescoreCandidat()}, etc. \\
+\hline
+\end{longtable}
+\FloatBarrier
+
+\subsection{Configuration du modèle IA}
+
+\begin{table}[hbt!]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\rowcolor{gray!15} \textbf{Paramètre} & \textbf{Scoring CV} & \textbf{Génération offre} \\
+\hline
+\textbf{Modèle} & \multicolumn{2}{c|}{\texttt{llama-3.3-70b-versatile}} \\
+\hline
+\textbf{Température} & 0.3 (déterministe) & 0.7 (créatif) \\
+\hline
+\textbf{Max tokens} & 600 & 1\,000 \\
+\hline
+\textbf{Pondération} & Technique 40\%, Expérience 25\%, Formation 20\%, Soft skills 15\% & N/A \\
+\hline
+\textbf{Sortie} & JSON (score, reco, forts/faibles) & Texte en 4 sections \\
+\hline
+\end{tabular}
+\caption{Paramètres de l'API Groq pour le sprint 2}
+\label{tab:ia_config}
+\end{table}
+\FloatBarrier
+
+\subsection{Interface « Tableau de bord recruteur --- Candidatures »}
+
+L'onglet \textit{Candidatures} (figure~\ref{fig:dashboard_recruteur_candidatures}) du composant \texttt{recruteurDashboard} présente : une barre de KPIs (total candidats, en Gaming, Technique, Architecture, RH Fit, clôturés), des filtres multicritères (nom, offre, score, tri), et la liste des candidats avec score IA coloré (vert $\geq$~70, orange 50--69, rouge $<$~30), recommandation et boutons d'action (planifier, avancer, rescorer).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer la capture du tableau de bord recruteur
+  %\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/recruteur-candidatures.png}}
+  \caption{Tableau de bord recruteur --- Onglet Candidatures}
+  \label{fig:dashboard_recruteur_candidatures}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Tableau de bord recruteur --- Offres »}
+
+L'onglet \textit{Offres} (figure~\ref{fig:dashboard_recruteur_offres}) permet de créer des offres (titre, département, localisation, contrat, salaire), générer la description par IA, et gérer le cycle de vie (clôturer/réouvrir, déclencher la génération des questions gaming et techniques avec indicateur de progression).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer la capture de l'onglet Offres
+  %\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/recruteur-offres.png}}
+  \caption{Tableau de bord recruteur --- Onglet Offres}
+  \label{fig:dashboard_recruteur_offres}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Fiche détaillée du candidat »}
+
+La modale de détail (figure~\ref{fig:detail_candidat}) affiche le score IA avec badge coloré, la recommandation, les encarts points forts (vert) et axes d'amélioration (orange), et les boutons d'action (rescorer, planifier gaming, avancer).
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer la capture de la fiche détaillée
+  %\fbox{\includegraphics[width=\dimexpr\textwidth-4pt\relax]{images/detail-candidat.png}}
+  \caption{Fiche détaillée du candidat avec analyse IA}
+  \label{fig:detail_candidat}
+\end{figure}
+\FloatBarrier
+
+\subsection{Interface « Emails automatiques »}
+
+Deux templates HTML sont envoyés automatiquement lors de chaque conversion :
+
+\begin{itemize}
+    \item \textbf{Email de bienvenue} (figure~\ref{fig:email_bienvenue}) : message personnalisé avec lien de définition de mot de passe (usage unique, 24h), branding Talan (\texttt{\#2F7D59}).
+    \item \textbf{Email admin} (figure~\ref{fig:email_admin}) : badge score IA coloré, fiche résumée du candidat, points forts IA, actions automatisées, horodatage Africa/Tunis.
+\end{itemize}
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer la capture de l'email de bienvenue
+  %\fbox{\includegraphics[width=0.7\textwidth]{images/email-bienvenue.png}}
+  \caption{Email de bienvenue avec lien de définition de mot de passe}
+  \label{fig:email_bienvenue}
+\end{figure}
+
+\begin{figure}[hbt!]
+  \centering
+  % TODO : insérer la capture de l'email admin
+  %\fbox{\includegraphics[width=0.7\textwidth]{images/email-admin-notification.png}}
+  \caption{Email de notification administrateur après conversion}
+  \label{fig:email_admin}
+\end{figure}
+\FloatBarrier
+
+\section{Conclusion}
+
+Ce sprint a doté le \textbf{HR Talent Portal} de son moteur analytique. Le scoring IA (\texttt{llama-3.3-70b-versatile}, température~0.3, pondération technique 40\%/expérience 25\%/formation 20\%/soft skills 15\%) et la génération d'offres (température~0.7) sont opérationnels. La chaîne asynchrone en cinq transactions garantit un pipeline entièrement automatisé --- de l'attachement du CV à la réception de l'email de bienvenue --- sans intervention humaine et dans le respect des \textit{Governor Limits}.
+
+\medskip
+
+Au total : \textbf{2~triggers}, \textbf{2~classes de service}, \textbf{1~contrôleur enrichi} (9~méthodes), \textbf{1~Custom Setting} et \textbf{2~templates email HTML}. Le chapitre suivant abordera le Sprint~3 : tests gaming, entretiens techniques et entretiens architecture avec transcription Whisper.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:

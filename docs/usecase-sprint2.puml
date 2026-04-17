@@ -1,0 +1,59 @@
+@startuml usecase-sprint2
+
+left to right direction
+
+actor "Recruteur" as REC
+rectangle "Système IA\n(API Groq)" as IA
+rectangle "Système\nSalesforce" as SF
+
+rectangle "HR Talent Portal — Sprint 2 : Moteur IA & Scoring" {
+
+  usecase "Scorer automatiquement\nun CV" as UC1
+  usecase "Extraire le texte\ndu CV" as UC1a
+  usecase "Appeler l'API Groq\n(LLaMA 3.3-70B)" as UC1b
+  usecase "Classifier le Lead\n(Hot/Warm/Cold)" as UC1c
+
+  usecase "Consulter les points\nforts et faibles IA" as UC2
+
+  usecase "Convertir le Lead\nautomatiquement" as UC3
+  usecase "Créer Account +\nContact + Opportunity" as UC3a
+
+  usecase "Provisionner le\ncompte portail" as UC4
+  usecase "Envoyer l'email\nde bienvenue" as UC4a
+  usecase "Notifier\nl'administrateur" as UC4b
+
+  usecase "Générer une description\nd'offre par IA" as UC5
+
+  usecase "Relancer le\nscoring IA" as UC6
+}
+
+' --- Relations Recruteur ---
+REC --> UC2
+REC --> UC5
+REC --> UC6
+
+' --- Relations Système IA ---
+IA --> UC1
+IA --> UC5
+
+' --- Relations Système Salesforce ---
+SF --> UC1
+SF --> UC3
+SF --> UC4
+
+' --- Include ---
+UC1 ..> UC1a : <<include>>
+UC1 ..> UC1b : <<include>>
+UC1 ..> UC1c : <<include>>
+
+UC3 ..> UC3a : <<include>>
+
+UC4 ..> UC4a : <<include>>
+UC4 ..> UC4b : <<include>>
+
+' --- Extend ---
+UC1 ..> UC3 : <<extend>>\n[score > 15/100]
+UC3 ..> UC4 : <<extend>>\n[conversion réussie]
+UC6 ..> UC1 : <<include>>
+
+@enduml
