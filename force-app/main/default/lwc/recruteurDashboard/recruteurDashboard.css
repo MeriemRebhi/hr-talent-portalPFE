@@ -1307,7 +1307,7 @@
 }
 .offres-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
 }
 .offer-card {
@@ -1376,7 +1376,12 @@
 .offer-apps { font-size: 12px; color: #374151; }
 .offer-apps strong { color: #2F7D59; font-weight: 800; }
 .offer-date { font-size: 11px; color: #9ca3af; }
-.offer-actions { display: flex; gap: 6px; }
+.offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 4px;
+}
 .btn-close-offer {
     background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;
 }
@@ -1412,21 +1417,21 @@
     box-shadow: 0 0 0 3px rgba(47,125,89,.1);
 }
 
-/* ── AI Generate Button ── */
+/* ── AI Generate Buttons (Gaming + Technique) ── */
 .btn-ai-generate {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    padding: 8px 18px;
+    gap: 5px;
+    padding: 6px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 600;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all .2s;
+    white-space: nowrap;
 }
 .btn-ai-generate:hover:not(:disabled) {
     transform: translateY(-1px);
@@ -1440,7 +1445,25 @@
 /* ═══════════════════════════════════════
    DETAIL MODAL
 ═══════════════════════════════════════ */
-.detail-modal { max-width: 520px; }
+.detail-modal {
+    max-width: 600px;
+}
+.detail-modal .modal-body {
+    max-height: calc(85vh - 140px);
+    overflow-y: auto;
+    padding: 20px 24px;
+    gap: 14px;
+}
+.detail-modal .modal-body::-webkit-scrollbar {
+    width: 5px;
+}
+.detail-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+.detail-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
 .detail-avatar {
     width: 44px; height: 44px;
     border-radius: 12px;
@@ -1451,15 +1474,15 @@
 }
 .detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
 }
 .detail-card {
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px 10px;
     text-align: center;
 }
 .detail-card-title {
@@ -1475,19 +1498,19 @@
     margin-bottom: 8px;
 }
 .detail-score-big {
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 800;
     color: #2F7D59;
     line-height: 1;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
-.detail-pct { font-size: 16px; font-weight: 600; }
+.detail-pct { font-size: 14px; font-weight: 600; }
 .detail-na { font-size: 14px; color: #9ca3af; margin: 10px 0 0; }
 .detail-section {
     background: #f9fafb;
     border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
+    padding: 12px 14px;
+    margin-bottom: 0;
 }
 .detail-section-title {
     display: flex;
@@ -1573,12 +1596,11 @@
     box-shadow: 0 3px 8px rgba(245,158,11,0.35);
 }
 .btn-tech-gen {
-    border-color: #8b5cf6 !important;
-    color: #8b5cf6 !important;
-}
-.btn-tech-gen:hover {
-    background: #8b5cf6 !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
     color: #fff !important;
+}
+.btn-tech-gen:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(59,130,246,.4) !important;
 }
 .detail-composite {
     font-size: 11px;
@@ -1604,7 +1626,7 @@
 @media (max-width: 768px) {
     .offres-grid { grid-template-columns: 1fr; }
     .offer-form-grid { grid-template-columns: 1fr; }
-    .detail-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr 1fr; }
     .rdb-tabs { flex-wrap: wrap; }
 }
 
