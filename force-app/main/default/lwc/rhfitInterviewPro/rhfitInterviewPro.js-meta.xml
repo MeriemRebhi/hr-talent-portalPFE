@@ -5,10 +5,7 @@
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__RecordPage</target>
-        <target>lightning__HomePage</target>
         <target>lightningCommunity__Page</target>
         <target>lightningCommunity__Default</target>
     </targets>
-    <masterLabel>Espace Candidat - Dashboard</masterLabel>
-    <description>Portail personnel du candidat avec profil, CV et suivi des candidatures</description>
 </LightningComponentBundle>

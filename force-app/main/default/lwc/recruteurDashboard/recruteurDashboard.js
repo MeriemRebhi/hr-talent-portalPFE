@@ -6,6 +6,9 @@ import scheduleBatchGamingTests from '@salesforce/apex/InternalDashboardControll
 import cancelGamingTest from '@salesforce/apex/InternalDashboardController.cancelGamingTest';
 import scheduleTechnicalInterview from '@salesforce/apex/InternalDashboardController.scheduleTechnicalInterview';
 import scheduleArchitectureInterview from '@salesforce/apex/InternalDashboardController.scheduleArchitectureInterview';
+import validateArchitectureInterview from '@salesforce/apex/InternalDashboardController.validateArchitectureInterview';
+import scheduleRHFitInterview from '@salesforce/apex/InternalDashboardController.scheduleRHFitInterview';
+import validateRHFitInterview from '@salesforce/apex/InternalDashboardController.validateRHFitInterview';
 import getJobPostings from '@salesforce/apex/InternalDashboardController.getJobPostings';
 import createJobPosting from '@salesforce/apex/InternalDashboardController.createJobPosting';
 import toggleJobPosting from '@salesforce/apex/InternalDashboardController.toggleJobPosting';
@@ -17,6 +20,10 @@ import generateTechQuestionsApex from '@salesforce/apex/TechnicalQuestionService
 import getTechGenerationStatus from '@salesforce/apex/TechnicalQuestionService.getGenerationStatus';
 import validateScore from '@salesforce/apex/TechnicalInterviewController.validateScore';
 import getInterviewDetails from '@salesforce/apex/TechnicalInterviewController.getInterviewDetails';
+import generateRHFitQuestionsApex from '@salesforce/apex/RHFitInterviewController.generateQuestions';
+import uploadRHFitAudioApex from '@salesforce/apex/RHFitInterviewController.uploadAudio';
+import processRHFitAudioApex from '@salesforce/apex/RHFitInterviewController.processAudio';
+import getRHFitProcessingStatusApex from '@salesforce/apex/RHFitInterviewController.getProcessingStatus';
 
 const STAGE_ORDER = ['Gaming', 'Technique', 'Architecture', 'RH Fit', 'Closed Won'];
 
@@ -93,6 +100,14 @@ export default class RecruteurDashboard extends LightningElement {
     @track archPlanDuration = '45';
     @track isArchSending = false;
 
+    // RH Fit interview planning modal
+    @track showRHFitPlanModal = false;
+    @track rhfitPlanOppId = '';
+    @track rhfitPlanCandidatName = '';
+    @track rhfitPlanDateTime = '';
+    @track rhfitPlanDuration = '45';
+    @track isRHFitSending = false;
+
     // Batch planning
     @track selectedMap = {};
     @track showBatchModal = false;
@@ -133,6 +148,55 @@ export default class RecruteurDashboard extends LightningElement {
     @track validationDetails = null;
     @track loadingDetails = false;
 
+    // Architecture validation modal
+    @track showArchValidationModal = false;
+    @track archValidationOppId = '';
+    @track archValidationCandidateName = '';
+    @track archDesignScore = 0;
+    @track archTradeoffScore = 0;
+    @track archScalabilityScore = 0;
+    @track archCommunicationScore = 0;
+    @track archCollaborationScore = 0;
+    @track archValidationDecision = '';
+    @track archValidationNotes = '';
+    @track isArchValidating = false;
+
+    // RH Fit question modal
+    @track showRHFitQuestionModal = false;
+    @track rhfitQuestionOppId = '';
+    @track rhfitQuestionCandidateName = '';
+    @track rhfitQuestionsText = '';
+    @track isGeneratingRHFitQuestions = false;
+
+    // RH Fit validation modal
+    @track showRHFitValidationModal = false;
+    @track rhfitValidationOppId = '';
+    @track rhfitValidationCandidateName = '';
+    @track rhfitValidationAIScore = 0;
+    @track rhfitValidationSentiment = '';
+    @track rhfitValidationScore = 0;
+    @track rhfitValidationDecision = '';
+    @track rhfitValidationNotes = '';
+    @track isRHFitValidating = false;
+
+    // RH Fit processing modal (recruiter-only)
+    @track showRHFitProcessModal = false;
+    @track rhfitProcessOppId = '';
+    @track rhfitProcessCandidateName = '';
+    @track rhfitProcessStatus = '';
+    @track rhfitProcessHasAudio = false;
+    @track rhfitProcessFileName = '';
+    @track isRHFitUploadingAudio = false;
+    @track isRHFitProcessingAudio = false;
+    @track rhfitProcessAIScore = null;
+    @track rhfitProcessSentimentScore = null;
+    @track rhfitProcessSentimentLabel = '';
+    @track rhfitProcessTranscription = '';
+    @track rhfitProcessAIFeedback = '';
+    rhfitSelectedAudioFile = null;
+    rhfitProcessPollingTimer = null;
+    rhfitProcessPollingAttempts = 0;
+
     // Observation criteria (stars 0-5)
     @track obsCommunication = 0;
     @track obsApproach = 0;
@@ -170,6 +234,37 @@ export default class RecruteurDashboard extends LightningElement {
     get detailTechComposite() { return this.detailOpp.techComposite; }
     get detailHasManagerScore() { return this.detailOpp.hasManagerScore; }
     get detailManagerScore() { return this.detailOpp.managerValidatedScore; }
+    get detailHasArch() { return this.detailOpp.hasArchScore; }
+    get detailArchScore() { return this.detailOpp.archScore != null ? this.detailOpp.archScore : ''; }
+    get detailArchStatus() { return this.detailOpp.archStatus || 'Non passe'; }
+    get detailHasRHFitPlan() { return !!this.detailOpp.rhfitScheduled; }
+    get detailRHFitDateFmt() { return this.detailOpp.rhfitDateFmt || ''; }
+    get detailRHFitStatus() { return this.detailOpp.rhfitStatus || 'Non planifie'; }
+    get detailHasRHFitAIScore() { return !!this.detailOpp.hasRHFitAIScore; }
+    get detailRHFitAIScore() { return this.detailOpp.rhfitAIScore != null ? this.detailOpp.rhfitAIScore : ''; }
+    get detailRHFitSentimentLabel() { return this.detailOpp.rhfitSentimentLabel || 'N/A'; }
+    get detailRHFitSentimentClass() {
+        const s = (this.detailOpp.rhfitSentimentLabel || '').toLowerCase();
+        if (s.includes('posit')) return 'rhfit-sentiment-pill rhfit-sentiment-positive';
+        if (s.includes('negat')) return 'rhfit-sentiment-pill rhfit-sentiment-negative';
+        if (s.includes('mitig')) return 'rhfit-sentiment-pill rhfit-sentiment-mixed';
+        return 'rhfit-sentiment-pill rhfit-sentiment-neutral';
+    }
+    get detailHasRHFitValidatedScore() { return !!this.detailOpp.hasRHFitValidatedScore; }
+    get detailRHFitValidatedScore() { return this.detailOpp.rhfitValidatedScore != null ? this.detailOpp.rhfitValidatedScore : ''; }
+    get detailRHFitQuestionsReady() { return !!this.detailOpp.rhfitQuestionsReady; }
+    get detailCanValidateArch() {
+        return this.detailOpp && this.detailOpp.StageName === 'Architecture' && this.detailOpp.archScheduled;
+    }
+    get detailCanManageRHFit() {
+        return this.detailOpp && this.detailOpp.StageName === 'RH Fit';
+    }
+    get detailCanValidateRHFit() {
+        return this.detailCanManageRHFit && this.detailOpp.rhfitScheduled;
+    }
+    get detailCanProcessRHFit() {
+        return this.detailCanManageRHFit && this.detailOpp.rhfitScheduled;
+    }
 
     get planOppShortId() {
         return this.planOppId ? this.planOppId.substring(0, 15) : '';
@@ -178,19 +273,32 @@ export default class RecruteurDashboard extends LightningElement {
     @wire(getRecruteurData)
     wiredData({ data, error }) {
         if (data) {
-            this.totalCandidats = data.totalCandidats || 0;
-            this.enGaming       = data.enGaming       || 0;
-            this.enTechnique    = data.enTechnique    || 0;
-            this.enArchitecture = data.enArchitecture || 0;
-            this.enRHFit        = data.enRHFit        || 0;
-            this.closedCount    = data.closed         || 0;
-
-            this.allOpps = (data.rows || []).map(o => this.mapOpp(o));
-            this.applyFilter();
-            this.isLoaded = true;
+            this.applyDashboardData(data);
         } else if (error) {
             this.isLoaded = true;
         }
+    }
+
+    applyDashboardData(data) {
+        this.totalCandidats = data.totalCandidats || 0;
+        this.enGaming = data.enGaming || 0;
+        this.enTechnique = data.enTechnique || 0;
+        this.enArchitecture = data.enArchitecture || 0;
+        this.enRHFit = data.enRHFit || 0;
+        this.closedCount = data.closed || 0;
+        this.allOpps = (data.rows || []).map(o => this.mapOpp(o));
+        this.applyFilter();
+        this.isLoaded = true;
+    }
+
+    refreshDashboardData() {
+        return getRecruteurData()
+            .then(data => {
+                this.applyDashboardData(data);
+            })
+            .catch(() => {
+                this.isLoaded = true;
+            });
     }
 
     mapOpp(o) {
@@ -288,7 +396,28 @@ export default class RecruteurDashboard extends LightningElement {
             hasArchScore:      o.archScore != null && o.archStatus === 'Completed',
             archScoreLabel:    o.archScore != null ? Math.round(o.archScore) + '/100' : '\u2014',
             archPending:       o.archStatus !== 'Completed' && !!o.archDateTime,
-            archRescheduleRequested: !!o.archRescheduleRequested
+            archRescheduleRequested: !!o.archRescheduleRequested,
+            // RH Fit interview
+            isRHFit:          stage === 'RH Fit',
+            rhfitScheduled:   !!o.rhfitDateTime,
+            rhfitDateFmt:     (() => {
+                if (!o.rhfitDateTime) return '';
+                const dt4 = new Date(o.rhfitDateTime);
+                return dt4.toLocaleDateString('fr-FR') + ' a ' + dt4.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            })(),
+            rhfitMeetLink:    o.rhfitMeetLink || '',
+            rhfitJitsiRoom:   o.rhfitJitsiRoom || '',
+            rhfitStatus:      o.rhfitStatus || '',
+            rhfitHasAudio:    !!o.rhfitHasAudio,
+            rhfitQuestions:   o.rhfitQuestions || '',
+            rhfitQuestionsReady: !!o.rhfitQuestions,
+            rhfitAIScore:     o.rhfitAIScore != null ? Math.round(o.rhfitAIScore) : null,
+            hasRHFitAIScore:  o.rhfitAIScore != null,
+            rhfitSentimentScore: o.rhfitSentimentScore != null ? Math.round(o.rhfitSentimentScore * 100) / 100 : null,
+            rhfitSentimentLabel: o.rhfitSentimentLabel || '',
+            rhfitValidatedScore: o.rhfitValidatedScore != null ? Math.round(o.rhfitValidatedScore) : null,
+            hasRHFitValidatedScore: o.rhfitValidatedScore != null,
+            rhfitRescheduleRequested: !!o.rhfitRescheduleRequested
         };
     }
 
@@ -611,6 +740,48 @@ export default class RecruteurDashboard extends LightningElement {
     }
 
     // ── Batch planning ──
+    // RH Fit interview planning
+    openRHFitPlanModal(event) {
+        this.rhfitPlanOppId = event.currentTarget.dataset.id;
+        this.rhfitPlanCandidatName = event.currentTarget.dataset.name;
+        this.rhfitPlanDuration = '45';
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        this.rhfitPlanDateTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        this.showRHFitPlanModal = true;
+    }
+
+    closeRHFitPlanModal() {
+        this.showRHFitPlanModal = false;
+        this.isRHFitSending = false;
+    }
+
+    onRHFitDateTimeChange(event) { this.rhfitPlanDateTime = event.target.value; }
+    onRHFitDurationChange(event) { this.rhfitPlanDuration = event.target.value; }
+
+    confirmRHFitSchedule() {
+        if (!this.rhfitPlanDateTime) {
+            this.showToast('Veuillez choisir une date et heure.', 'error');
+            return;
+        }
+        this.isRHFitSending = true;
+        scheduleRHFitInterview({
+            oppId: this.rhfitPlanOppId,
+            interviewDateTime: this.rhfitPlanDateTime,
+            duration: this.rhfitPlanDuration
+        })
+            .then(() => this.refreshDashboardData())
+            .then(() => {
+                this.showRHFitPlanModal = false;
+                this.isRHFitSending = false;
+                this.showToast('Invitation RH Fit envoyee avec succes.', 'success');
+            })
+            .catch(err => {
+                this.isRHFitSending = false;
+                this.showToast('Erreur RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+            });
+    }
+
     toggleSelect(event) {
         const id = event.currentTarget.dataset.id;
         const updated = Object.assign({}, this.selectedMap);
@@ -1021,6 +1192,597 @@ export default class RecruteurDashboard extends LightningElement {
     // TECH INTERVIEW VALIDATION
     // ══════════════════════════════════════
 
+    // RH Fit question generation
+    openRHFitQuestionModal(event) {
+        let id = null;
+        if (event && event.currentTarget && event.currentTarget.dataset) {
+            id = event.currentTarget.dataset.id;
+        }
+        if (!id && this.detailOpp) {
+            id = this.detailOpp.Id;
+        }
+        if (!id) return;
+        const opp = this.allOpps.find(o => o.Id === id) || this.detailOpp || {};
+        this.rhfitQuestionOppId = id;
+        this.rhfitQuestionCandidateName = opp.Name || '';
+        this.rhfitQuestionsText = opp.rhfitQuestions || '';
+        this.showRHFitQuestionModal = true;
+    }
+
+    get hasRHFitQuestionsText() {
+        return !!(this.rhfitQuestionsText && this.rhfitQuestionsText.trim().length > 0);
+    }
+
+    get rhfitQuestionsDisplayJson() {
+        if (!this.hasRHFitQuestionsText) return '';
+        const parsed = this.tryParseRHFitQuestions(this.rhfitQuestionsText);
+        if (parsed == null) return this.rhfitQuestionsText;
+        try {
+            return JSON.stringify(parsed, null, 2);
+        } catch (e) {
+            return this.rhfitQuestionsText;
+        }
+    }
+
+    get rhfitInterviewIntro() {
+        const parsed = this.tryParseRHFitQuestions(this.rhfitQuestionsText);
+        if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') return '';
+        return this.readFirstString(parsed, ['interview_intro', 'intro', 'summary', 'guide_intro']);
+    }
+
+    get rhfitQuestionCards() {
+        const parsed = this.tryParseRHFitQuestions(this.rhfitQuestionsText);
+        const source = this.extractRHFitQuestionSource(parsed);
+        return source
+            .map((item, index) => this.normalizeRHFitQuestionItem(item, index))
+            .filter(item => item.question)
+            .map((item, index) => ({
+                ...item,
+                key: `${item.id}-${index}`,
+                displayIndex: index + 1
+            }));
+    }
+
+    get hasRHFitQuestionCards() {
+        return this.rhfitQuestionCards.length > 0;
+    }
+
+    closeRHFitQuestionModal() {
+        this.showRHFitQuestionModal = false;
+        this.isGeneratingRHFitQuestions = false;
+    }
+
+    generateRHFitQuestions() {
+        if (!this.rhfitQuestionOppId || this.isGeneratingRHFitQuestions) return;
+        this.isGeneratingRHFitQuestions = true;
+        generateRHFitQuestionsApex({ oppId: this.rhfitQuestionOppId })
+            .then(result => {
+                const payload = result && (result.questions || result.promptResponse || result.response);
+                const generated = typeof payload === 'string'
+                    ? payload
+                    : (payload ? JSON.stringify(payload) : '');
+                this.rhfitQuestionsText = generated;
+                this.allOpps = this.allOpps.map(o => (
+                    o.Id === this.rhfitQuestionOppId
+                        ? this.mapOpp({ ...o, rhfitQuestions: this.rhfitQuestionsText })
+                        : o
+                ));
+                this.applyFilter();
+                if (this.detailOpp && this.detailOpp.Id === this.rhfitQuestionOppId) {
+                    this.detailOpp = this.allOpps.find(o => o.Id === this.rhfitQuestionOppId) || this.detailOpp;
+                }
+                if (this.rhfitQuestionsText && this.rhfitQuestionsText.trim().length > 0) {
+                    this.showToast('Questions RH Fit generees par Einstein.', 'success');
+                } else {
+                    this.showToast('Einstein a repondu vide. Verifie le Prompt Template.', 'error');
+                }
+            })
+            .catch(err => {
+                this.showToast('Erreur Einstein RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+            })
+            .finally(() => {
+                this.isGeneratingRHFitQuestions = false;
+            });
+    }
+
+    // RH Fit recruiter processing (audio -> transcription -> IA)
+    openRHFitProcessModal(event) {
+        let id = null;
+        if (event && event.currentTarget && event.currentTarget.dataset) {
+            id = event.currentTarget.dataset.id;
+        }
+        if (!id && this.detailOpp) {
+            id = this.detailOpp.Id;
+        }
+        if (!id) return;
+
+        const opp = this.allOpps.find(o => o.Id === id) || this.detailOpp || {};
+        if (!opp.rhfitScheduled) {
+            this.showToast('Entretien RH Fit non planifie pour ce candidat.', 'error');
+            return;
+        }
+
+        this.rhfitProcessOppId = id;
+        this.rhfitProcessCandidateName = opp.Name || '';
+        this.rhfitProcessStatus = opp.rhfitStatus || 'Scheduled';
+        const initialStatusLower = (opp.rhfitStatus || '').toLowerCase();
+        this.rhfitProcessHasAudio = !!opp.rhfitHasAudio || initialStatusLower.includes('audio') || initialStatusLower.includes('processing') || initialStatusLower.includes('completed');
+        this.rhfitProcessAIScore = opp.rhfitAIScore != null ? opp.rhfitAIScore : null;
+        this.rhfitProcessSentimentScore = opp.rhfitSentimentScore != null ? opp.rhfitSentimentScore : null;
+        this.rhfitProcessSentimentLabel = opp.rhfitSentimentLabel || '';
+        this.rhfitProcessTranscription = '';
+        this.rhfitProcessAIFeedback = '';
+        this.rhfitProcessFileName = '';
+        this.rhfitSelectedAudioFile = null;
+        this.isRHFitUploadingAudio = false;
+        this.isRHFitProcessingAudio = false;
+        this.showRHFitProcessModal = true;
+
+        getRHFitProcessingStatusApex({ oppId: this.rhfitProcessOppId })
+            .then(result => {
+                this.rhfitProcessStatus = result.status || this.rhfitProcessStatus;
+                this.rhfitProcessAIScore = result.score != null ? Math.round(result.score) : this.rhfitProcessAIScore;
+                this.rhfitProcessSentimentScore = result.sentimentScore != null
+                    ? Math.round(result.sentimentScore * 100) / 100
+                    : this.rhfitProcessSentimentScore;
+                this.rhfitProcessSentimentLabel = result.sentimentLabel || this.rhfitProcessSentimentLabel;
+                this.rhfitProcessTranscription = result.transcription || '';
+                this.rhfitProcessAIFeedback = result.aiFeedback || '';
+                this.syncRHFitProcessToOpp({
+                    rhfitStatus: this.rhfitProcessStatus,
+                    rhfitAIScore: this.rhfitProcessAIScore,
+                    rhfitSentimentScore: this.rhfitProcessSentimentScore,
+                    rhfitSentimentLabel: this.rhfitProcessSentimentLabel
+                });
+            })
+            .catch(() => {});
+
+        const statusLower = (this.rhfitProcessStatus || '').toLowerCase();
+        if (statusLower.includes('processing')) {
+            this.isRHFitProcessingAudio = true;
+            this.startRHFitProcessingPolling();
+        }
+    }
+
+    closeRHFitProcessModal() {
+        this.stopRHFitProcessingPolling();
+        this.showRHFitProcessModal = false;
+        this.isRHFitUploadingAudio = false;
+        this.isRHFitProcessingAudio = false;
+        this.rhfitSelectedAudioFile = null;
+        this.rhfitProcessFileName = '';
+        this.rhfitProcessHasAudio = false;
+    }
+
+    stopPropagationRHFitProcess(event) {
+        event.stopPropagation();
+    }
+
+    get rhfitProcessHasAIScore() {
+        return this.rhfitProcessAIScore != null;
+    }
+
+    get rhfitProcessHasSentimentScore() {
+        return this.rhfitProcessSentimentScore != null;
+    }
+
+    get rhfitProcessHasTranscription() {
+        return !!(this.rhfitProcessTranscription && this.rhfitProcessTranscription.trim().length > 0);
+    }
+
+    get rhfitProcessHasFeedback() {
+        return !!(this.rhfitProcessAIFeedback && this.rhfitProcessAIFeedback.trim().length > 0);
+    }
+
+    get rhfitProcessCanUploadAudio() {
+        return !!this.rhfitSelectedAudioFile && !this.isRHFitUploadingAudio && !this.isRHFitProcessingAudio;
+    }
+
+    get rhfitProcessCanStartAI() {
+        return this.rhfitProcessHasAudio && !this.isRHFitUploadingAudio && !this.isRHFitProcessingAudio;
+    }
+
+    get rhfitProcessUploadDisabled() {
+        return !this.rhfitProcessCanUploadAudio;
+    }
+
+    get rhfitProcessStartDisabled() {
+        return !this.rhfitProcessCanStartAI;
+    }
+
+    get rhfitProcessStatusClass() {
+        const s = (this.rhfitProcessStatus || '').toLowerCase();
+        if (s.includes('completed')) return 'rhfit-process-pill rhfit-process-success';
+        if (s.includes('processing')) return 'rhfit-process-pill rhfit-process-info';
+        if (s.includes('error')) return 'rhfit-process-pill rhfit-process-danger';
+        if (s.includes('audio')) return 'rhfit-process-pill rhfit-process-warn';
+        return 'rhfit-process-pill rhfit-process-neutral';
+    }
+
+    onRHFitProcessFileChange(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        this.rhfitSelectedAudioFile = file;
+        this.rhfitProcessFileName = file.name;
+    }
+
+    readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const value = String(reader.result || '');
+                const idx = value.indexOf(',');
+                resolve(idx >= 0 ? value.substring(idx + 1) : value);
+            };
+            reader.onerror = () => reject(new Error('Lecture du fichier audio impossible.'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    uploadRHFitAudioForProcess() {
+        if (!this.rhfitProcessCanUploadAudio || !this.rhfitProcessOppId) return;
+
+        this.isRHFitUploadingAudio = true;
+        this.readFileAsBase64(this.rhfitSelectedAudioFile)
+            .then(base64 => uploadRHFitAudioApex({
+                oppId: this.rhfitProcessOppId,
+                audioBase64: base64,
+                fileName: this.rhfitProcessFileName || `rhfit-interview-${Date.now()}.webm`
+            }))
+            .then(() => {
+                this.rhfitProcessStatus = 'Audio Uploaded';
+                this.rhfitProcessHasAudio = true;
+                this.syncRHFitProcessToOpp({
+                    rhfitStatus: 'Audio Uploaded',
+                    rhfitHasAudio: true
+                });
+                this.showToast('Audio RH Fit uploade.', 'success');
+            })
+            .catch(err => {
+                this.showToast('Erreur upload audio RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+            })
+            .finally(() => {
+                this.isRHFitUploadingAudio = false;
+            });
+    }
+
+    startRHFitAIProcessing() {
+        if (!this.rhfitProcessCanStartAI || !this.rhfitProcessOppId) return;
+
+        this.isRHFitProcessingAudio = true;
+        this.rhfitProcessStatus = 'Processing';
+        processRHFitAudioApex({ oppId: this.rhfitProcessOppId })
+            .then(() => {
+                this.syncRHFitProcessToOpp({ rhfitStatus: 'Processing' });
+                this.startRHFitProcessingPolling();
+                this.showToast('Transcription + analyse RH Fit lancees.', 'info');
+            })
+            .catch(err => {
+                this.isRHFitProcessingAudio = false;
+                this.rhfitProcessStatus = 'Error';
+                this.showToast('Erreur lancement analyse RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+            });
+    }
+
+    startRHFitProcessingPolling() {
+        this.stopRHFitProcessingPolling();
+        this.rhfitProcessPollingAttempts = 0;
+        this.pollRHFitProcessing();
+    }
+
+    stopRHFitProcessingPolling() {
+        if (this.rhfitProcessPollingTimer) {
+            clearTimeout(this.rhfitProcessPollingTimer);
+            this.rhfitProcessPollingTimer = null;
+        }
+    }
+
+    pollRHFitProcessing() {
+        if (!this.rhfitProcessOppId) return;
+        this.rhfitProcessPollingAttempts += 1;
+
+        getRHFitProcessingStatusApex({ oppId: this.rhfitProcessOppId })
+            .then(result => {
+                const status = result.status || this.rhfitProcessStatus || '';
+                this.rhfitProcessStatus = status;
+                this.rhfitProcessAIScore = result.score != null ? Math.round(result.score) : this.rhfitProcessAIScore;
+                this.rhfitProcessSentimentScore = result.sentimentScore != null
+                    ? Math.round(result.sentimentScore * 100) / 100
+                    : this.rhfitProcessSentimentScore;
+                this.rhfitProcessSentimentLabel = result.sentimentLabel || this.rhfitProcessSentimentLabel;
+                this.rhfitProcessTranscription = result.transcription || this.rhfitProcessTranscription;
+                this.rhfitProcessAIFeedback = result.aiFeedback || this.rhfitProcessAIFeedback;
+
+                this.syncRHFitProcessToOpp({
+                    rhfitStatus: status,
+                    rhfitAIScore: this.rhfitProcessAIScore,
+                    rhfitSentimentScore: this.rhfitProcessSentimentScore,
+                    rhfitSentimentLabel: this.rhfitProcessSentimentLabel
+                });
+
+                const statusLower = status.toLowerCase();
+                if (statusLower.includes('audio') || statusLower.includes('processing') || statusLower.includes('completed')) {
+                    this.rhfitProcessHasAudio = true;
+                }
+                if (result.isComplete || statusLower.includes('completed')) {
+                    this.isRHFitProcessingAudio = false;
+                    this.stopRHFitProcessingPolling();
+                    this.showToast('Analyse RH Fit terminee.', 'success');
+                    return;
+                }
+                if (statusLower.includes('error')) {
+                    this.isRHFitProcessingAudio = false;
+                    this.stopRHFitProcessingPolling();
+                    this.showToast('Traitement RH Fit en erreur.', 'error');
+                    return;
+                }
+
+                if (this.rhfitProcessPollingAttempts >= 60) {
+                    this.isRHFitProcessingAudio = false;
+                    this.stopRHFitProcessingPolling();
+                    this.showToast('Le traitement RH Fit prend plus de temps que prevu.', 'info');
+                    return;
+                }
+
+                // eslint-disable-next-line @lwc/lwc/no-async-operation
+                this.rhfitProcessPollingTimer = setTimeout(() => this.pollRHFitProcessing(), 4000);
+            })
+            .catch(() => {
+                if (this.rhfitProcessPollingAttempts >= 60) {
+                    this.isRHFitProcessingAudio = false;
+                    this.stopRHFitProcessingPolling();
+                    this.showToast('Impossible de recuperer le statut RH Fit.', 'error');
+                    return;
+                }
+                // eslint-disable-next-line @lwc/lwc/no-async-operation
+                this.rhfitProcessPollingTimer = setTimeout(() => this.pollRHFitProcessing(), 4000);
+            });
+    }
+
+    syncRHFitProcessToOpp(fields) {
+        this.allOpps = this.allOpps.map(o => (
+            o.Id === this.rhfitProcessOppId ? this.mapOpp({ ...o, ...fields }) : o
+        ));
+        this.applyFilter();
+        if (this.detailOpp && this.detailOpp.Id === this.rhfitProcessOppId) {
+            this.detailOpp = this.allOpps.find(o => o.Id === this.rhfitProcessOppId) || this.detailOpp;
+        }
+    }
+
+    tryParseRHFitQuestions(raw) {
+        if (!raw || !raw.trim()) return null;
+        const direct = this.parseJson(raw.trim());
+        if (direct != null) return direct;
+
+        const withoutFence = this.stripCodeFence(raw.trim());
+        const fenced = this.parseJson(withoutFence);
+        if (fenced != null) return fenced;
+
+        const jsonBlock = this.extractJsonBlock(withoutFence);
+        if (!jsonBlock) return null;
+        return this.parseJson(jsonBlock);
+    }
+
+    parseJson(text) {
+        if (!text) return null;
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    stripCodeFence(text) {
+        if (!text) return '';
+        let value = text;
+        value = value.replace(/^```json\s*/i, '');
+        value = value.replace(/^```\s*/i, '');
+        value = value.replace(/\s*```$/i, '');
+        return value.trim();
+    }
+
+    extractJsonBlock(text) {
+        if (!text) return '';
+        const firstObj = text.indexOf('{');
+        const firstArr = text.indexOf('[');
+        let start = -1;
+
+        if (firstObj >= 0 && firstArr >= 0) {
+            start = Math.min(firstObj, firstArr);
+        } else {
+            start = firstObj >= 0 ? firstObj : firstArr;
+        }
+        if (start < 0) return '';
+
+        const openChar = text[start];
+        const closeChar = openChar === '{' ? '}' : ']';
+        const end = text.lastIndexOf(closeChar);
+        if (end <= start) return '';
+
+        return text.substring(start, end + 1).trim();
+    }
+
+    extractRHFitQuestionSource(parsed) {
+        if (!parsed) return [];
+        if (Array.isArray(parsed)) return parsed;
+        if (typeof parsed !== 'object') return [];
+
+        const directArrayKeys = ['questions', 'interview_questions', 'rhfit_questions', 'question_set'];
+        for (const key of directArrayKeys) {
+            if (Array.isArray(parsed[key])) {
+                return parsed[key];
+            }
+        }
+
+        const gathered = [];
+        for (const key of Object.keys(parsed)) {
+            const keyLower = key.toLowerCase();
+            const value = parsed[key];
+            if (Array.isArray(value) && keyLower.includes('question')) {
+                gathered.push(...value);
+            } else if ((keyLower.startsWith('question') || keyLower.startsWith('q')) && typeof value === 'string') {
+                gathered.push({ id: key, question: value });
+            }
+        }
+
+        return gathered;
+    }
+
+    normalizeRHFitQuestionItem(item, index) {
+        if (typeof item === 'string') {
+            return {
+                id: String(index + 1),
+                question: item.trim(),
+                intent: '',
+                followUp: ''
+            };
+        }
+        if (!item || typeof item !== 'object') {
+            return {
+                id: String(index + 1),
+                question: '',
+                intent: '',
+                followUp: ''
+            };
+        }
+
+        const id = this.readFirstString(item, ['id', 'number', 'index', 'code']) || String(index + 1);
+        const question = this.readFirstString(item, ['question', 'text', 'prompt', 'content', 'title']);
+        const intent = this.readFirstString(item, ['intent', 'objective', 'goal', 'competency', 'evaluation_focus']);
+        const followUp = this.readFirstString(item, ['follow_up', 'followUp', 'relance', 'probe', 'dig_deeper']);
+
+        return {
+            id,
+            question,
+            intent,
+            followUp
+        };
+    }
+
+    readFirstString(source, keys) {
+        if (!source || typeof source !== 'object' || !Array.isArray(keys)) return '';
+        for (const key of keys) {
+            if (Object.prototype.hasOwnProperty.call(source, key) && source[key] != null) {
+                const rawValue = source[key];
+                let value = '';
+                if (Array.isArray(rawValue)) {
+                    value = rawValue
+                        .map(item => (item == null ? '' : String(item).trim()))
+                        .filter(item => item.length > 0)
+                        .join(' | ');
+                } else if (typeof rawValue === 'object') {
+                    try {
+                        value = JSON.stringify(rawValue);
+                    } catch (e) {
+                        value = '';
+                    }
+                } else {
+                    value = String(rawValue).trim();
+                }
+                if (value) return value;
+            }
+        }
+        return '';
+    }
+
+    // RH Fit validation
+    openRHFitValidationModal(event) {
+        let id = null;
+        if (event && event.currentTarget && event.currentTarget.dataset) {
+            id = event.currentTarget.dataset.id;
+        }
+        if (!id && this.detailOpp) {
+            id = this.detailOpp.Id;
+        }
+        if (!id) return;
+        const opp = this.allOpps.find(o => o.Id === id) || this.detailOpp;
+        if (!opp || !opp.rhfitScheduled) {
+            this.showToast('Entretien RH Fit non planifie pour ce candidat.', 'error');
+            return;
+        }
+        this.rhfitValidationOppId = id;
+        this.rhfitValidationCandidateName = opp.Name || '';
+        this.rhfitValidationAIScore = opp.rhfitAIScore != null ? opp.rhfitAIScore : 0;
+        this.rhfitValidationSentiment = opp.rhfitSentimentLabel || 'N/A';
+        this.rhfitValidationScore = opp.rhfitValidatedScore != null
+            ? opp.rhfitValidatedScore
+            : (opp.rhfitAIScore != null ? opp.rhfitAIScore : 0);
+        this.rhfitValidationDecision = '';
+        this.rhfitValidationNotes = '';
+        this.showRHFitValidationModal = true;
+    }
+
+    closeRHFitValidationModal() {
+        this.showRHFitValidationModal = false;
+        this.isRHFitValidating = false;
+    }
+
+    stopPropagationRHFitValidation(event) {
+        event.stopPropagation();
+    }
+
+    onRHFitValidationScoreChange(event) {
+        this.rhfitValidationScore = parseInt(event.target.value, 10) || 0;
+    }
+
+    onRHFitValidationNotesChange(event) {
+        this.rhfitValidationNotes = event.target.value;
+    }
+
+    setRHFitDecisionAccept() { this.rhfitValidationDecision = 'accept'; }
+    setRHFitDecisionReview() { this.rhfitValidationDecision = 'review'; }
+    setRHFitDecisionReject() { this.rhfitValidationDecision = 'reject'; }
+
+    get btnRHFitAcceptClass() {
+        return 'btn-decision btn-accept' + (this.rhfitValidationDecision === 'accept' ? ' decision-active' : '');
+    }
+
+    get btnRHFitReviewClass() {
+        return 'btn-decision btn-review' + (this.rhfitValidationDecision === 'review' ? ' decision-active' : '');
+    }
+
+    get btnRHFitRejectClass() {
+        return 'btn-decision btn-reject' + (this.rhfitValidationDecision === 'reject' ? ' decision-active' : '');
+    }
+
+    get rhfitCannotSubmit() {
+        return !this.rhfitValidationDecision || this.isRHFitValidating;
+    }
+
+    confirmRHFitValidation() {
+        if (this.rhfitCannotSubmit) return;
+        this.isRHFitValidating = true;
+        validateRHFitInterview({
+            oppId: this.rhfitValidationOppId,
+            recruiterScore: this.rhfitValidationScore,
+            decision: this.rhfitValidationDecision,
+            recruiterNotes: this.rhfitValidationNotes
+        })
+            .then(result => this.refreshDashboardData().then(() => result))
+            .then(result => {
+                this.showRHFitValidationModal = false;
+                this.showDetailModal = false;
+                let msg = 'Validation RH Fit enregistree.';
+                let type = 'success';
+                if (result.newStage === 'Closed Won') {
+                    msg = 'Candidat embauche (Closed Won).';
+                } else if (result.newStage === 'Closed Lost') {
+                    msg = 'Candidat non retenu apres RH Fit.';
+                    type = 'error';
+                } else if (result.newStage === 'RH Fit') {
+                    msg = 'Candidat maintenu en RH Fit pour revue complementaire.';
+                    type = 'info';
+                }
+                this.showToast(msg, type);
+            })
+            .catch(err => {
+                this.showToast('Erreur validation RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+            })
+            .finally(() => {
+                this.isRHFitValidating = false;
+            });
+    }
+
     openValidationModal() {
         const opp = this.detailOpp;
         if (!opp.hasTechScore) {
@@ -1165,6 +1927,168 @@ export default class RecruteurDashboard extends LightningElement {
     }
 
     stopPropagationValidation(e) { e.stopPropagation(); }
+
+    openArchValidationModal(event) {
+        let id = null;
+        if (event && event.currentTarget && event.currentTarget.dataset) {
+            id = event.currentTarget.dataset.id;
+        }
+        if (!id && this.detailOpp) {
+            id = this.detailOpp.Id;
+        }
+        if (!id) return;
+
+        const opp = this.allOpps.find(o => o.Id === id) || this.detailOpp;
+        if (!opp || !opp.archScheduled) {
+            this.showToast('❌ Entretien architecture non planifie pour ce candidat.', 'error');
+            return;
+        }
+
+        this.archValidationOppId = id;
+        this.archValidationCandidateName = opp.Name || '';
+        this.archValidationDecision = '';
+        this.archValidationNotes = '';
+        this.isArchValidating = false;
+
+        const base = opp.archScore != null && opp.archScore > 0
+            ? Math.max(1, Math.min(5, Math.round((opp.archScore / 100) * 5)))
+            : 0;
+        this.archDesignScore = base;
+        this.archTradeoffScore = base;
+        this.archScalabilityScore = base;
+        this.archCommunicationScore = base;
+        this.archCollaborationScore = base;
+
+        this.showArchValidationModal = true;
+    }
+
+    closeArchValidationModal() {
+        this.showArchValidationModal = false;
+        this.isArchValidating = false;
+    }
+
+    stopPropagationArchValidation(e) {
+        e.stopPropagation();
+    }
+
+    get archStarsDesign() { return this._buildStars(this.archDesignScore); }
+    get archStarsTradeoff() { return this._buildStars(this.archTradeoffScore); }
+    get archStarsScalability() { return this._buildStars(this.archScalabilityScore); }
+    get archStarsCommunication() { return this._buildStars(this.archCommunicationScore); }
+    get archStarsCollaboration() { return this._buildStars(this.archCollaborationScore); }
+
+    handleArchStarClick(e) {
+        const criteria = e.currentTarget.dataset.criteria;
+        const value = parseInt(e.currentTarget.dataset.value, 10);
+        if (criteria === 'design') this.archDesignScore = value;
+        else if (criteria === 'tradeoff') this.archTradeoffScore = value;
+        else if (criteria === 'scalability') this.archScalabilityScore = value;
+        else if (criteria === 'communication') this.archCommunicationScore = value;
+        else if (criteria === 'collaboration') this.archCollaborationScore = value;
+    }
+
+    onArchValidationNotesChange(e) {
+        this.archValidationNotes = e.target.value;
+    }
+
+    setArchDecisionAccept() { this.archValidationDecision = 'accept'; }
+    setArchDecisionReview() { this.archValidationDecision = 'review'; }
+    setArchDecisionReject() { this.archValidationDecision = 'reject'; }
+
+    get btnArchAcceptClass() {
+        return 'btn-decision btn-accept' + (this.archValidationDecision === 'accept' ? ' decision-active' : '');
+    }
+
+    get btnArchReviewClass() {
+        return 'btn-decision btn-review' + (this.archValidationDecision === 'review' ? ' decision-active' : '');
+    }
+
+    get btnArchRejectClass() {
+        return 'btn-decision btn-reject' + (this.archValidationDecision === 'reject' ? ' decision-active' : '');
+    }
+
+    get archComputedScore() {
+        const score =
+            ((this.archDesignScore / 5) * 30) +
+            ((this.archTradeoffScore / 5) * 25) +
+            ((this.archScalabilityScore / 5) * 20) +
+            ((this.archCommunicationScore / 5) * 15) +
+            ((this.archCollaborationScore / 5) * 10);
+        return Math.round(score * 10) / 10;
+    }
+
+    get archCriteriaCompleted() {
+        return [
+            this.archDesignScore,
+            this.archTradeoffScore,
+            this.archScalabilityScore,
+            this.archCommunicationScore,
+            this.archCollaborationScore
+        ].every(v => v > 0);
+    }
+
+    get archCannotSubmit() {
+        return !this.archValidationDecision || !this.archCriteriaCompleted || this.isArchValidating;
+    }
+
+    async confirmArchValidation() {
+        if (this.archCannotSubmit) return;
+        this.isArchValidating = true;
+        try {
+            const result = await validateArchitectureInterview({
+                oppId: this.archValidationOppId,
+                designScore: this.archDesignScore,
+                tradeoffScore: this.archTradeoffScore,
+                scalabilityScore: this.archScalabilityScore,
+                communicationScore: this.archCommunicationScore,
+                collaborationScore: this.archCollaborationScore,
+                decision: this.archValidationDecision,
+                managerNotes: this.archValidationNotes
+            });
+
+            const newStage = result.newStage;
+            const nextArchStatus = newStage === 'Architecture' ? 'Review' : 'Completed';
+            const validatedScore = result.finalScore != null
+                ? Math.round(result.finalScore * 10) / 10
+                : this.archComputedScore;
+
+            this.allOpps = this.allOpps.map(o => {
+                if (o.Id === this.archValidationOppId) {
+                    return this.mapOpp({
+                        ...o,
+                        StageName: newStage,
+                        archScore: validatedScore,
+                        archStatus: nextArchStatus
+                    });
+                }
+                return o;
+            });
+            this.applyFilter();
+
+            const refreshed = this.allOpps.find(o => o.Id === this.archValidationOppId);
+            if (refreshed) this.detailOpp = refreshed;
+
+            this.showArchValidationModal = false;
+            this.showDetailModal = false;
+
+            let msg = '✅ Validation architecture enregistree.';
+            let toastType = 'success';
+            if (newStage === 'RH Fit') {
+                msg = '✅ Candidat valide: passage a RH Fit + invitation envoyee.';
+            } else if (newStage === 'Closed Lost') {
+                msg = '❌ Candidat refuse apres architecture.';
+                toastType = 'error';
+            } else if (newStage === 'Architecture') {
+                msg = 'ℹ️ Candidat conserve en Architecture pour revue complementaire.';
+                toastType = 'info';
+            }
+            this.showToast(msg, toastType);
+        } catch (err) {
+            this.showToast('❌ Erreur: ' + (err.body ? err.body.message : err.message), 'error');
+        } finally {
+            this.isArchValidating = false;
+        }
+    }
 
     // ══════════════════════════════════════
     // IA RE-SCORING

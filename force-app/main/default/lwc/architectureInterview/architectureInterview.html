@@ -1,214 +1,123 @@
 <template>
-    <!-- ═══════ LOADING ═══════ -->
     <template lwc:if={isStepLoading}>
         <div class="container">
             <div class="loading-card">
                 <lightning-spinner alternative-text="Chargement" size="large"></lightning-spinner>
-                <p class="loading-text">Chargement de l'entretien architecture…</p>
+                <p class="loading-text">Chargement de l entretien architecture...</p>
             </div>
         </div>
     </template>
 
-    <!-- ═══════ ERROR ═══════ -->
     <template lwc:if={isStepError}>
         <div class="container">
             <div class="error-card">
-                <div class="error-icon">⚠️</div>
+                <div class="error-icon">!</div>
                 <h2>Erreur</h2>
                 <p>{errorMessage}</p>
             </div>
         </div>
     </template>
 
-    <!-- ═══════ WELCOME ═══════ -->
     <template lwc:if={isStepWelcome}>
         <div class="container">
             <div class="welcome-card">
                 <div class="welcome-header">
-                    <div class="welcome-icon">🏗️</div>
+                    <div class="welcome-icon">Architecture</div>
                     <h1>Entretien Architecture</h1>
                     <p class="welcome-subtitle">HR Talent Portal · Talan Tunisie</p>
                 </div>
 
                 <div class="info-grid">
                     <div class="info-item">
-                        <span class="info-label">👤 Candidat</span>
+                        <span class="info-label">Candidat</span>
                         <span class="info-value">{candidateName}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">💼 Poste</span>
+                        <span class="info-label">Poste</span>
                         <span class="info-value">{jobTitle}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">📅 Date</span>
+                        <span class="info-label">Date</span>
                         <span class="info-value">{scheduledDateFormatted}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">⏱ Durée</span>
+                        <span class="info-label">Duree</span>
                         <span class="info-value">{durationLabel}</span>
                     </div>
                 </div>
 
-                <!-- Consent RGPD -->
-                <div class="consent-box">
-                    <label class="consent-label">
-                        <input type="checkbox" onchange={handleConsent} />
-                        <span>J'accepte que cet entretien soit enregistré et analysé par l'IA dans le cadre
-                        du processus de recrutement. L'enregistrement sera conservé de manière sécurisée
-                        dans Salesforce et ne sera accessible qu'aux recruteurs et managers habilités.</span>
-                    </label>
-                </div>
-
                 <div class="action-buttons">
-                    <button class="btn-primary" onclick={handleStartInterview} disabled={consentNotGiven}>
-                        🎥 Démarrer l'entretien
+                    <button class="btn-primary" onclick={handleStartInterview}>
+                        Acceder a l entretien
                     </button>
                     <template lwc:if={canReschedule}>
                         <button class="btn-secondary" onclick={handleShowReschedule}>
-                            📅 Demander un report
+                            Demander un report
                         </button>
                     </template>
                 </div>
 
                 <template lwc:if={rescheduleRequested}>
                     <div class="info-banner warning">
-                        ⚠️ Votre demande de report a été envoyée au recruteur.
+                        Votre demande de report a ete envoyee au recruteur.
                     </div>
                 </template>
             </div>
         </div>
     </template>
 
-    <!-- ═══════ INTERVIEW (Jitsi + Recording) ═══════ -->
     <template lwc:if={isStepInterview}>
         <div class="container interview-container">
-            <!-- Jitsi Video -->
             <div class="jitsi-section">
                 <div class="jitsi-header">
-                    <h2>🎥 Visioconférence Jitsi</h2>
+                    <h2>Visioconference Jitsi</h2>
                     <span class="jitsi-room-badge">{jitsiRoom}</span>
                 </div>
                 <div class="jitsi-launch-wrapper">
                     <div class="jitsi-launch-card">
-                        <div class="jitsi-launch-icon">📹</div>
-                        <h3>Rejoindre la visioconférence</h3>
+                        <div class="jitsi-launch-icon">Video</div>
+                        <h3>Rejoindre la visioconference</h3>
                         <p class="jitsi-launch-info">
-                            La visioconférence s'ouvrira dans un nouvel onglet. 
-                            Gardez cette page ouverte pour enregistrer l'audio et envoyer à l'IA.
+                            Cette etape ne fait pas de transcription ni d analyse IA.
+                            Le recruteur evaluera l entretien manuellement.
                         </p>
                         <a href={jitsiUrl} target="_blank" rel="noopener noreferrer" class="btn-jitsi">
-                            🚀 Ouvrir Jitsi Meet
+                            Ouvrir Jitsi Meet
                         </a>
-                        <p class="jitsi-room-info">Salle : <strong>{jitsiRoom}</strong></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recording Controls -->
-            <div class="recording-section">
-                <div class="recording-card">
-                    <h3>🎙️ Enregistrement Audio</h3>
-                    <p class="recording-info">
-                        Enregistrez l'entretien pour l'analyse IA. Seul l'audio de votre microphone sera capturé.
-                    </p>
-
-                    <template lwc:if={isRecording}>
-                        <div class="recording-active">
-                            <div class="recording-indicator">
-                                <span class="rec-dot"></span>
-                                <span class="rec-label">Enregistrement en cours</span>
-                            </div>
-                            <div class="recording-timer">{recordingTimeFormatted}</div>
-                            <button class="btn-stop" onclick={handleStopRecording}>
-                                ⏹ Arrêter l'enregistrement
+                        <p class="jitsi-room-info">Salle: <strong>{jitsiRoom}</strong></p>
+                        <div class="interview-actions">
+                            <button class="btn-secondary" onclick={handleMarkDone}>
+                                Entretien termine
                             </button>
                         </div>
-                    </template>
-
-                    <template lwc:if={isNotRecording}>
-                        <button class="btn-record" onclick={handleStartRecording}>
-                            🔴 Démarrer l'enregistrement
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- ═══════ UPLOADING ═══════ -->
-    <template lwc:if={isStepUploading}>
-        <div class="container">
-            <div class="processing-card">
-                <lightning-spinner alternative-text="Upload" size="large"></lightning-spinner>
-                <h2>📤 Upload de l'audio…</h2>
-                <p>Envoi du fichier audio vers Salesforce. Veuillez patienter.</p>
-            </div>
-        </div>
-    </template>
-
-    <!-- ═══════ PROCESSING ═══════ -->
-    <template lwc:if={isStepProcessing}>
-        <div class="container">
-            <div class="processing-card">
-                <lightning-spinner alternative-text="Traitement" size="large"></lightning-spinner>
-                <h2>🤖 Analyse IA en cours</h2>
-                <p>{processingMessage}</p>
-                <div class="processing-steps">
-                    <div class="step-item active">1. Transcription audio (Whisper)</div>
-                    <div class="step-item">2. Analyse par IA (LLaMA)</div>
-                    <div class="step-item">3. Score &amp; Feedback</div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- ═══════ RESULTS ═══════ -->
-    <template lwc:if={isStepResults}>
-        <div class="container">
-            <div class="results-card">
-                <div class="results-header">
-                    <h1>🏗️ Résultats — Entretien Architecture</h1>
-                    <p class="results-subtitle">{candidateName} · {jobTitle}</p>
-                </div>
-
-                <!-- Score -->
-                <div class="score-container">
-                    <div class={scoreClass}>
-                        <span class="score-number">{score}</span>
-                        <span class="score-max">/100</span>
                     </div>
-                    <p class="score-label">Score Architecture IA</p>
-                </div>
-
-                <!-- AI Feedback -->
-                <template lwc:if={aiFeedback}>
-                    <div class="feedback-section">
-                        <h3>📝 Analyse IA</h3>
-                        <div class="feedback-content">{aiFeedback}</div>
-                    </div>
-                </template>
-
-                <!-- Transcription -->
-                <template lwc:if={transcription}>
-                    <div class="transcription-section">
-                        <h3>🎙️ Transcription</h3>
-                        <div class="transcription-content">{transcription}</div>
-                    </div>
-                </template>
-
-                <div class="results-footer">
-                    <p>Le manager sera notifié pour valider les résultats.</p>
                 </div>
             </div>
         </div>
     </template>
 
-    <!-- ═══════ RESCHEDULE MODAL ═══════ -->
+    <template lwc:if={isStepDone}>
+        <div class="container">
+            <div class="completion-card">
+                <div class="completion-header">
+                    <h1>Entretien Architecture termine</h1>
+                    <p>{candidateName} · {jobTitle}</p>
+                </div>
+                <div class="completion-content">
+                    <p>
+                        Merci. Le recruteur validera la grille Architecture puis decidera:
+                        RH Fit, Review ou Rejet.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <template lwc:if={showRescheduleModal}>
         <section class="modal-overlay" onclick={handleCloseReschedule}>
             <div class="modal-content" onclick={stopPropagation}>
-                <h2>📅 Demande de report</h2>
-                <p>Vous ne pouvez demander qu'un seul report.</p>
+                <h2>Demande de report</h2>
+                <p>Vous ne pouvez demander qu un seul report.</p>
                 <textarea
                     class="reschedule-textarea"
                     placeholder="Motif du report (optionnel)"

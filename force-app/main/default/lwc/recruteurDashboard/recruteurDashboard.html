@@ -219,7 +219,7 @@
                 <div class="meet-preview">
                     <span class="meet-icon">🎙️</span>
                     <div>
-                        <p class="meet-label">Enregistrement audio + Analyse IA</p>
+                        <p class="meet-label">Validation humaine</p>
                         <p class="meet-link">L'audio sera transcrit (Whisper) et analysé (LLaMA) pour générer un score automatique.</p>
                     </div>
                 </div>
@@ -232,6 +232,54 @@
                 <button class="btn-send" onclick={confirmArchSchedule} disabled={isArchSending}>
                     <template if:true={isArchSending}><svg class="btn-icon spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83" /></svg> Envoi...</template>
                     <template if:false={isArchSending}><svg class="btn-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg> Envoyer l'invitation</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showRHFitPlanModal}>
+        <div class="modal-backdrop" onclick={closeRHFitPlanModal}></div>
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <span class="modal-icon"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    <div>
+                        <h2 class="modal-title">Planifier l'entretien RH Fit</h2>
+                        <p class="modal-sub">{rhfitPlanCandidatName}</p>
+                    </div>
+                </div>
+                <button class="modal-close" onclick={closeRHFitPlanModal}>×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Date &amp; Heure</label>
+                    <input type="datetime-local" class="form-input" value={rhfitPlanDateTime} onchange={onRHFitDateTimeChange} />
+                </div>
+                <div class="form-row">
+                    <label class="form-label"><svg class="lbl-icon" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Durée</label>
+                    <select class="form-select" value={rhfitPlanDuration} onchange={onRHFitDurationChange}>
+                        <option value="30">30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 heure</option>
+                        <option value="90">1h30</option>
+                    </select>
+                </div>
+                <div class="meet-preview">
+                    <span class="meet-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+                    <div>
+                        <p class="meet-label">Workflow RH Fit pro</p>
+                        <p class="meet-link">Invitation + visio Jitsi + transcription + analyse de sentiment + score IA.</p>
+                    </div>
+                </div>
+                <div class="modal-note">
+                    Un email d'invitation sera envoyé au candidat avec le lien Meet. Le recruteur reçoit aussi une notification pour conduire l'entretien et traiter l'audio.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeRHFitPlanModal}>Annuler</button>
+                <button class="btn-send" onclick={confirmRHFitSchedule} disabled={isRHFitSending}>
+                    <template if:true={isRHFitSending}>Planification...</template>
+                    <template if:false={isRHFitSending}>Planifier RH Fit</template>
                 </button>
             </div>
         </div>
@@ -378,6 +426,39 @@
                             <p class="detail-na">Non passé</p>
                         </template>
                     </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l10 7-10 13L2 9l10-7z"/></svg>
+                            Entretien Architecture
+                        </div>
+                        <template if:true={detailHasArch}>
+                            <div class="detail-score-big">{detailArchScore}<span class="detail-pct">/100</span></div>
+                            <div class="detail-composite">Statut: {detailArchStatus}</div>
+                        </template>
+                        <template if:false={detailHasArch}>
+                            <p class="detail-na">Non evalue</p>
+                        </template>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Entretien RH Fit
+                        </div>
+                        <template if:true={detailHasRHFitPlan}>
+                            <div class="detail-composite">Date: {detailRHFitDateFmt}</div>
+                            <div class="detail-composite">Statut: {detailRHFitStatus}</div>
+                            <template if:true={detailHasRHFitAIScore}>
+                                <div class="detail-validated">Score IA: {detailRHFitAIScore}/100</div>
+                                <span class={detailRHFitSentimentClass}>{detailRHFitSentimentLabel}</span>
+                            </template>
+                            <template if:true={detailHasRHFitValidatedScore}>
+                                <div class="detail-validated">Score valide: {detailRHFitValidatedScore}/100</div>
+                            </template>
+                        </template>
+                        <template if:false={detailHasRHFitPlan}>
+                            <p class="detail-na">Non planifie</p>
+                        </template>
+                    </div>
                 </div>
                 <template if:true={detailAiReco}>
                     <div class="detail-section">
@@ -415,6 +496,21 @@
             <div class="modal-footer">
                 <template if:true={detailHasTech}>
                     <button class="btn-validate-score" onclick={openValidationModal}>⚖️ Valider / Ajuster le score</button>
+                </template>
+                <template if:true={detailCanValidateArch}>
+                    <button class="btn-validate-arch" onclick={openArchValidationModal}>Valider Architecture</button>
+                </template>
+                <template if:true={detailCanManageRHFit}>
+                    <button class="btn-validate-arch" data-id={detailOpp.Id} onclick={openRHFitQuestionModal}>Generer Questions RH Fit</button>
+                </template>
+                <template if:true={detailCanProcessRHFit}>
+                    <button class="btn-validate-score" data-id={detailOpp.Id} onclick={openRHFitProcessModal}>Traiter RH Fit (Audio + IA)</button>
+                </template>
+                <template if:true={detailCanManageRHFit}>
+                    <button class="btn-validate-score" data-id={detailOpp.Id} onclick={openRHFitPlanModal}>Planifier RH Fit</button>
+                </template>
+                <template if:true={detailCanValidateRHFit}>
+                    <button class="btn-confirm-validation" data-id={detailOpp.Id} onclick={openRHFitValidationModal}>Valider RH Fit</button>
                 </template>
                 <button class="btn-cancel" onclick={closeDetailModal}>Fermer</button>
             </div>
@@ -538,6 +634,264 @@
                 <button class="btn-confirm-validation" disabled={validationCannotSubmit} onclick={confirmValidation}>
                     <template if:true={isValidating}>Envoi en cours...</template>
                     <template if:false={isValidating}>Confirmer la décision</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showArchValidationModal}>
+        <div class="modal-backdrop" onclick={closeArchValidationModal}></div>
+        <div class="modal-box validation-modal" onclick={stopPropagationArchValidation}>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 class="modal-title">Validation Entretien Architecture</h2>
+                    <p class="modal-sub">{archValidationCandidateName}</p>
+                </div>
+                <button class="modal-close" onclick={closeArchValidationModal}>✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="validation-scores">
+                    <div class="vs-card">
+                        <span class="vs-label">Score calcule</span>
+                        <span class="vs-value">{archComputedScore}/100</span>
+                    </div>
+                    <div class="vs-card">
+                        <span class="vs-label">Regle acceptation</span>
+                        <span class="vs-value-small">>= 70</span>
+                    </div>
+                </div>
+
+                <h4 class="vp-title">Grille d evaluation (0-5)</h4>
+                <div class="obs-section">
+                    <div class="obs-criteria">
+                        <div class="obs-row">
+                            <span class="obs-label">Design architecture (30)</span>
+                            <div class="obs-stars">
+                                <template for:each={archStarsDesign} for:item="s">
+                                    <span key={s.key} class={s.cls} data-criteria="design" data-value={s.value} onclick={handleArchStarClick}>★</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="obs-row">
+                            <span class="obs-label">Trade-offs techniques (25)</span>
+                            <div class="obs-stars">
+                                <template for:each={archStarsTradeoff} for:item="s">
+                                    <span key={s.key} class={s.cls} data-criteria="tradeoff" data-value={s.value} onclick={handleArchStarClick}>★</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="obs-row">
+                            <span class="obs-label">Scalabilite/Securite (20)</span>
+                            <div class="obs-stars">
+                                <template for:each={archStarsScalability} for:item="s">
+                                    <span key={s.key} class={s.cls} data-criteria="scalability" data-value={s.value} onclick={handleArchStarClick}>★</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="obs-row">
+                            <span class="obs-label">Communication (15)</span>
+                            <div class="obs-stars">
+                                <template for:each={archStarsCommunication} for:item="s">
+                                    <span key={s.key} class={s.cls} data-criteria="communication" data-value={s.value} onclick={handleArchStarClick}>★</span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="obs-row">
+                            <span class="obs-label">Collaboration (10)</span>
+                            <div class="obs-stars">
+                                <template for:each={archStarsCollaboration} for:item="s">
+                                    <span key={s.key} class={s.cls} data-criteria="collaboration" data-value={s.value} onclick={handleArchStarClick}>★</span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="obs-notes-wrap">
+                        <label class="obs-notes-label" for="archNotes">Notes recruteur</label>
+                        <textarea id="archNotes" class="obs-notes" rows="4" value={archValidationNotes} onchange={onArchValidationNotesChange}
+                            placeholder="Points forts, points de vigilance, elements a revoir..."></textarea>
+                    </div>
+                </div>
+
+                <h4 class="vd-title">Decision</h4>
+                <div class="vd-buttons vd-buttons-arch">
+                    <button class={btnArchAcceptClass} onclick={setArchDecisionAccept}>Accepter -> RH Fit</button>
+                    <button class={btnArchReviewClass} onclick={setArchDecisionReview}>Review -> Rester Architecture</button>
+                    <button class={btnArchRejectClass} onclick={setArchDecisionReject}>Rejeter -> Closed Lost</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeArchValidationModal}>Annuler</button>
+                <button class="btn-confirm-validation" disabled={archCannotSubmit} onclick={confirmArchValidation}>
+                    <template if:true={isArchValidating}>Envoi en cours...</template>
+                    <template if:false={isArchValidating}>Confirmer</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showRHFitQuestionModal}>
+        <div class="modal-backdrop" onclick={closeRHFitQuestionModal}></div>
+        <div class="modal-box validation-modal" onclick={stopPropagationRHFitValidation}>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 class="modal-title">Génération Einstein - Questions RH Fit</h2>
+                    <p class="modal-sub">{rhfitQuestionCandidateName}</p>
+                </div>
+                <button class="modal-close" onclick={closeRHFitQuestionModal}>×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-note">
+                    Génère un guide RH Fit personnalisé (offre + profil + étapes précédentes).
+                </div>
+                <template if:true={hasRHFitQuestionCards}>
+                    <div class="rhfit-question-list" style="margin-top:12px;">
+                        <template for:each={rhfitQuestionCards} for:item="question">
+                            <article key={question.key} class="rhfit-question-card">
+                                <div class="rhfit-question-head">
+                                    <span class="rhfit-question-id">Q{question.displayIndex}</span>
+                                    <span class="rhfit-question-tag">RH FIT</span>
+                                </div>
+                                <p class="rhfit-question-text">{question.question}</p>
+                                <template if:true={question.intent}>
+                                    <p class="rhfit-question-meta"><strong>Objectif:</strong> {question.intent}</p>
+                                </template>
+                                <template if:true={question.followUp}>
+                                    <p class="rhfit-question-meta"><strong>Relance:</strong> {question.followUp}</p>
+                                </template>
+                            </article>
+                        </template>
+                    </div>
+                </template>
+                <div class="form-row" style="margin-top:12px;">
+                    <label class="form-label">Questions générées (JSON)</label>
+                    <pre class="detail-text rhfit-json-box">{rhfitQuestionsDisplayJson}</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeRHFitQuestionModal}>Fermer</button>
+                <button class="btn-send" onclick={generateRHFitQuestions} disabled={isGeneratingRHFitQuestions}>
+                    <template if:true={isGeneratingRHFitQuestions}>Génération...</template>
+                    <template if:false={isGeneratingRHFitQuestions}>Générer avec Einstein</template>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showRHFitProcessModal}>
+        <div class="modal-backdrop" onclick={closeRHFitProcessModal}></div>
+        <div class="modal-box validation-modal" onclick={stopPropagationRHFitProcess}>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 class="modal-title">Traitement RH Fit - Audio &amp; IA</h2>
+                    <p class="modal-sub">{rhfitProcessCandidateName}</p>
+                </div>
+                <button class="modal-close" onclick={closeRHFitProcessModal}>×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-note">
+                    Workflow recruteur: importer l audio de l entretien, lancer transcription et analyse IA, puis valider la decision RH.
+                </div>
+
+                <div class="rhfit-process-row">
+                    <span class={rhfitProcessStatusClass}>{rhfitProcessStatus}</span>
+                </div>
+
+                <div class="form-row" style="margin-top:12px;">
+                    <label class="form-label">Fichier audio entretien</label>
+                    <input type="file" accept="audio/*" onchange={onRHFitProcessFileChange} />
+                    <template if:true={rhfitProcessFileName}>
+                        <p class="form-hint">{rhfitProcessFileName}</p>
+                    </template>
+                    <div class="rhfit-process-actions">
+                        <button class="btn-send" onclick={uploadRHFitAudioForProcess} disabled={rhfitProcessUploadDisabled}>
+                            <template if:true={isRHFitUploadingAudio}>Upload...</template>
+                            <template if:false={isRHFitUploadingAudio}>Uploader audio</template>
+                        </button>
+                        <button class="btn-confirm-validation" onclick={startRHFitAIProcessing} disabled={rhfitProcessStartDisabled}>
+                            <template if:true={isRHFitProcessingAudio}>Analyse en cours...</template>
+                            <template if:false={isRHFitProcessingAudio}>Lancer transcription + IA</template>
+                        </button>
+                    </div>
+                </div>
+
+                <template if:true={rhfitProcessHasAIScore}>
+                    <div class="validation-scores" style="margin-top:14px;">
+                        <div class="vs-card">
+                            <span class="vs-label">Score IA RH Fit</span>
+                            <span class="vs-value">{rhfitProcessAIScore}/100</span>
+                        </div>
+                        <div class="vs-card">
+                            <span class="vs-label">Sentiment</span>
+                            <span class="vs-value-small">{rhfitProcessSentimentLabel}</span>
+                            <template if:true={rhfitProcessHasSentimentScore}>
+                                <span class="vs-value-small">({rhfitProcessSentimentScore})</span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <template if:true={rhfitProcessHasFeedback}>
+                    <div class="detail-section" style="margin-top:12px;">
+                        <h4 class="detail-section-title">Feedback IA</h4>
+                        <p class="detail-text">{rhfitProcessAIFeedback}</p>
+                    </div>
+                </template>
+
+                <template if:true={rhfitProcessHasTranscription}>
+                    <div class="detail-section" style="margin-top:12px;">
+                        <h4 class="detail-section-title">Transcription</h4>
+                        <pre class="detail-text">{rhfitProcessTranscription}</pre>
+                    </div>
+                </template>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeRHFitProcessModal}>Fermer</button>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showRHFitValidationModal}>
+        <div class="modal-backdrop" onclick={closeRHFitValidationModal}></div>
+        <div class="modal-box validation-modal" onclick={stopPropagationRHFitValidation}>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h2 class="modal-title">Validation finale RH Fit</h2>
+                    <p class="modal-sub">{rhfitValidationCandidateName}</p>
+                </div>
+                <button class="modal-close" onclick={closeRHFitValidationModal}>×</button>
+            </div>
+            <div class="modal-body">
+                <div class="validation-scores">
+                    <div class="vs-card">
+                        <span class="vs-label">Score IA RH Fit</span>
+                        <span class="vs-value">{rhfitValidationAIScore}/100</span>
+                    </div>
+                    <div class="vs-card">
+                        <span class="vs-label">Sentiment</span>
+                        <span class="vs-value-small">{rhfitValidationSentiment}</span>
+                    </div>
+                </div>
+                <div class="vs-card vs-editable" style="margin-bottom:16px;">
+                    <label class="vs-label" for="rhfitValidScore">Score validé RH</label>
+                    <input id="rhfitValidScore" type="number" class="vs-input" min="0" max="100" value={rhfitValidationScore} onchange={onRHFitValidationScoreChange} />
+                </div>
+                <div class="obs-notes-wrap">
+                    <label class="obs-notes-label" for="rhfitValidationNotes">Notes décision RH</label>
+                    <textarea id="rhfitValidationNotes" class="obs-notes" rows="4" value={rhfitValidationNotes} onchange={onRHFitValidationNotesChange}
+                        placeholder="Motivation de la décision, points observés, risques..."></textarea>
+                </div>
+                <h4 class="vd-title" style="margin-top:16px;">Décision</h4>
+                <div class="vd-buttons vd-buttons-arch">
+                    <button class={btnRHFitAcceptClass} onclick={setRHFitDecisionAccept}>Accepter → Embauche</button>
+                    <button class={btnRHFitReviewClass} onclick={setRHFitDecisionReview}>Review → Rester RH Fit</button>
+                    <button class={btnRHFitRejectClass} onclick={setRHFitDecisionReject}>Rejeter → Closed Lost</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick={closeRHFitValidationModal}>Annuler</button>
+                <button class="btn-confirm-validation" onclick={confirmRHFitValidation} disabled={rhfitCannotSubmit}>
+                    <template if:true={isRHFitValidating}>Envoi...</template>
+                    <template if:false={isRHFitValidating}>Confirmer la décision</template>
                 </button>
             </div>
         </div>
@@ -849,7 +1203,42 @@
                                                         </template>
                                                         <template if:false={opp.archRescheduleRequested}>
                                                             <span class="tech-scheduled-tag">🏗️ Architecture planifié</span>
+                                                            <button class="btn-action btn-validate-arch-table"
+                                                                data-id={opp.Id}
+                                                                onclick={openArchValidationModal}>
+                                                                Valider
+                                                            </button>
                                                         </template>
+                                                    </template>
+                                                </template>
+                                                <template if:true={opp.isRHFit}>
+                                                    <template if:false={opp.rhfitScheduled}>
+                                                        <button class="btn-action btn-plan-rhfit"
+                                                            data-id={opp.Id}
+                                                            data-name={opp.Name}
+                                                            onclick={openRHFitPlanModal}>
+                                                            RH Fit Planifier
+                                                        </button>
+                                                    </template>
+                                                    <template if:true={opp.rhfitScheduled}>
+                                                        <span class="rhfit-scheduled-tag">RH Fit planifie</span>
+                                                        <button class="btn-action btn-process-rhfit"
+                                                            data-id={opp.Id}
+                                                            data-name={opp.Name}
+                                                            onclick={openRHFitProcessModal}>
+                                                            Traiter RH Fit
+                                                        </button>
+                                                        <button class="btn-action btn-generate-rhfit"
+                                                            data-id={opp.Id}
+                                                            data-name={opp.Name}
+                                                            onclick={openRHFitQuestionModal}>
+                                                            Questions IA
+                                                        </button>
+                                                        <button class="btn-action btn-validate-rhfit"
+                                                            data-id={opp.Id}
+                                                            onclick={openRHFitValidationModal}>
+                                                            Valider RH Fit
+                                                        </button>
                                                     </template>
                                                 </template>
                                                 <button class="btn-action btn-rescore"

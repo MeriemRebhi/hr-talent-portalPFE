@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Audio_ContentVersion_Id__c</fullName>
+    <label>Audio File Id</label>
+    <description>ContentVersion Id of the uploaded RH Fit audio recording</description>
+    <type>Text</type>
+    <length>18</length>
+</CustomField>
+

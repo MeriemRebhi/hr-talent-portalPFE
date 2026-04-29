@@ -1,0 +1,118 @@
+<template>
+    <template lwc:if={isStepLoading}>
+        <div class="rhfit-shell">
+            <div class="state-card">
+                <lightning-spinner alternative-text="Chargement" size="large"></lightning-spinner>
+                <p>Chargement de l entretien RH Fit...</p>
+            </div>
+        </div>
+    </template>
+
+    <template lwc:if={isStepError}>
+        <div class="rhfit-shell">
+            <div class="state-card error">
+                <div class="state-icon">!</div>
+                <h2>Erreur</h2>
+                <p>{errorMessage}</p>
+            </div>
+        </div>
+    </template>
+
+    <template lwc:if={isStepWelcome}>
+        <div class="rhfit-shell">
+            <section class="panel hero">
+                <div class="hero-top">
+                    <span class="hero-chip">RH FIT INTERVIEW</span>
+                    <span class={statusClass}>{statusLabel}</span>
+                </div>
+                <h1>Bienvenue {candidateName}</h1>
+                <p class="hero-sub">Poste: {jobTitle}</p>
+                <div class="meta-grid">
+                    <article class="meta-item">
+                        <span class="meta-label">Date</span>
+                        <span class="meta-value">{scheduledDateFormatted}</span>
+                    </article>
+                    <article class="meta-item">
+                        <span class="meta-label">Duree</span>
+                        <span class="meta-value">{durationLabel}</span>
+                    </article>
+                    <article class="meta-item">
+                        <span class="meta-label">Format</span>
+                        <span class="meta-value">Visioconference RH Fit</span>
+                    </article>
+                    <article class="meta-item">
+                        <span class="meta-label">Conduite</span>
+                        <span class="meta-value">Recruteur</span>
+                    </article>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick={handleJoinFlow}>Acceder a la visioconference</button>
+                    <template lwc:if={canReschedule}>
+                        <button class="btn btn-secondary" onclick={handleShowReschedule}>Demander un report</button>
+                    </template>
+                </div>
+                <template lwc:if={rescheduleRequested}>
+                    <div class="notice notice-warning">Demande de report deja envoyee au recruteur.</div>
+                </template>
+            </section>
+        </div>
+    </template>
+
+    <template lwc:if={isStepJoin}>
+        <div class="rhfit-shell">
+            <section class="panel hero mini">
+                <div class="hero-top">
+                    <span class="hero-chip">ENTRETIEN EN COURS</span>
+                    <span class={statusClass}>{statusLabel}</span>
+                </div>
+                <h1>{candidateName}</h1>
+                <p class="hero-sub">{jobTitle}</p>
+            </section>
+
+            <template lwc:if={showNotice}>
+                <div class={noticeClass}>{noticeMessage}</div>
+            </template>
+
+            <section class="panel">
+                <h2>Rejoindre la visioconference RH Fit</h2>
+                <p class="hint">Le recruteur vous posera les questions RH Fit en direct pendant l entretien.</p>
+                <a class="btn btn-primary" href={jitsiUrl} target="_blank" rel="noopener noreferrer">Ouvrir Jitsi Meet</a>
+                <p class="room">Salle: <strong>{jitsiRoom}</strong></p>
+                <div class="footer-actions">
+                    <button class="btn btn-secondary" onclick={handleBackToWelcome}>Retour</button>
+                    <button class="btn btn-primary" onclick={handleMarkDone}>Entretien termine</button>
+                </div>
+            </section>
+        </div>
+    </template>
+
+    <template lwc:if={isStepDone}>
+        <div class="rhfit-shell">
+            <section class="panel done">
+                <h1>Merci pour votre entretien RH Fit</h1>
+                <p>{candidateName} - {jobTitle}</p>
+                <p>Le recruteur analysera l entretien et vous contactera pour la suite.</p>
+            </section>
+        </div>
+    </template>
+
+    <template lwc:if={showRescheduleModal}>
+        <section class="modal-overlay" onclick={handleCloseReschedule}>
+            <div class="modal-panel" onclick={stopPropagation}>
+                <h2>Demande de report RH Fit</h2>
+                <p>Vous ne pouvez demander qu un seul report.</p>
+                <textarea
+                    class="reschedule-input"
+                    rows="4"
+                    value={rescheduleReason}
+                    onchange={handleRescheduleReasonChange}
+                    placeholder="Motif du report (optionnel)"
+                ></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick={handleCloseReschedule}>Annuler</button>
+                    <button class="btn btn-primary" onclick={handleSubmitReschedule} disabled={isRescheduling}>{rescheduleButtonLabel}</button>
+                </div>
+            </div>
+        </section>
+    </template>
+</template>

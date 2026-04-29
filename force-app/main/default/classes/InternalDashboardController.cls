@@ -101,6 +101,21 @@ public with sharing class InternalDashboardController {
             archByOpp.put(ai.Opportunity__c, ai);
         }
 
+        // Query RH_Fit_Interview__c records
+        Map<Id, RH_Fit_Interview__c> rhfitByOpp = new Map<Id, RH_Fit_Interview__c>();
+        for (RH_Fit_Interview__c ri : [
+            SELECT Opportunity__c, Interview_DateTime__c, Duration__c,
+                   Meet_Link__c, Jitsi_Room__c, Status__c,
+                   Audio_ContentVersion_Id__c,
+                   Generated_Questions__c, AI_RHFit_Score__c,
+                   Sentiment_Score__c, Sentiment_Label__c,
+                   Recruiter_Validated_Score__c, Reschedule_Requested__c
+            FROM RH_Fit_Interview__c
+            WHERE Opportunity__c IN :oppIds
+        ]) {
+            rhfitByOpp.put(ri.Opportunity__c, ri);
+        }
+
         // Join Lead (score IA) via ConvertedOpportunityId
 
         Map<Id, Lead> oppLeadMap = new Map<Id, Lead>();
@@ -202,6 +217,20 @@ public with sharing class InternalDashboardController {
             row.put('archScore',       archI != null ? archI.Score__c : null);
             row.put('archStatus',      archI != null ? archI.Status__c : null);
             row.put('archRescheduleRequested', archI != null ? archI.Reschedule_Requested__c : false);
+            // RH Fit interview from RH_Fit_Interview__c
+            RH_Fit_Interview__c rhI = rhfitByOpp.get(o.Id);
+            row.put('rhfitDateTime',    rhI != null ? rhI.Interview_DateTime__c : null);
+            row.put('rhfitDuration',    rhI != null ? rhI.Duration__c : null);
+            row.put('rhfitMeetLink',    rhI != null ? rhI.Meet_Link__c : null);
+            row.put('rhfitJitsiRoom',   rhI != null ? rhI.Jitsi_Room__c : null);
+            row.put('rhfitStatus',      rhI != null ? rhI.Status__c : null);
+            row.put('rhfitHasAudio',    rhI != null ? String.isNotBlank(rhI.Audio_ContentVersion_Id__c) : false);
+            row.put('rhfitQuestions',   rhI != null ? rhI.Generated_Questions__c : null);
+            row.put('rhfitAIScore',     rhI != null ? rhI.AI_RHFit_Score__c : null);
+            row.put('rhfitSentimentScore', rhI != null ? rhI.Sentiment_Score__c : null);
+            row.put('rhfitSentimentLabel', rhI != null ? rhI.Sentiment_Label__c : null);
+            row.put('rhfitValidatedScore', rhI != null ? rhI.Recruiter_Validated_Score__c : null);
+            row.put('rhfitRescheduleRequested', rhI != null ? rhI.Reschedule_Requested__c : false);
             // Job Posting title
             String jobTitle = '';
             Id jId = oppIdToJobId.get(o.Id);
@@ -1469,5 +1498,320 @@ public with sharing class InternalDashboardController {
         } catch (Exception e) {
             throw new AuraHandledException('Erreur planification entretien architecture : ' + e.getMessage());
         }
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> scheduleRHFitInterview(
+        Id oppId,
+        String interviewDateTime,
+        String duration
+    ) {
+        try {
+            DateTime parsedDt = DateTime.valueOf(interviewDateTime.replace('T', ' ').length() == 16
+                ? interviewDateTime.replace('T', ' ') + ':00'
+                : interviewDateTime.replace('T', ' '));
+
+            Opportunity opp = [
+                SELECT Id, Name, StageName, AccountId, Owner.Email
+                FROM Opportunity
+                WHERE Id = :oppId
+                LIMIT 1
+            ];
+
+            String hex = EncodingUtil.convertToHex(Crypto.generateAesKey(128));
+            String jitsiRoom = 'talan-rhfit-' + hex.substring(0, 8) + '-' + hex.substring(8, 12) + '-' + hex.substring(12, 16) + '-' + hex.substring(16, 20);
+            String jitsiUrl = 'https://meet.jit.si/' + jitsiRoom;
+            String portalLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/rhfitinterview?id=' + oppId;
+
+            List<RH_Fit_Interview__c> listRec = [
+                SELECT Id
+                FROM RH_Fit_Interview__c
+                WHERE Opportunity__c = :oppId
+                LIMIT 1
+            ];
+            RH_Fit_Interview__c rec = listRec.isEmpty()
+                ? new RH_Fit_Interview__c(Opportunity__c = oppId)
+                : listRec[0];
+
+            rec.Interview_DateTime__c = parsedDt;
+            rec.Duration__c = duration;
+            rec.Jitsi_Room__c = jitsiRoom;
+            rec.Meet_Link__c = jitsiUrl;
+            rec.Status__c = 'Scheduled';
+            rec.Reschedule_Requested__c = false;
+            upsert rec;
+
+            String candidatEmail = '';
+            String prenom = '';
+            String nom = '';
+            List<Lead> leads = [
+                SELECT Id, FirstName, LastName, Email, Description
+                FROM Lead
+                WHERE ConvertedOpportunityId = :oppId
+                LIMIT 1
+            ];
+            if (!leads.isEmpty() && String.isNotBlank(leads[0].Email)) {
+                candidatEmail = leads[0].Email;
+                prenom = leads[0].FirstName != null ? leads[0].FirstName : '';
+                nom = leads[0].LastName != null ? leads[0].LastName : '';
+            }
+
+            String dateLabel = parsedDt.format('dd/MM/yyyy \'a\' HH:mm');
+            String dureeLabel = duration == '30' ? '30 minutes'
+                : duration == '45' ? '45 minutes'
+                : duration == '60' ? '1 heure'
+                : duration == '90' ? '1h30'
+                : duration + ' min';
+            String recruiterConsoleLink = URL.getOrgDomainUrl().toExternalForm() + '/lightning/n/Recruteur_Dashboard';
+
+            if (String.isNotBlank(candidatEmail)) {
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                mail.setToAddresses(new List<String>{ candidatEmail });
+                mail.setSubject('Invitation - Entretien RH Fit - Talan Tunisie');
+                mail.setHtmlBody(
+                    '<div style="font-family:Inter,Arial,sans-serif;max-width:620px;margin:0 auto;">' +
+                    '<div style="background:linear-gradient(135deg,#0f766e,#14b8a6);padding:26px 30px;border-radius:14px 14px 0 0;">' +
+                    '<h1 style="color:#fff;margin:0;font-size:22px;">Entretien RH Fit planifie</h1>' +
+                    '<p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">HR Talent Portal - Talan Tunisie</p>' +
+                    '</div>' +
+                    '<div style="background:#fff;padding:26px 30px;border:1px solid #e5e7eb;border-top:none;">' +
+                    '<p style="margin:0 0 14px;font-size:15px;color:#334155;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>' +
+                    '<p style="margin:0 0 14px;font-size:14px;color:#475569;line-height:1.7;">Votre entretien RH Fit est planifie. Le recruteur animera l entretien et vous posera les questions en direct.</p>' +
+                    '<div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:12px 14px;margin-bottom:16px;">' +
+                    '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Date:</strong> ' + dateLabel + '</p>' +
+                    '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
+                    '<p style="margin:0;font-size:13px;color:#0f766e;"><strong>Format:</strong> Visioconference RH Fit</p>' +
+                    '</div>' +
+                    '<div style="text-align:center;margin:18px 0;">' +
+                    '<a href="' + jitsiUrl + '" style="display:inline-block;padding:11px 28px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Rejoindre la visioconference RH Fit</a>' +
+                    '</div>' +
+                    '<p style="margin:0;font-size:12px;color:#94a3b8;">Merci de preparer un environnement calme avec microphone fonctionnel.</p>' +
+                    '</div>' +
+                    '</div>'
+                );
+                Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
+            }
+
+            Set<String> recruiterEmails = new Set<String>();
+            if (String.isNotBlank(opp.Owner != null ? opp.Owner.Email : null)) {
+                recruiterEmails.add(opp.Owner.Email);
+            }
+            if (String.isNotBlank(UserInfo.getUserEmail())) {
+                recruiterEmails.add(UserInfo.getUserEmail());
+            }
+            recruiterEmails.remove(candidatEmail);
+
+            if (!recruiterEmails.isEmpty()) {
+                Messaging.SingleEmailMessage recruiterMail = new Messaging.SingleEmailMessage();
+                recruiterMail.setToAddresses(new List<String>(recruiterEmails));
+                recruiterMail.setSubject('Notification recruteur - Entretien RH Fit planifie');
+                recruiterMail.setHtmlBody(
+                    '<div style="font-family:Inter,Arial,sans-serif;max-width:620px;margin:0 auto;">' +
+                    '<div style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:22px 26px;border-radius:14px 14px 0 0;">' +
+                    '<h2 style="color:#fff;margin:0;font-size:20px;">Entretien RH Fit a animer</h2>' +
+                    '<p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">Action recruteur: conduite entretien + enregistrement + analyse IA</p>' +
+                    '</div>' +
+                    '<div style="background:#fff;padding:22px 26px;border:1px solid #e5e7eb;border-top:none;">' +
+                    '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Candidat:</strong> ' + prenom + ' ' + nom + '</p>' +
+                    '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Date:</strong> ' + dateLabel + '</p>' +
+                    '<p style="margin:0 0 16px;font-size:14px;color:#334155;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
+                    '<div style="text-align:center;margin:0 0 14px;">' +
+                    '<a href="' + jitsiUrl + '" style="display:inline-block;padding:10px 20px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;margin-right:8px;">Rejoindre Meet</a>' +
+                    '<a href="' + recruiterConsoleLink + '" style="display:inline-block;padding:10px 20px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Ouvrir Dashboard Recruteur</a>' +
+                    '</div>' +
+                    '<p style="margin:0;font-size:12px;color:#64748b;">Apres l entretien, importez l audio dans le dashboard puis lancez transcription + analyse IA.</p>' +
+                    '</div>' +
+                    '</div>'
+                );
+                Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ recruiterMail });
+            }
+
+            return new Map<String, Object>{
+                'success' => true,
+                'jitsiRoom' => jitsiRoom,
+                'jitsiUrl' => jitsiUrl,
+                'portalLink' => portalLink
+            };
+        } catch (Exception e) {
+            throw new AuraHandledException('Erreur planification RH Fit : ' + e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> validateRHFitInterview(
+        Id oppId,
+        Decimal recruiterScore,
+        String decision,
+        String recruiterNotes
+    ) {
+        try {
+            if (oppId == null) throw new AuraHandledException('Candidature introuvable.');
+            if (String.isBlank(decision)) throw new AuraHandledException('Veuillez choisir une decision.');
+
+            Decimal score = recruiterScore != null ? recruiterScore : 0;
+            if (score < 0) score = 0;
+            if (score > 100) score = 100;
+
+            List<RH_Fit_Interview__c> listRec = [
+                SELECT Id, Manager_Notes__c
+                FROM RH_Fit_Interview__c
+                WHERE Opportunity__c = :oppId
+                LIMIT 1
+            ];
+            RH_Fit_Interview__c rec = listRec.isEmpty()
+                ? new RH_Fit_Interview__c(Opportunity__c = oppId)
+                : listRec[0];
+            rec.Recruiter_Validated_Score__c = score;
+            rec.Status__c = decision == 'review' ? 'Review' : 'Validated';
+            if (String.isNotBlank(recruiterNotes)) {
+                rec.Manager_Notes__c = (
+                    (rec.Manager_Notes__c != null ? rec.Manager_Notes__c + '\n\n' : '') +
+                    'Decision RH Fit: ' + decision + '\n' +
+                    'Score valide: ' + score + '/100\n' +
+                    recruiterNotes
+                ).left(32768);
+            }
+            upsert rec;
+
+            String newStage;
+            Boolean hired = false;
+            String recommendation;
+
+            if (decision == 'accept') {
+                if (score < 75) {
+                    throw new AuraHandledException('Score < 75/100. Utilisez review/reject ou ajustez le score.');
+                }
+                newStage = 'Closed Won';
+                hired = true;
+                recommendation = 'Candidat embauche.';
+                updateOpportunityStage(oppId, newStage);
+            } else if (decision == 'reject') {
+                newStage = 'Closed Lost';
+                recommendation = 'Candidat non retenu apres RH Fit.';
+                updateOpportunityStage(oppId, newStage);
+            } else if (decision == 'review') {
+                newStage = 'RH Fit';
+                recommendation = 'Revue complementaire requise.';
+            } else {
+                throw new AuraHandledException('Decision invalide.');
+            }
+
+            return new Map<String, Object>{
+                'success' => true,
+                'hired' => hired,
+                'newStage' => newStage,
+                'recommendation' => recommendation,
+                'validatedScore' => score
+            };
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuraHandledException('Erreur validation RH Fit : ' + e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> validateArchitectureInterview(
+        Id oppId,
+        Decimal designScore,
+        Decimal tradeoffScore,
+        Decimal scalabilityScore,
+        Decimal communicationScore,
+        Decimal collaborationScore,
+        String decision,
+        String managerNotes
+    ) {
+        try {
+            if (oppId == null) {
+                throw new AuraHandledException('Candidature introuvable.');
+            }
+            if (String.isBlank(decision)) {
+                throw new AuraHandledException('Veuillez choisir une decision.');
+            }
+
+            Decimal d = normalizeArchitectureCriteriaScore(designScore);
+            Decimal t = normalizeArchitectureCriteriaScore(tradeoffScore);
+            Decimal s = normalizeArchitectureCriteriaScore(scalabilityScore);
+            Decimal c = normalizeArchitectureCriteriaScore(communicationScore);
+            Decimal p = normalizeArchitectureCriteriaScore(collaborationScore);
+
+            Decimal finalScore =
+                ((d / 5) * 30) +
+                ((t / 5) * 25) +
+                ((s / 5) * 20) +
+                ((c / 5) * 15) +
+                ((p / 5) * 10);
+            finalScore = finalScore.setScale(1, RoundingMode.HALF_UP);
+
+            List<Architecture_Interview__c> aiList = [
+                SELECT Id
+                FROM Architecture_Interview__c
+                WHERE Opportunity__c = :oppId
+                LIMIT 1
+            ];
+            Architecture_Interview__c ai = aiList.isEmpty()
+                ? new Architecture_Interview__c(Opportunity__c = oppId)
+                : aiList[0];
+
+            String structuredNotes =
+                'Validation Architecture (recruteur)' + '\n' +
+                'Design architecture (30): ' + d + '/5' + '\n' +
+                'Trade-offs techniques (25): ' + t + '/5' + '\n' +
+                'Scalabilite/Securite/Performance (20): ' + s + '/5' + '\n' +
+                'Communication (15): ' + c + '/5' + '\n' +
+                'Collaboration/Posture (10): ' + p + '/5' + '\n' +
+                'Score final: ' + finalScore + '/100';
+            if (String.isNotBlank(managerNotes)) {
+                structuredNotes += '\n---\n' + managerNotes;
+            }
+
+            ai.Score__c = finalScore;
+            ai.Status__c = decision == 'review' ? 'Review' : 'Completed';
+            ai.Manager_Notes__c = structuredNotes.left(32768);
+            upsert ai;
+
+            String newStage;
+            Boolean passed = false;
+            String recommendation;
+
+            if (decision == 'accept') {
+                if (finalScore < 70) {
+                    throw new AuraHandledException(
+                        'Le score est inferieur a 70/100. Utilisez review/reject, ou ajustez les criteres.'
+                    );
+                }
+                newStage = 'RH Fit';
+                passed = true;
+                recommendation = 'Candidat valide pour RH Fit.';
+                updateOpportunityStage(oppId, newStage);
+            } else if (decision == 'reject') {
+                newStage = 'Closed Lost';
+                recommendation = 'Candidat non retenu apres entretien architecture.';
+                updateOpportunityStage(oppId, newStage);
+            } else if (decision == 'review') {
+                newStage = 'Architecture';
+                recommendation = 'Candidat a revoir (2e avis ou entretien complementaire).';
+            } else {
+                throw new AuraHandledException('Decision invalide.');
+            }
+
+            Map<String, Object> result = new Map<String, Object>();
+            result.put('finalScore', finalScore);
+            result.put('newStage', newStage);
+            result.put('passed', passed);
+            result.put('recommendation', recommendation);
+            return result;
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuraHandledException('Erreur validation architecture : ' + e.getMessage());
+        }
+    }
+
+    private static Decimal normalizeArchitectureCriteriaScore(Decimal score) {
+        if (score == null) return 0;
+        if (score < 0) return 0;
+        if (score > 5) return 5;
+        return score;
     }
 }

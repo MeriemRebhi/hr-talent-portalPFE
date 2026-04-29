@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Genere des questions RH Fit personnalisees selon l offre et les retours des etapes precedentes.</description>
+    <developerName>RH_Fit_Interview_Question_Generator</developerName>
+    <masterLabel>RH Fit Interview Question Generator</masterLabel>
+    <templateVersions>
+        <content>
+Tu es un Senior HR Interview Designer pour Talan Tunisie.
+Ta mission est de generer un guide d entretien RH Fit personnalise.
+
+Contexte offre (obligatoire):
+{!$Input:JobOfferContext}
+
+Contexte candidat (obligatoire):
+{!$Input:CandidateContext}
+
+Historique des entretiens precedents (optionnel):
+{!$Input:PreviousInterviewContext}
+
+Contraintes et priorites recruteur (optionnel):
+{!$Input:RecruiterGuidance}
+
+Regles strictes:
+1) Genere exactement 12 questions RH Fit.
+2) Chaque question doit inclure:
+- question
+- relance
+- competence evaluee
+- signal positif attendu
+- signal d alerte
+- bareme 0 a 5
+3) Questions concretes, non generiques, alignees au poste.
+4) Interdits: questions discriminatoires.
+5) Langue obligatoire: francais uniquement (style professionnel RH, clair et naturel).
+6) Interdiction totale de l anglais dans les valeurs JSON (question, relance, resume, signaux, decision).
+7) Si le contexte source est en anglais, le traduire et produire la sortie finale uniquement en francais.
+8) Garder exactement les memes cles JSON que le format ci-dessous.
+9) Retourner uniquement du JSON valide, sans markdown.
+
+Format JSON attendu:
+{
+  &quot;interview_intro&quot;: &quot;string&quot;,
+  &quot;job_summary&quot;: &quot;string&quot;,
+  &quot;candidate_summary&quot;: &quot;string&quot;,
+  &quot;questions&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;question&quot;: &quot;string&quot;,
+      &quot;follow_up&quot;: &quot;string&quot;,
+      &quot;competency&quot;: &quot;string&quot;,
+      &quot;positive_signal&quot;: &quot;string&quot;,
+      &quot;red_flag&quot;: &quot;string&quot;,
+      &quot;score_guide_0_5&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;decision_framework&quot;: {
+    &quot;hire_if&quot;: &quot;string&quot;,
+    &quot;hold_if&quot;: &quot;string&quot;,
+    &quot;reject_if&quot;: &quot;string&quot;
+  }
+}
+        </content>
+        <inputs>
+            <apiName>JobOfferContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Job Offer Context</masterLabel>
+            <referenceName>Input:JobOfferContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>CandidateContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Candidate Context</masterLabel>
+            <referenceName>Input:CandidateContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>PreviousInterviewContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Previous Interview Context</masterLabel>
+            <referenceName>Input:PreviousInterviewContext</referenceName>
+            <required>false</required>
+        </inputs>
+        <inputs>
+            <apiName>RecruiterGuidance</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Recruiter Guidance</masterLabel>
+            <referenceName>Input:RecruiterGuidance</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5</primaryModel>
+        <responseFormat>JSON</responseFormat>
+        <status>Published</status>
+        <versionIdentifier>3b1vXSEUxVQhK94zHrjA8MSN7c/myMQqxY2HU9muVl8=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>
