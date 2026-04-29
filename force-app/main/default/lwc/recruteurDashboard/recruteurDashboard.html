@@ -798,7 +798,7 @@
 
                 <div class="form-row" style="margin-top:12px;">
                     <label class="form-label">Fichier audio entretien</label>
-                    <input type="file" accept="audio/*" onchange={onRHFitProcessFileChange} />
+                    <input type="file" accept=".webm,.mp3,.wav,.m4a,.ogg,.flac,audio/webm,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac" onchange={onRHFitProcessFileChange} />
                     <template if:true={rhfitProcessFileName}>
                         <p class="form-hint">{rhfitProcessFileName}</p>
                     </template>
@@ -1212,47 +1212,55 @@
                                                     </template>
                                                 </template>
                                                 <template if:true={opp.isRHFit}>
-                                                    <template if:false={opp.rhfitScheduled}>
-                                                        <button class="btn-action btn-plan-rhfit"
+                                                    <div class="rhfit-actions-group">
+                                                        <span class={opp.rhfitStateClass}>{opp.rhfitStateLabel}</span>
+                                                        <button class={opp.rhfitPrimaryClass}
                                                             data-id={opp.Id}
                                                             data-name={opp.Name}
-                                                            onclick={openRHFitPlanModal}>
-                                                            RH Fit Planifier
+                                                            data-action={opp.rhfitPrimaryAction}
+                                                            onclick={handleRHFitPrimaryAction}>
+                                                            {opp.rhfitPrimaryLabel}
                                                         </button>
-                                                    </template>
-                                                    <template if:true={opp.rhfitScheduled}>
-                                                        <span class="rhfit-scheduled-tag">RH Fit planifie</span>
-                                                        <button class="btn-action btn-process-rhfit"
+                                                        <lightning-button-menu
+                                                            alternative-text="Plus d'actions RH Fit"
+                                                            icon-size="x-small"
+                                                            menu-alignment="right"
+                                                            class="rhfit-actions-menu"
                                                             data-id={opp.Id}
                                                             data-name={opp.Name}
-                                                            onclick={openRHFitProcessModal}>
-                                                            Traiter RH Fit
-                                                        </button>
-                                                        <button class="btn-action btn-generate-rhfit"
-                                                            data-id={opp.Id}
-                                                            data-name={opp.Name}
-                                                            onclick={openRHFitQuestionModal}>
-                                                            Questions IA
-                                                        </button>
-                                                        <button class="btn-action btn-validate-rhfit"
-                                                            data-id={opp.Id}
-                                                            onclick={openRHFitValidationModal}>
-                                                            Valider RH Fit
-                                                        </button>
-                                                    </template>
+                                                            onselect={handleRHFitSecondaryAction}>
+                                                            <template if:true={opp.rhfitShowReplanAction}>
+                                                                <lightning-menu-item value="replan" label="Replanifier"></lightning-menu-item>
+                                                            </template>
+                                                            <template if:true={opp.rhfitShowProcessAction}>
+                                                                <lightning-menu-item value="process" label="Traiter entretien"></lightning-menu-item>
+                                                            </template>
+                                                            <template if:true={opp.rhfitShowValidateAction}>
+                                                                <lightning-menu-item value="validate" label="Valider RH Fit"></lightning-menu-item>
+                                                            </template>
+                                                            <template if:true={opp.rhfitShowReportAction}>
+                                                                <lightning-menu-item value="report" label="Voir rapport"></lightning-menu-item>
+                                                            </template>
+                                                            <lightning-menu-item value="questions" label="Guide questions"></lightning-menu-item>
+                                                            <lightning-menu-item value="assistant" label="Assistant IA"></lightning-menu-item>
+                                                            <lightning-menu-item value="dossier" label="Dossier candidat"></lightning-menu-item>
+                                                        </lightning-button-menu>
+                                                    </div>
                                                 </template>
-                                                <button class="btn-action btn-rescore"
-                                                    data-id={opp.Id}
-                                                    onclick={handleRescore}
-                                                    title="Relancer l'analyse IA">
-                                                    <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> IA
-                                                </button>
-                                                <button class="btn-action btn-view"
-                                                    data-id={opp.Id}
-                                                    data-name={opp.Name}
-                                                    onclick={openDetailModal}>
-                                                    <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Voir
-                                                </button>
+                                                <template if:false={opp.isRHFit}>
+                                                    <button class="btn-action btn-rescore"
+                                                        data-id={opp.Id}
+                                                        onclick={handleRescore}
+                                                        title="Relancer l'analyse IA">
+                                                        <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg> Assistant IA
+                                                    </button>
+                                                    <button class="btn-action btn-view"
+                                                        data-id={opp.Id}
+                                                        data-name={opp.Name}
+                                                        onclick={openDetailModal}>
+                                                        <svg class="btn-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Dossier candidat
+                                                    </button>
+                                                </template>
                                             </div>
                                         </td>
                                     </tr>

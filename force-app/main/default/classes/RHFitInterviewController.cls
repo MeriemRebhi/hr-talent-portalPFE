@@ -347,23 +347,42 @@ public without sharing class RHFitInterviewController {
 
     private static void notifyRecruiterReschedule(Id oppId, String reason, Datetime plannedDate, String interviewType) {
         Lead lead = getConvertedLead(oppId);
-        if (lead == null) return;
-        String candidateName = getCandidateName(lead);
+        String candidateName = lead != null ? getCandidateName(lead) : 'Candidat';
 
-        Id jobId = extractJobPostingId(lead);
-        String recruiterEmail = '';
-        if (jobId != null) {
-            List<Opportunity> jobs = [SELECT Owner.Email FROM Opportunity WHERE Id = :jobId LIMIT 1];
-            if (!jobs.isEmpty()) recruiterEmail = jobs[0].Owner.Email;
+        Set<String> recruiterEmails = new Set<String>();
+        Opportunity appOpp = [
+            SELECT Id, Name, Owner.Email
+            FROM Opportunity
+            WHERE Id = :oppId
+            LIMIT 1
+        ];
+        if (String.isBlank(candidateName) && String.isNotBlank(appOpp.Name)) {
+            candidateName = appOpp.Name;
         }
-        if (String.isBlank(recruiterEmail)) return;
+        if (String.isNotBlank(appOpp.Owner != null ? appOpp.Owner.Email : null)) {
+            recruiterEmails.add(appOpp.Owner.Email);
+        }
+
+        if (lead != null) {
+            Id jobId = extractJobPostingId(lead);
+            if (jobId != null) {
+                List<Opportunity> jobs = [SELECT Owner.Email FROM Opportunity WHERE Id = :jobId LIMIT 1];
+                if (!jobs.isEmpty() && String.isNotBlank(jobs[0].Owner.Email)) {
+                    recruiterEmails.add(jobs[0].Owner.Email);
+                }
+            }
+        }
+        if (String.isNotBlank(UserInfo.getUserEmail())) {
+            recruiterEmails.add(UserInfo.getUserEmail());
+        }
+        if (recruiterEmails.isEmpty()) return;
 
         String dateFmt = plannedDate != null
             ? plannedDate.format('dd/MM/yyyy \'a\' HH:mm', 'Europe/Paris')
             : 'Non definie';
 
         Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-        mail.setToAddresses(new List<String>{ recruiterEmail });
+        mail.setToAddresses(new List<String>(recruiterEmails));
         mail.setSubject('Demande de report - ' + interviewType + ' - ' + candidateName);
         mail.setPlainTextBody(
             'Le candidat ' + candidateName + ' demande un report.' + '\n' +

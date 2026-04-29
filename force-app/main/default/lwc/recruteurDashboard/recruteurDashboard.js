@@ -322,6 +322,77 @@ export default class RecruteurDashboard extends LightningElement {
             gamingDateFmt = dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         }
 
+        // RH Fit UI state
+        const rhfitScheduled = !!o.rhfitDateTime;
+        const rhfitStatus = (o.rhfitStatus || '').trim();
+        const rhfitStatusLower = rhfitStatus.toLowerCase();
+        const rhfitHasAIScore = o.rhfitAIScore != null;
+        const rhfitHasValidatedScore = o.rhfitValidatedScore != null;
+        const rhfitIsValidated = rhfitHasValidatedScore || rhfitStatusLower.includes('valid');
+        const rhfitAnalysisReady = rhfitHasAIScore || rhfitStatusLower.includes('completed');
+        const rhfitInProgress = rhfitStatusLower.includes('processing');
+
+        let rhfitState = 'to_plan';
+        if (!rhfitScheduled) {
+            rhfitState = 'to_plan';
+        } else if (rhfitIsValidated) {
+            rhfitState = 'validated';
+        } else if (rhfitAnalysisReady) {
+            rhfitState = 'analysis_ready';
+        } else if (rhfitInProgress) {
+            rhfitState = 'in_progress';
+        } else {
+            rhfitState = 'planned';
+        }
+
+        const rhfitStateLabel = (() => {
+            switch (rhfitState) {
+                case 'validated': return 'Validé';
+                case 'analysis_ready': return 'Analyse prête';
+                case 'in_progress': return 'En cours';
+                case 'planned': return 'Planifié';
+                default: return 'À planifier';
+            }
+        })();
+
+        const rhfitStateClass = (() => {
+            switch (rhfitState) {
+                case 'validated': return 'rhfit-state-pill rhfit-state-validated';
+                case 'analysis_ready': return 'rhfit-state-pill rhfit-state-analysis';
+                case 'in_progress': return 'rhfit-state-pill rhfit-state-progress';
+                case 'planned': return 'rhfit-state-pill rhfit-state-planned';
+                default: return 'rhfit-state-pill rhfit-state-toplan';
+            }
+        })();
+
+        const rhfitPrimaryAction = (() => {
+            switch (rhfitState) {
+                case 'validated': return 'report';
+                case 'analysis_ready': return 'validate';
+                case 'in_progress': return 'process';
+                case 'planned': return 'process';
+                default: return 'plan';
+            }
+        })();
+
+        const rhfitPrimaryLabel = (() => {
+            switch (rhfitPrimaryAction) {
+                case 'report': return 'Voir rapport';
+                case 'validate': return 'Valider RH Fit';
+                case 'process': return 'Traiter entretien';
+                default: return 'Planifier RH Fit';
+            }
+        })();
+
+        const rhfitPrimaryClass = (() => {
+            switch (rhfitPrimaryAction) {
+                case 'report': return 'btn-action btn-rhfit-primary btn-rhfit-report';
+                case 'validate': return 'btn-action btn-rhfit-primary btn-rhfit-validate';
+                case 'process': return 'btn-action btn-rhfit-primary btn-rhfit-process';
+                default: return 'btn-action btn-rhfit-primary btn-rhfit-plan';
+            }
+        })();
+
         return {
             ...o,
             initials,
@@ -399,7 +470,7 @@ export default class RecruteurDashboard extends LightningElement {
             archRescheduleRequested: !!o.archRescheduleRequested,
             // RH Fit interview
             isRHFit:          stage === 'RH Fit',
-            rhfitScheduled:   !!o.rhfitDateTime,
+            rhfitScheduled,
             rhfitDateFmt:     (() => {
                 if (!o.rhfitDateTime) return '';
                 const dt4 = new Date(o.rhfitDateTime);
@@ -407,17 +478,27 @@ export default class RecruteurDashboard extends LightningElement {
             })(),
             rhfitMeetLink:    o.rhfitMeetLink || '',
             rhfitJitsiRoom:   o.rhfitJitsiRoom || '',
-            rhfitStatus:      o.rhfitStatus || '',
+            rhfitStatus,
             rhfitHasAudio:    !!o.rhfitHasAudio,
             rhfitQuestions:   o.rhfitQuestions || '',
             rhfitQuestionsReady: !!o.rhfitQuestions,
             rhfitAIScore:     o.rhfitAIScore != null ? Math.round(o.rhfitAIScore) : null,
-            hasRHFitAIScore:  o.rhfitAIScore != null,
+            hasRHFitAIScore:  rhfitHasAIScore,
             rhfitSentimentScore: o.rhfitSentimentScore != null ? Math.round(o.rhfitSentimentScore * 100) / 100 : null,
             rhfitSentimentLabel: o.rhfitSentimentLabel || '',
             rhfitValidatedScore: o.rhfitValidatedScore != null ? Math.round(o.rhfitValidatedScore) : null,
-            hasRHFitValidatedScore: o.rhfitValidatedScore != null,
-            rhfitRescheduleRequested: !!o.rhfitRescheduleRequested
+            hasRHFitValidatedScore: rhfitHasValidatedScore,
+            rhfitRescheduleRequested: !!o.rhfitRescheduleRequested,
+            rhfitState,
+            rhfitStateLabel,
+            rhfitStateClass,
+            rhfitPrimaryAction,
+            rhfitPrimaryLabel,
+            rhfitPrimaryClass,
+            rhfitShowReplanAction: rhfitScheduled && rhfitPrimaryAction !== 'plan',
+            rhfitShowProcessAction: rhfitScheduled && !rhfitIsValidated && rhfitPrimaryAction !== 'process',
+            rhfitShowValidateAction: rhfitScheduled && rhfitAnalysisReady && !rhfitIsValidated && rhfitPrimaryAction !== 'validate',
+            rhfitShowReportAction: rhfitPrimaryAction !== 'report'
         };
     }
 
@@ -780,6 +861,49 @@ export default class RecruteurDashboard extends LightningElement {
                 this.isRHFitSending = false;
                 this.showToast('Erreur RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
             });
+    }
+
+    handleRHFitPrimaryAction(event) {
+        const id = event.currentTarget.dataset.id;
+        const name = event.currentTarget.dataset.name || '';
+        const action = event.currentTarget.dataset.action;
+        this.runRHFitAction(action, id, name);
+    }
+
+    handleRHFitSecondaryAction(event) {
+        const id = event.currentTarget.dataset.id;
+        const name = event.currentTarget.dataset.name || '';
+        const action = event.detail ? event.detail.value : '';
+        this.runRHFitAction(action, id, name);
+    }
+
+    runRHFitAction(action, id, name = '') {
+        if (!id || !action) return;
+        const actionEvent = { currentTarget: { dataset: { id, name } } };
+        switch (action) {
+            case 'plan':
+            case 'replan':
+                this.openRHFitPlanModal(actionEvent);
+                break;
+            case 'process':
+                this.openRHFitProcessModal(actionEvent);
+                break;
+            case 'validate':
+                this.openRHFitValidationModal(actionEvent);
+                break;
+            case 'questions':
+                this.openRHFitQuestionModal(actionEvent);
+                break;
+            case 'assistant':
+                this.handleRescore(actionEvent);
+                break;
+            case 'report':
+            case 'dossier':
+                this.openDetailModal(actionEvent);
+                break;
+            default:
+                break;
+        }
     }
 
     toggleSelect(event) {
@@ -1402,6 +1526,22 @@ export default class RecruteurDashboard extends LightningElement {
     onRHFitProcessFileChange(event) {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
+        const maxBytes = 24 * 1024 * 1024;
+        if (!file.size || file.size <= 0) {
+            this.showToast('Fichier audio vide. Merci de choisir un enregistrement valide.', 'error');
+            return;
+        }
+        if (file.size > maxBytes) {
+            this.showToast('Audio trop volumineux. Taille max: 24 MB.', 'error');
+            return;
+        }
+        const fileName = String(file.name || '').toLowerCase();
+        const ext = fileName.includes('.') ? fileName.split('.').pop() : '';
+        const allowedExt = ['webm', 'mp3', 'wav', 'm4a', 'ogg', 'flac'];
+        if (!allowedExt.includes(ext)) {
+            this.showToast('Format non supporte. Utilisez: .webm, .mp3, .wav, .m4a, .ogg, .flac', 'error');
+            return;
+        }
         this.rhfitSelectedAudioFile = file;
         this.rhfitProcessFileName = file.name;
     }

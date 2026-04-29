@@ -362,6 +362,8 @@
 .action-btns {
     display: flex;
     gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .btn-stage {
@@ -2021,45 +2023,91 @@
 .btn-confirm-validation:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* RH Fit actions */
-.btn-plan-rhfit {
-    border-color: #0f766e !important;
-    color: #0f766e !important;
+.rhfit-actions-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
-.btn-plan-rhfit:hover {
-    background: #0f766e !important;
-    color: #fff !important;
-}
-.btn-generate-rhfit {
-    border-color: #334155 !important;
-    color: #334155 !important;
-}
-.btn-generate-rhfit:hover {
-    background: #334155 !important;
-    color: #fff !important;
-}
-.btn-process-rhfit {
-    border-color: #0ea5e9 !important;
-    color: #0c4a6e !important;
-}
-.btn-process-rhfit:hover {
-    background: #0ea5e9 !important;
-    color: #fff !important;
-}
-.btn-validate-rhfit {
-    border-color: #14532d !important;
-    color: #14532d !important;
-}
-.btn-validate-rhfit:hover {
-    background: #14532d !important;
-    color: #fff !important;
-}
-.rhfit-scheduled-tag {
+.rhfit-state-pill {
     font-size: 11px;
-    color: #0f766e;
     font-weight: 700;
-    padding: 3px 8px;
-    background: rgba(20,184,166,0.12);
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+.rhfit-state-toplan {
+    color: #334155;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+.rhfit-state-planned {
+    color: #0f766e;
+    background: #ecfeff;
+    border-color: #99f6e4;
+}
+.rhfit-state-progress {
+    color: #0c4a6e;
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+}
+.rhfit-state-analysis {
+    color: #166534;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+.rhfit-state-validated {
+    color: #14532d;
+    background: #bbf7d0;
+    border-color: #4ade80;
+}
+.btn-rhfit-primary {
+    border: 1px solid transparent;
+}
+.btn-rhfit-plan {
+    color: #0f766e;
+    background: #e6fffa;
+    border-color: #99f6e4;
+}
+.btn-rhfit-plan:hover {
+    color: #fff;
+    background: #0f766e;
+    border-color: #0f766e;
+}
+.btn-rhfit-process {
+    color: #0c4a6e;
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+}
+.btn-rhfit-process:hover {
+    color: #fff;
+    background: #0369a1;
+    border-color: #0369a1;
+}
+.btn-rhfit-validate {
+    color: #14532d;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+.btn-rhfit-validate:hover {
+    color: #fff;
+    background: #166534;
+    border-color: #166534;
+}
+.btn-rhfit-report {
+    color: #1e3a8a;
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+.btn-rhfit-report:hover {
+    color: #fff;
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+.rhfit-actions-menu {
+    --sds-c-button-color-border: #cbd5e1;
+    --sds-c-button-text-color: #334155;
+    --sds-c-button-neutral-color-background: #fff;
+    --sds-c-button-radius-border: 8px;
 }
 .rhfit-sentiment-pill {
     display: inline-block;

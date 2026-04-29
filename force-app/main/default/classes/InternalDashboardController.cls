@@ -1512,7 +1512,7 @@ public with sharing class InternalDashboardController {
                 : interviewDateTime.replace('T', ' '));
 
             Opportunity opp = [
-                SELECT Id, Name, StageName, AccountId, Owner.Email
+                SELECT Id, Name, StageName, AccountId, OwnerId, Owner.Email
                 FROM Opportunity
                 WHERE Id = :oppId
                 LIMIT 1
@@ -1555,6 +1555,10 @@ public with sharing class InternalDashboardController {
                 prenom = leads[0].FirstName != null ? leads[0].FirstName : '';
                 nom = leads[0].LastName != null ? leads[0].LastName : '';
             }
+            String candidateDisplayName = (prenom + ' ' + nom).trim();
+            if (String.isBlank(candidateDisplayName)) {
+                candidateDisplayName = String.isNotBlank(opp.Name) ? opp.Name : 'Candidat';
+            }
 
             String dateLabel = parsedDt.format('dd/MM/yyyy \'a\' HH:mm');
             String dureeLabel = duration == '30' ? '30 minutes'
@@ -1580,12 +1584,12 @@ public with sharing class InternalDashboardController {
                     '<div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:12px 14px;margin-bottom:16px;">' +
                     '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Date:</strong> ' + dateLabel + '</p>' +
                     '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
-                    '<p style="margin:0;font-size:13px;color:#0f766e;"><strong>Format:</strong> Visioconference RH Fit</p>' +
+                    '<p style="margin:0;font-size:13px;color:#0f766e;"><strong>Format:</strong> Entretien RH Fit via votre espace candidat</p>' +
                     '</div>' +
                     '<div style="text-align:center;margin:18px 0;">' +
-                    '<a href="' + jitsiUrl + '" style="display:inline-block;padding:11px 28px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Rejoindre la visioconference RH Fit</a>' +
+                    '<a href="' + portalLink + '" style="display:inline-block;padding:11px 28px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Acceder a l entretien RH Fit</a>' +
                     '</div>' +
-                    '<p style="margin:0;font-size:12px;color:#94a3b8;">Merci de preparer un environnement calme avec microphone fonctionnel.</p>' +
+                    '<p style="margin:0;font-size:12px;color:#94a3b8;">Depuis cette page, vous pourrez rejoindre Meet puis suivre les etapes de l entretien.</p>' +
                     '</div>' +
                     '</div>'
                 );
@@ -1612,7 +1616,7 @@ public with sharing class InternalDashboardController {
                     '<p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">Action recruteur: conduite entretien + enregistrement + analyse IA</p>' +
                     '</div>' +
                     '<div style="background:#fff;padding:22px 26px;border:1px solid #e5e7eb;border-top:none;">' +
-                    '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Candidat:</strong> ' + prenom + ' ' + nom + '</p>' +
+                    '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Candidat:</strong> ' + candidateDisplayName + '</p>' +
                     '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Date:</strong> ' + dateLabel + '</p>' +
                     '<p style="margin:0 0 16px;font-size:14px;color:#334155;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
                     '<div style="text-align:center;margin:0 0 14px;">' +
@@ -1624,6 +1628,26 @@ public with sharing class InternalDashboardController {
                     '</div>'
                 );
                 Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ recruiterMail });
+            }
+
+            createRHFitRecruiterTask(
+                opp.OwnerId != null ? opp.OwnerId : UserInfo.getUserId(),
+                opp.Id,
+                candidateDisplayName,
+                parsedDt,
+                jitsiUrl
+            );
+            Set<Id> notifRecipients = new Set<Id>();
+            if (opp.OwnerId != null) notifRecipients.add(opp.OwnerId);
+            notifRecipients.add(UserInfo.getUserId());
+            for (Id uid : notifRecipients) {
+                sendRHFitBellNotification(
+                    uid,
+                    opp.Id,
+                    'Entretien RH Fit planifie',
+                    'Candidat: ' + candidateDisplayName + ' - ' + dateLabel + '. Cliquez pour rejoindre la salle Meet.',
+                    jitsiUrl
+                );
             }
 
             return new Map<String, Object>{
@@ -1708,6 +1732,88 @@ public with sharing class InternalDashboardController {
         } catch (Exception e) {
             throw new AuraHandledException('Erreur validation RH Fit : ' + e.getMessage());
         }
+    }
+
+    private static void createRHFitRecruiterTask(
+        Id ownerId,
+        Id oppId,
+        String candidateName,
+        Datetime interviewDateTime,
+        String meetLink
+    ) {
+        if (ownerId == null || oppId == null) return;
+        try {
+            Task t = new Task();
+            t.OwnerId = ownerId;
+            t.WhatId = oppId;
+            t.Subject = 'RH Fit a animer - ' + (String.isNotBlank(candidateName) ? candidateName : 'Candidat');
+            t.Priority = 'High';
+            t.Status = 'Not Started';
+            t.ActivityDate = interviewDateTime != null ? interviewDateTime.date() : Date.today();
+            t.Description =
+                'Entretien RH Fit planifie.' + '\n' +
+                'Candidat: ' + (String.isNotBlank(candidateName) ? candidateName : 'Candidat') + '\n' +
+                'Date: ' + (interviewDateTime != null ? interviewDateTime.format('dd/MM/yyyy HH:mm') : 'N/A') + '\n' +
+                'Meet: ' + (String.isNotBlank(meetLink) ? meetLink : 'N/A') + '\n' +
+                'Action: conduire l entretien, enregistrer, puis lancer transcription + analyse IA.';
+            insert t;
+        } catch (Exception ex) {
+            System.debug('RH Fit task notification error: ' + ex.getMessage());
+        }
+    }
+
+    private static void sendRHFitBellNotification(
+        Id recipientUserId,
+        Id targetId,
+        String title,
+        String body,
+        String targetUrl
+    ) {
+        if (recipientUserId == null || targetId == null) return;
+        try {
+            Id notifTypeId = getRHFitNotificationTypeId();
+            if (notifTypeId == null) return;
+
+            Messaging.CustomNotification notif = new Messaging.CustomNotification();
+            notif.setNotificationTypeId(notifTypeId);
+            notif.setTitle((String.isNotBlank(title) ? title : 'Notification RH Fit').left(80));
+            notif.setBody((String.isNotBlank(body) ? body : 'Mise a jour RH Fit.').left(750));
+            if (String.isNotBlank(targetUrl)) {
+                Map<String, Object> pageRef = new Map<String, Object>{
+                    'type' => 'standard__webPage',
+                    'attributes' => new Map<String, Object>{
+                        'url' => targetUrl
+                    }
+                };
+                notif.setTargetPageRef(JSON.serialize(pageRef));
+            } else {
+                notif.setTargetId(targetId);
+            }
+            notif.send(new Set<String>{ String.valueOf(recipientUserId) });
+        } catch (Exception ex) {
+            System.debug('RH Fit bell notification error: ' + ex.getMessage());
+        }
+    }
+
+    private static Id getRHFitNotificationTypeId() {
+        List<CustomNotificationType> types = [
+            SELECT Id, DeveloperName
+            FROM CustomNotificationType
+            WHERE DeveloperName IN (
+                'RH_Fit_Recruteur_Notification',
+                'RH_Fit_Recruteur',
+                'RHFit_Recruteur_Notification'
+            )
+            LIMIT 1
+        ];
+        if (!types.isEmpty()) return types[0].Id;
+
+        List<CustomNotificationType> fallbackTypes = [
+            SELECT Id
+            FROM CustomNotificationType
+            LIMIT 1
+        ];
+        return fallbackTypes.isEmpty() ? null : fallbackTypes[0].Id;
     }
 
     @AuraEnabled
