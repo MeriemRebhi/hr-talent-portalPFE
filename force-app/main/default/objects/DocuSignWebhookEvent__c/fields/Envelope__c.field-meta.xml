@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Envelope__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Envelope</label>
+    <referenceTo>DocuSign_Envelope__c</referenceTo>
+    <relationshipLabel>Webhook Events</relationshipLabel>
+    <relationshipName>Webhook_Events</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

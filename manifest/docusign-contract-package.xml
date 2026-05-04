@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>DocuSignAuthService</members>
+        <members>DocuSignConfigService</members>
+        <members>DocuSignContractDispatcher</members>
+        <members>DocuSignEnvelopeCompletionJob</members>
+        <members>DocuSignEnvelopeService</members>
+        <members>DocuSignEnvelopeServiceTest</members>
+        <members>DocuSignWebhookRest</members>
+        <members>DocuSignWebhookRestTest</members>
+        <members>InternalDashboardController</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>DocuSignConfig__mdt</members>
+        <members>DocuSign_Envelope__c</members>
+        <members>DocuSignWebhookEvent__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Opportunity.DocuSign_Envelope_Id__c</members>
+        <members>Opportunity.Contract_Status__c</members>
+        <members>Opportunity.Contract_Sent_At__c</members>
+        <members>Opportunity.Contract_Signed_At__c</members>
+        <members>Opportunity.Contract_Error__c</members>
+        <members>Opportunity.Contract_Template_Id__c</members>
+        <members>Opportunity.Contract_Attempts__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>DocuSign_Auth</members>
+        <members>DocuSign_Demo</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <types>
+        <members>DocuSign_Integration_Access</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>ContractTemplate</members>
+        <name>ApexPage</name>
+    </types>
+    <version>59.0</version>
+</Package>
+
+

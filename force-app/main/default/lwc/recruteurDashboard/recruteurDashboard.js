@@ -21,7 +21,7 @@ import getTechGenerationStatus from '@salesforce/apex/TechnicalQuestionService.g
 import validateScore from '@salesforce/apex/TechnicalInterviewController.validateScore';
 import getInterviewDetails from '@salesforce/apex/TechnicalInterviewController.getInterviewDetails';
 import generateRHFitQuestionsApex from '@salesforce/apex/RHFitInterviewController.generateQuestions';
-import uploadRHFitAudioApex from '@salesforce/apex/RHFitInterviewController.uploadAudio';
+import registerRHFitUploadedAudioFileApex from '@salesforce/apex/RHFitInterviewController.registerUploadedAudioFile';
 import processRHFitAudioApex from '@salesforce/apex/RHFitInterviewController.processAudio';
 import getRHFitProcessingStatusApex from '@salesforce/apex/RHFitInterviewController.getProcessingStatus';
 
@@ -50,6 +50,15 @@ const SCORE_BAR = {
     'low':    'score-bar bar-low',
     'reject': 'score-bar bar-reject',
     'none':   'score-bar bar-none'
+};
+
+const CONTRACT_STATUS_META = {
+    'Not Sent': { label: 'A envoyer', pillClass: 'contract-pill cp-not-sent' },
+    'Sent': { label: 'Envoye', pillClass: 'contract-pill cp-sent' },
+    'Completed': { label: 'Signe', pillClass: 'contract-pill cp-completed' },
+    'Declined': { label: 'Refuse', pillClass: 'contract-pill cp-declined' },
+    'Voided': { label: 'Annule', pillClass: 'contract-pill cp-voided' },
+    'Failed': { label: 'Erreur', pillClass: 'contract-pill cp-failed' }
 };
 
 export default class RecruteurDashboard extends LightningElement {
@@ -193,7 +202,6 @@ export default class RecruteurDashboard extends LightningElement {
     @track rhfitProcessSentimentLabel = '';
     @track rhfitProcessTranscription = '';
     @track rhfitProcessAIFeedback = '';
-    rhfitSelectedAudioFile = null;
     rhfitProcessPollingTimer = null;
     rhfitProcessPollingAttempts = 0;
 
@@ -253,6 +261,16 @@ export default class RecruteurDashboard extends LightningElement {
     get detailHasRHFitValidatedScore() { return !!this.detailOpp.hasRHFitValidatedScore; }
     get detailRHFitValidatedScore() { return this.detailOpp.rhfitValidatedScore != null ? this.detailOpp.rhfitValidatedScore : ''; }
     get detailRHFitQuestionsReady() { return !!this.detailOpp.rhfitQuestionsReady; }
+
+    get detailContractStatusLabel() { return this.detailOpp.contractStatusLabel || 'A envoyer'; }
+    get detailContractPillClass() { return this.detailOpp.contractPillClass || 'contract-pill cp-not-sent'; }
+    get detailContractSentAt() { return this.detailOpp.contractSentAtFmt || '—'; }
+    get detailContractSignedAt() { return this.detailOpp.contractSignedAtFmt || '—'; }
+    get detailHasContractEnvelope() { return !!this.detailOpp.contractHasEnvelope; }
+    get detailContractEnvelopeShort() { return this.detailOpp.contractEnvelopeShort || ''; }
+    get detailContractEnvelopeId() { return this.detailOpp.contractEnvelopeId || ''; }
+    get detailHasContractError() { return !!this.detailOpp.hasContractError; }
+    get detailContractError() { return this.detailOpp.contractError || ''; }
     get detailCanValidateArch() {
         return this.detailOpp && this.detailOpp.StageName === 'Architecture' && this.detailOpp.archScheduled;
     }
@@ -301,6 +319,22 @@ export default class RecruteurDashboard extends LightningElement {
             });
     }
 
+    formatDateTimeFr(value) {
+        if (!value) return '';
+        const dt = new Date(value);
+        if (Number.isNaN(dt.getTime())) return '';
+        return dt.toLocaleDateString('fr-FR') + ' a ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    resolveContractStatus(rawStatus, envelopeId) {
+        const status = (rawStatus || '').trim().toLowerCase();
+        if (status === 'completed' || status === 'signed') return 'Completed';
+        if (status === 'sent' || status === 'created' || status === 'delivered' || status === 'queued') return 'Sent';
+        if (status === 'declined' || status === 'refused') return 'Declined';
+        if (status === 'voided' || status === 'cancelled' || status === 'canceled') return 'Voided';
+        if (status === 'failed' || status === 'error') return 'Failed';
+        return envelopeId ? 'Sent' : 'Not Sent';
+    }
     mapOpp(o) {
         const stage    = o.StageName || '';
         const idx      = STAGE_ORDER.indexOf(stage);
@@ -322,6 +356,23 @@ export default class RecruteurDashboard extends LightningElement {
             gamingDateFmt = dt.toLocaleDateString('fr-FR') + ' à ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         }
 
+        const contractEnvelopeId = o.contractEnvelopeId || '';
+        const contractStatusValue = this.resolveContractStatus(o.contractStatus, contractEnvelopeId);
+        const contractMeta = CONTRACT_STATUS_META[contractStatusValue] || CONTRACT_STATUS_META['Not Sent'];
+        const contractSentAtFmt = this.formatDateTimeFr(o.contractSentAt);
+        const contractSignedAtFmt = this.formatDateTimeFr(o.contractSignedAt);
+        const contractEnvelopeShort = contractEnvelopeId
+            ? (contractEnvelopeId.length > 16
+                ? `${contractEnvelopeId.substring(0, 8)}...${contractEnvelopeId.substring(contractEnvelopeId.length - 4)}`
+                : contractEnvelopeId)
+            : '';
+        const contractError = o.contractError || '';
+        const contractErrorShort = contractError.length > 58
+            ? `${contractError.substring(0, 58)}...`
+            : contractError;
+        const contractRowMeta = contractStatusValue === 'Completed'
+            ? (contractSignedAtFmt ? `Signe le ${contractSignedAtFmt}` : 'Signature complete')
+            : (contractSentAtFmt ? `Envoye le ${contractSentAtFmt}` : (contractEnvelopeId ? 'En attente de signature' : 'Pas encore envoye'));
         // RH Fit UI state
         const rhfitScheduled = !!o.rhfitDateTime;
         const rhfitStatus = (o.rhfitStatus || '').trim();
@@ -426,6 +477,19 @@ export default class RecruteurDashboard extends LightningElement {
                              : o.gamingScore != null ? 'Insuffisant'
                              : '',
             gamingPending:     o.gamingStatus !== 'Completed' && gamingScheduled,
+            // Contract / DocuSign
+            contractStatusValue,
+            contractStatusLabel: contractMeta.label,
+            contractPillClass: contractMeta.pillClass,
+            contractHasEnvelope: !!contractEnvelopeId,
+            contractEnvelopeId,
+            contractEnvelopeShort,
+            contractSentAtFmt,
+            contractSignedAtFmt,
+            contractRowMeta,
+            contractError,
+            contractErrorShort,
+            hasContractError: !!contractError,
             // Technical interview
             isTechnique:       stage === 'Technique',
             techScheduled:     !!o.techDateTime,
@@ -1437,7 +1501,6 @@ export default class RecruteurDashboard extends LightningElement {
         this.rhfitProcessTranscription = '';
         this.rhfitProcessAIFeedback = '';
         this.rhfitProcessFileName = '';
-        this.rhfitSelectedAudioFile = null;
         this.isRHFitUploadingAudio = false;
         this.isRHFitProcessingAudio = false;
         this.showRHFitProcessModal = true;
@@ -1473,7 +1536,6 @@ export default class RecruteurDashboard extends LightningElement {
         this.showRHFitProcessModal = false;
         this.isRHFitUploadingAudio = false;
         this.isRHFitProcessingAudio = false;
-        this.rhfitSelectedAudioFile = null;
         this.rhfitProcessFileName = '';
         this.rhfitProcessHasAudio = false;
     }
@@ -1498,20 +1560,17 @@ export default class RecruteurDashboard extends LightningElement {
         return !!(this.rhfitProcessAIFeedback && this.rhfitProcessAIFeedback.trim().length > 0);
     }
 
-    get rhfitProcessCanUploadAudio() {
-        return !!this.rhfitSelectedAudioFile && !this.isRHFitUploadingAudio && !this.isRHFitProcessingAudio;
-    }
-
     get rhfitProcessCanStartAI() {
-        return this.rhfitProcessHasAudio && !this.isRHFitUploadingAudio && !this.isRHFitProcessingAudio;
-    }
-
-    get rhfitProcessUploadDisabled() {
-        return !this.rhfitProcessCanUploadAudio;
+        const hasLocalAudio = !!(this.rhfitProcessFileName && this.rhfitProcessFileName.trim().length > 0);
+        return (this.rhfitProcessHasAudio || hasLocalAudio) && !this.isRHFitUploadingAudio && !this.isRHFitProcessingAudio;
     }
 
     get rhfitProcessStartDisabled() {
         return !this.rhfitProcessCanStartAI;
+    }
+
+    get rhfitAcceptedFormats() {
+        return ['.webm', '.mp3', '.wav', '.m4a', '.ogg', '.flac'];
     }
 
     get rhfitProcessStatusClass() {
@@ -1523,63 +1582,40 @@ export default class RecruteurDashboard extends LightningElement {
         return 'rhfit-process-pill rhfit-process-neutral';
     }
 
-    onRHFitProcessFileChange(event) {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
-        const maxBytes = 24 * 1024 * 1024;
-        if (!file.size || file.size <= 0) {
-            this.showToast('Fichier audio vide. Merci de choisir un enregistrement valide.', 'error');
+    handleRHFitFileUploadFinished(event) {
+        const files = event && event.detail ? event.detail.files : [];
+        if (!files || files.length === 0) {
+            this.showToast('Aucun fichier audio detecte apres upload.', 'error');
             return;
         }
-        if (file.size > maxBytes) {
-            this.showToast('Audio trop volumineux. Taille max: 24 MB.', 'error');
+        if (!this.rhfitProcessOppId) {
+            this.showToast('Candidature RH Fit introuvable.', 'error');
             return;
         }
-        const fileName = String(file.name || '').toLowerCase();
-        const ext = fileName.includes('.') ? fileName.split('.').pop() : '';
-        const allowedExt = ['webm', 'mp3', 'wav', 'm4a', 'ogg', 'flac'];
-        if (!allowedExt.includes(ext)) {
-            this.showToast('Format non supporte. Utilisez: .webm, .mp3, .wav, .m4a, .ogg, .flac', 'error');
-            return;
-        }
-        this.rhfitSelectedAudioFile = file;
-        this.rhfitProcessFileName = file.name;
-    }
 
-    readFileAsBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const value = String(reader.result || '');
-                const idx = value.indexOf(',');
-                resolve(idx >= 0 ? value.substring(idx + 1) : value);
-            };
-            reader.onerror = () => reject(new Error('Lecture du fichier audio impossible.'));
-            reader.readAsDataURL(file);
+        const uploaded = files[0];
+        this.rhfitProcessFileName = uploaded.name || this.rhfitProcessFileName;
+        this.rhfitProcessHasAudio = true;
+        this.syncRHFitProcessToOpp({
+            rhfitHasAudio: true
         });
-    }
-
-    uploadRHFitAudioForProcess() {
-        if (!this.rhfitProcessCanUploadAudio || !this.rhfitProcessOppId) return;
-
         this.isRHFitUploadingAudio = true;
-        this.readFileAsBase64(this.rhfitSelectedAudioFile)
-            .then(base64 => uploadRHFitAudioApex({
-                oppId: this.rhfitProcessOppId,
-                audioBase64: base64,
-                fileName: this.rhfitProcessFileName || `rhfit-interview-${Date.now()}.webm`
-            }))
+        registerRHFitUploadedAudioFileApex({
+            oppId: this.rhfitProcessOppId,
+            contentDocumentId: uploaded.documentId
+        })
             .then(() => {
+                this.rhfitProcessFileName = uploaded.name || this.rhfitProcessFileName;
                 this.rhfitProcessStatus = 'Audio Uploaded';
                 this.rhfitProcessHasAudio = true;
                 this.syncRHFitProcessToOpp({
                     rhfitStatus: 'Audio Uploaded',
                     rhfitHasAudio: true
                 });
-                this.showToast('Audio RH Fit uploade.', 'success');
+                this.showToast('Audio uploadé via Salesforce Files.', 'success');
             })
             .catch(err => {
-                this.showToast('Erreur upload audio RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
+                this.showToast('Erreur enregistrement audio RH Fit : ' + (err.body ? err.body.message : err.message), 'error');
             })
             .finally(() => {
                 this.isRHFitUploadingAudio = false;

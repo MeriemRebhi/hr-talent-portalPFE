@@ -459,6 +459,21 @@
                             <p class="detail-na">Non planifie</p>
                         </template>
                     </div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/></svg>
+                            Contrat DocuSign
+                        </div>
+                        <span class={detailContractPillClass}>{detailContractStatusLabel}</span>
+                        <div class="detail-contract-meta">Envoye: {detailContractSentAt}</div>
+                        <div class="detail-contract-meta">Signe: {detailContractSignedAt}</div>
+                        <template if:true={detailHasContractEnvelope}>
+                            <div class="detail-contract-id" title={detailContractEnvelopeId}>Envelope: {detailContractEnvelopeShort}</div>
+                        </template>
+                        <template if:true={detailHasContractError}>
+                            <p class="detail-contract-error">{detailContractError}</p>
+                        </template>
+                    </div>
                 </div>
                 <template if:true={detailAiReco}>
                     <div class="detail-section">
@@ -798,15 +813,22 @@
 
                 <div class="form-row" style="margin-top:12px;">
                     <label class="form-label">Fichier audio entretien</label>
-                    <input type="file" accept=".webm,.mp3,.wav,.m4a,.ogg,.flac,audio/webm,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/flac" onchange={onRHFitProcessFileChange} />
+                    <lightning-file-upload
+                        name="rhfitAudioUpload"
+                        label="Uploader l'audio (Salesforce Files)"
+                        record-id={rhfitProcessOppId}
+                        accept={rhfitAcceptedFormats}
+                        disabled={isRHFitProcessingAudio}
+                        onuploadfinished={handleRHFitFileUploadFinished}>
+                    </lightning-file-upload>
+                    <p class="form-hint">Formats: webm, mp3, wav, m4a, ogg, flac. Taille max recommandée: 25 MB.</p>
                     <template if:true={rhfitProcessFileName}>
                         <p class="form-hint">{rhfitProcessFileName}</p>
                     </template>
                     <div class="rhfit-process-actions">
-                        <button class="btn-send" onclick={uploadRHFitAudioForProcess} disabled={rhfitProcessUploadDisabled}>
-                            <template if:true={isRHFitUploadingAudio}>Upload...</template>
-                            <template if:false={isRHFitUploadingAudio}>Uploader audio</template>
-                        </button>
+                        <template if:true={isRHFitUploadingAudio}>
+                            <span class="form-hint">Enregistrement du fichier en cours...</span>
+                        </template>
                         <button class="btn-confirm-validation" onclick={startRHFitAIProcessing} disabled={rhfitProcessStartDisabled}>
                             <template if:true={isRHFitProcessingAudio}>Analyse en cours...</template>
                             <template if:false={isRHFitProcessingAudio}>Lancer transcription + IA</template>
@@ -1067,6 +1089,7 @@
                                     <th>Score IA</th>
                                     <th>Recommandation</th>
                                     <th>Test Gaming</th>
+                                    <th>Contrat</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -1135,6 +1158,19 @@
                                                     <span class="gaming-na">Non planifié</span>
                                                 </template>
                                             </template>
+                                        </td>
+                                        <!-- Contrat DocuSign -->
+                                        <td class="td-contract">
+                                            <div class="contract-cell">
+                                                <span class={opp.contractPillClass}>{opp.contractStatusLabel}</span>
+                                                <div class="contract-meta">{opp.contractRowMeta}</div>
+                                                <template if:true={opp.contractHasEnvelope}>
+                                                    <div class="contract-id" title={opp.contractEnvelopeId}>Env: {opp.contractEnvelopeShort}</div>
+                                                </template>
+                                                <template if:true={opp.hasContractError}>
+                                                    <div class="contract-error" title={opp.contractError}>{opp.contractErrorShort}</div>
+                                                </template>
+                                            </div>
                                         </td>
                                         <!-- Actions -->
                                         <td>

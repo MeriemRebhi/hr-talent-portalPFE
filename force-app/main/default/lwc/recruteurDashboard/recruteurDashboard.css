@@ -340,6 +340,75 @@
 .td-account { color: var(--gray); font-size: 13px; }
 .td-date    { color: var(--gray); font-size: 13px; white-space: nowrap; }
 
+.td-contract { min-width: 220px; }
+
+.contract-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contract-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    width: fit-content;
+}
+
+.cp-not-sent {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.cp-sent {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.cp-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.cp-declined {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.cp-voided {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.cp-failed {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.contract-meta {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.contract-id {
+    font-size: 11px;
+    color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.contract-error {
+    font-size: 11px;
+    color: #b91c1c;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
 /* ── STAGE BADGES ── */
 .badge {
     display: inline-block;
@@ -1623,6 +1692,29 @@
     background: #dbeafe;
     border-radius: 6px;
     display: inline-block;
+}
+
+
+.detail-contract-meta {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.detail-contract-id {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #334155;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.detail-contract-error {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: #b91c1c;
+    font-weight: 600;
+    line-height: 1.35;
 }
 
 @media (max-width: 768px) {

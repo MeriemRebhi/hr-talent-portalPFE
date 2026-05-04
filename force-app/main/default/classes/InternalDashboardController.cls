@@ -1,13 +1,13 @@
 /**
- * InternalDashboardController — HR Talent Portal
- * Controller partagé pour les dashboards internes :
+ * InternalDashboardController â€” HR Talent Portal
+ * Controller partagÃ© pour les dashboards internes :
  * Recruteur, Manager, Responsable RH
  */
 public with sharing class InternalDashboardController {
 
-    // ══════════════════════════════════════════
-    // RECRUTEUR — Opportunités à gérer
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // RECRUTEUR â€” OpportunitÃ©s Ã  gÃ©rer
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getRecruteurData() {
@@ -64,7 +64,12 @@ public with sharing class InternalDashboardController {
                        Score_Matching__c,
                        Gaming_Test_DateTime__c, Gaming_Test_Duration__c, Gaming_Meet_Link__c,
                        Gaming_Test_Score__c, Gaming_Test_Status__c,
-                       Manager_Validated_Score__c
+                       Manager_Validated_Score__c,
+                       DocuSign_Envelope_Id__c,
+                       Contract_Status__c,
+                       Contract_Sent_At__c,
+                       Contract_Signed_At__c,
+                       Contract_Error__c
                 FROM Opportunity
                 WHERE RecordType.DeveloperName = 'Application'
                 AND Id IN :myOppIds
@@ -175,17 +180,17 @@ public with sharing class InternalDashboardController {
             String recoType = 'none';
             String reco     = 'Score IA indisponible';
             if (score != null) {
-                if      (score >= 70) { recoType = 'high';   reco = 'Fortement recommandé'; }
-                else if (score >= 50) { recoType = 'mid';    reco = 'À évaluer en entretien'; }
-                else if (score >= 30) { recoType = 'low';    reco = 'Profil risqué'; }
-                else                  { recoType = 'reject'; reco = 'Non recommandé'; }
+                if      (score >= 70) { recoType = 'high';   reco = 'Fortement recommandÃ©'; }
+                else if (score >= 50) { recoType = 'mid';    reco = 'Ã€ Ã©valuer en entretien'; }
+                else if (score >= 30) { recoType = 'low';    reco = 'Profil risquÃ©'; }
+                else                  { recoType = 'reject'; reco = 'Non recommandÃ©'; }
             }
             Map<String, Object> row = new Map<String, Object>();
             row.put('Id',              o.Id);
             row.put('Name',            o.Name);
             row.put('StageName',       o.StageName);
             row.put('CloseDate',       o.CloseDate);
-            row.put('accountName',     o.Account != null ? o.Account.Name : '—');
+            row.put('accountName',     o.Account != null ? o.Account.Name : 'â€”');
             row.put('score',           score);
             row.put('reco',            reco);
             row.put('recoType',        recoType);
@@ -199,6 +204,11 @@ public with sharing class InternalDashboardController {
             row.put('gamingScore',     o.Gaming_Test_Score__c);
             row.put('gamingStatus',    o.Gaming_Test_Status__c);
             row.put('managerValidatedScore', o.Manager_Validated_Score__c);
+            row.put('contractEnvelopeId', o.DocuSign_Envelope_Id__c);
+            row.put('contractStatus',     o.Contract_Status__c);
+            row.put('contractSentAt',     o.Contract_Sent_At__c);
+            row.put('contractSignedAt',   o.Contract_Signed_At__c);
+            row.put('contractError',      o.Contract_Error__c);
             // Technical interview from Technical_Interview__c
             Technical_Interview__c ti = tiByOpp.get(o.Id);
             row.put('techDateTime',    ti != null ? ti.Interview_DateTime__c : null);
@@ -251,9 +261,9 @@ public with sharing class InternalDashboardController {
         return result;
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Planifier le test Gaming
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Planifier le test Gaming
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static void scheduleGamingTest(
@@ -262,7 +272,7 @@ public with sharing class InternalDashboardController {
         String duration
     ) {
         try {
-            // Parser la chaîne datetime (format: "2026-04-08T10:00" ou "2026-04-08 10:00:00")
+            // Parser la chaÃ®ne datetime (format: "2026-04-08T10:00" ou "2026-04-08 10:00:00")
             DateTime parsedDt = DateTime.valueOf(testDateTime.replace('T', ' ').length() == 16
                 ? testDateTime.replace('T', ' ') + ':00'
                 : testDateTime.replace('T', ' '));
@@ -273,7 +283,7 @@ public with sharing class InternalDashboardController {
                 FROM Opportunity WHERE Id = :oppId LIMIT 1
             ];
 
-            // Générer lien vers la page Gaming Test (Experience Cloud)
+            // GÃ©nÃ©rer lien vers la page Gaming Test (Experience Cloud)
             String meetLink = 'https://orgfarm-3ed211f8bb-dev-ed.develop.my.site.com/home2/s/testgaming?id=' + oppId;
 
             opp.Gaming_Test_DateTime__c = parsedDt;
@@ -281,7 +291,7 @@ public with sharing class InternalDashboardController {
             opp.Gaming_Meet_Link__c     = meetLink;
             update opp;
 
-            // Trouver l'email du candidat (Lead converti OU Contact lié)
+            // Trouver l'email du candidat (Lead converti OU Contact liÃ©)
             String candidatEmail;
             String prenom = '';
             String nom = '';
@@ -314,7 +324,7 @@ public with sharing class InternalDashboardController {
                 }
             }
 
-            // 3) Fallback : Contact lié au compte de l'Opportunity
+            // 3) Fallback : Contact liÃ© au compte de l'Opportunity
             if (String.isBlank(candidatEmail) && opp.AccountId != null) {
                 List<Contact> contacts = [
                     SELECT Id, FirstName, LastName, Email
@@ -331,8 +341,8 @@ public with sharing class InternalDashboardController {
 
             if (String.isNotBlank(candidatEmail)) {
 
-                // Format date en français
-                String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+                // Format date en franÃ§ais
+                String dateLabel = parsedDt.format('dd/MM/yyyy \'Ã \' HH:mm');
                 String dureeLabel = duration == '30'  ? '30 minutes'
                                   : duration == '60'  ? '1 heure'
                                   : duration == '90'  ? '1h30'
@@ -341,13 +351,13 @@ public with sharing class InternalDashboardController {
 
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new List<String>{ candidatEmail });
-                mail.setSubject('📅 Invitation — Test Gaming HR Talent Portal · Talan Tunisie');
+                mail.setSubject('ðŸ“… Invitation â€” Test Gaming HR Talent Portal Â· Talan Tunisie');
                 mail.setHtmlBody(
                     '<div style="font-family:Segoe UI,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                     + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                     + '<div style="background:linear-gradient(135deg,#1a1f36 0%,#2d3561 100%);padding:40px 40px 32px;">'
-                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">🎮 Test Gaming Planifié</h1>'
-                    + '<p style="margin:8px 0 0;color:#a0aec0;font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">ðŸŽ® Test Gaming PlanifiÃ©</h1>'
+                    + '<p style="margin:8px 0 0;color:#a0aec0;font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                     + '</div>'
                     + '<div style="padding:36px 40px;">'
                     + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
@@ -357,11 +367,11 @@ public with sharing class InternalDashboardController {
                     + '</p>'
                     + '<div style="background:#f7faff;border-left:4px solid #667eea;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                     + '<table style="width:100%;border-collapse:collapse;">'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ“… Date &amp; Heure</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">â± DurÃ©e</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ–¥ Format</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Quiz Gaming en ligne</td></tr>'
                     + '</table>'
                     + '</div>'
@@ -373,12 +383,12 @@ public with sharing class InternalDashboardController {
                     + '</a>'
                     + '</div>'
                     + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0 0 8px;">'
-                    + '<strong>Instructions :</strong> 10 questions adaptées à votre profil, chronomètre par question, '
-                    + 'bonus de rapidité. Aucune installation — votre navigateur suffit.'
+                    + '<strong>Instructions :</strong> 10 questions adaptÃ©es Ã  votre profil, chronomÃ¨tre par question, '
+                    + 'bonus de rapiditÃ©. Aucune installation â€” votre navigateur suffit.'
                     + '</p>'
                     + '</div>'
                     + '<div style="background:#f7faff;border-top:1px solid #e8ecf5;padding:20px 40px;text-align:center;">'
-                    + '<p style="margin:0;font-size:12px;color:#a0aec0;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '<p style="margin:0;font-size:12px;color:#a0aec0;">HR Talent Portal Â· Talan Tunisie Â· Ne pas rÃ©pondre Ã  cet email</p>'
                     + '</div>'
                     + '</div></div>'
                 );
@@ -390,9 +400,9 @@ public with sharing class InternalDashboardController {
         }
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Annuler un test Gaming planifié
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Annuler un test Gaming planifiÃ©
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static void cancelGamingTest(Id oppId) {
@@ -410,9 +420,9 @@ public with sharing class InternalDashboardController {
         }
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Planifier en lot (batch)
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Planifier en lot (batch)
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static List<Map<String, Object>> scheduleBatchGamingTests(
@@ -424,27 +434,27 @@ public with sharing class InternalDashboardController {
         List<Map<String, Object>> results = new List<Map<String, Object>>();
 
         if (oppIds == null || oppIds.isEmpty()) {
-            throw new AuraHandledException('Aucun candidat sélectionné.');
+            throw new AuraHandledException('Aucun candidat sÃ©lectionnÃ©.');
         }
         if (String.isBlank(startDateTime)) {
-            throw new AuraHandledException('Veuillez choisir une date de début.');
+            throw new AuraHandledException('Veuillez choisir une date de dÃ©but.');
         }
-        // Parser la chaîne datetime
+        // Parser la chaÃ®ne datetime
         DateTime parsedStartDt = DateTime.valueOf(startDateTime.replace('T', ' ').length() == 16
             ? startDateTime.replace('T', ' ') + ':00'
             : startDateTime.replace('T', ' '));
 
         Integer durationMin = Integer.valueOf(duration);
-        Integer slotMin = durationMin + gapMinutes; // durée + pause entre chaque
+        Integer slotMin = durationMin + gapMinutes; // durÃ©e + pause entre chaque
 
-        // Charger toutes les opportunités
+        // Charger toutes les opportunitÃ©s
         Map<Id, Opportunity> oppsMap = new Map<Id, Opportunity>([
             SELECT Id, Name, StageName, AccountId,
                    Gaming_Test_DateTime__c, Gaming_Test_Duration__c, Gaming_Meet_Link__c
             FROM Opportunity WHERE Id IN :oppIds
         ]);
 
-        // Charger les leads associés pour les emails
+        // Charger les leads associÃ©s pour les emails
         Map<Id, Lead> leadsByOpp = new Map<Id, Lead>();
         for (Lead l : [
             SELECT Id, FirstName, LastName, Email, ConvertedOpportunityId
@@ -498,7 +508,7 @@ public with sharing class InternalDashboardController {
             opp.Gaming_Meet_Link__c     = meetLink;
             toUpdate.add(opp);
 
-            // Préparer le résultat
+            // PrÃ©parer le rÃ©sultat
             Map<String, Object> row = new Map<String, Object>();
             row.put('oppId', oppId);
             row.put('name', opp.Name);
@@ -506,7 +516,7 @@ public with sharing class InternalDashboardController {
             row.put('meetLink', meetLink);
             results.add(row);
 
-            // Préparer l'email — 3-level fallback: Lead → OCR → Contact
+            // PrÃ©parer l'email â€” 3-level fallback: Lead â†’ OCR â†’ Contact
             String candidatEmail;
             String prenom = '';
             String nom = '';
@@ -535,7 +545,7 @@ public with sharing class InternalDashboardController {
             }
 
             if (String.isNotBlank(candidatEmail)) {
-                String dateLabel = slotTime.format('dd/MM/yyyy \'à\' HH:mm');
+                String dateLabel = slotTime.format('dd/MM/yyyy \'Ã \' HH:mm');
                 String dureeLabel = duration == '30'  ? '30 minutes'
                                   : duration == '60'  ? '1 heure'
                                   : duration == '90'  ? '1h30'
@@ -544,13 +554,13 @@ public with sharing class InternalDashboardController {
 
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new List<String>{ candidatEmail });
-                mail.setSubject('📅 Invitation — Test Gaming HR Talent Portal · Talan Tunisie');
+                mail.setSubject('ðŸ“… Invitation â€” Test Gaming HR Talent Portal Â· Talan Tunisie');
                 mail.setHtmlBody(
                     '<div style="font-family:Segoe UI,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                     + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                     + '<div style="background:linear-gradient(135deg,#1a1f36 0%,#2d3561 100%);padding:40px 40px 32px;">'
-                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">🎮 Test Gaming Planifié</h1>'
-                    + '<p style="margin:8px 0 0;color:#a0aec0;font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">ðŸŽ® Test Gaming PlanifiÃ©</h1>'
+                    + '<p style="margin:8px 0 0;color:#a0aec0;font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                     + '</div>'
                     + '<div style="padding:36px 40px;">'
                     + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
@@ -559,11 +569,11 @@ public with sharing class InternalDashboardController {
                     + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>.</p>'
                     + '<div style="background:#f7faff;border-left:4px solid #667eea;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                     + '<table style="width:100%;border-collapse:collapse;">'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ“… Date &amp; Heure</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">â± DurÃ©e</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ–¥ Format</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Quiz Gaming en ligne</td></tr>'
                     + '</table></div>'
                     + '<div style="text-align:center;margin:0 0 28px;">'
@@ -572,11 +582,11 @@ public with sharing class InternalDashboardController {
                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
                     + '&#127918; Passer le test Gaming</a></div>'
                     + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0 0 8px;">'
-                    + '<strong>Instructions :</strong> 10 questions adaptées à votre profil, chronomètre par question, '
-                    + 'bonus de rapidité. Aucune installation — votre navigateur suffit.'
+                    + '<strong>Instructions :</strong> 10 questions adaptÃ©es Ã  votre profil, chronomÃ¨tre par question, '
+                    + 'bonus de rapiditÃ©. Aucune installation â€” votre navigateur suffit.'
                     + '</div>'
                     + '<div style="background:#f7faff;border-top:1px solid #e8ecf5;padding:20px 40px;text-align:center;">'
-                    + '<p style="margin:0;font-size:12px;color:#a0aec0;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '<p style="margin:0;font-size:12px;color:#a0aec0;">HR Talent Portal Â· Talan Tunisie Â· Ne pas rÃ©pondre Ã  cet email</p>'
                     + '</div></div></div>'
                 );
                 emails.add(mail);
@@ -597,15 +607,15 @@ public with sharing class InternalDashboardController {
         return results;
     }
 
-    // ══════════════════════════════════════════
-    // MANAGER — Vue décisionnelle
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // MANAGER â€” Vue dÃ©cisionnelle
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getManagerData() {
         Map<String, Object> result = new Map<String, Object>();
 
-        // Candidats en attente de validation (RH Fit = dernière étape avant décision)
+        // Candidats en attente de validation (RH Fit = derniÃ¨re Ã©tape avant dÃ©cision)
         List<Opportunity> rhFitOpps = [
             SELECT Id, Name, StageName, CloseDate, Account.Name,
                    Description, CreatedDate, Score_Matching__c
@@ -650,7 +660,7 @@ public with sharing class InternalDashboardController {
             row.put('Name',          o.Name);
             row.put('StageName',     o.StageName);
             row.put('CloseDate',     o.CloseDate);
-            row.put('accountName',   o.Account != null ? o.Account.Name : '—');
+            row.put('accountName',   o.Account != null ? o.Account.Name : 'â€”');
             row.put('candidateName', l != null ? ((l.FirstName != null ? l.FirstName : '') + ' ' + (l.LastName != null ? l.LastName : '')).trim() : o.Name);
             row.put('leadEmail',     l != null ? l.Email : '');
             row.put('scoreCV',       l != null ? l.Score_Matching__c : o.Score_Matching__c);
@@ -663,14 +673,14 @@ public with sharing class InternalDashboardController {
             rows.add(row);
         }
 
-        // Candidats acceptés (Closed Won)
+        // Candidats acceptÃ©s (Closed Won)
         Integer acceptes = [
             SELECT COUNT() FROM Opportunity
             WHERE RecordType.DeveloperName = 'Application'
             AND StageName = 'Closed Won'
         ];
 
-        // Candidats refusés (Closed Lost)
+        // Candidats refusÃ©s (Closed Lost)
         Integer refuses = [
             SELECT COUNT() FROM Opportunity
             WHERE RecordType.DeveloperName = 'Application'
@@ -691,9 +701,9 @@ public with sharing class InternalDashboardController {
         return result;
     }
 
-    // ══════════════════════════════════════════
-    // RESPONSABLE RH — Vue globale
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // RESPONSABLE RH â€” Vue globale
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getRHData() {
@@ -702,8 +712,8 @@ public with sharing class InternalDashboardController {
         // Leads (phase 1)
         Integer totalLeads = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal'];
         Integer leadsConverted = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal' AND IsConverted = true];
-        Integer leadsRefuses = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal' AND Status = 'Condidature Réfusé'];
-        Integer leadsEnCours = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal' AND IsConverted = false AND Status != 'Condidature Réfusé'];
+        Integer leadsRefuses = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal' AND Status = 'Condidature RÃ©fusÃ©'];
+        Integer leadsEnCours = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Talent Portal' AND IsConverted = false AND Status != 'Condidature RÃ©fusÃ©'];
 
         // Score moyen IA
         AggregateResult[] scoreAgg = [
@@ -749,10 +759,10 @@ public with sharing class InternalDashboardController {
         return result;
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Changer stage d'une Opportunité
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Changer stage d'une OpportunitÃ©
     //          + email notification automatique
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static void updateOpportunityStage(Id oppId, String newStage) {
@@ -762,7 +772,7 @@ public with sharing class InternalDashboardController {
             opp.StageName = newStage;
             update opp;
 
-            // Trouver l'email du candidat (Lead → OCR → Contact)
+            // Trouver l'email du candidat (Lead â†’ OCR â†’ Contact)
             String candidatEmail;
             String prenom = '';
 
@@ -802,54 +812,54 @@ public with sharing class InternalDashboardController {
                 String stageDesc = '';
                 String stageColor = '#2F7D59';
                 if (newStage == 'Technique') {
-                    stageDesc = 'Vous avez brillamment passé l\'étape Gaming ! Nous souhaitons maintenant vous rencontrer pour un entretien technique.';
+                    stageDesc = 'Vous avez brillamment passÃ© l\'Ã©tape Gaming ! Nous souhaitons maintenant vous rencontrer pour un entretien technique.';
                     stageColor = '#3b82f6';
                 } else if (newStage == 'Architecture') {
-                    stageDesc = 'Félicitations pour l\'entretien technique ! La prochaine étape est une mise en situation architecture.';
+                    stageDesc = 'FÃ©licitations pour l\'entretien technique ! La prochaine Ã©tape est une mise en situation architecture.';
                     stageColor = '#8b5cf6';
                 } else if (newStage == 'RH Fit') {
-                    stageDesc = 'Bravo ! Vous êtes dans la dernière étape. Un entretien RH pour valider l\'adéquation avec notre culture.';
+                    stageDesc = 'Bravo ! Vous Ãªtes dans la derniÃ¨re Ã©tape. Un entretien RH pour valider l\'adÃ©quation avec notre culture.';
                     stageColor = '#ec4899';
                 } else if (newStage == 'Closed Won') {
-                    stageDesc = 'Toutes nos félicitations ! Votre candidature a été retenue. Notre équipe RH vous contactera très prochainement.';
+                    stageDesc = 'Toutes nos fÃ©licitations ! Votre candidature a Ã©tÃ© retenue. Notre Ã©quipe RH vous contactera trÃ¨s prochainement.';
                     stageColor = '#22c55e';
                 } else if (newStage == 'Closed Lost') {
-                    stageDesc = 'Après examen attentif de votre dossier, nous ne sommes malheureusement pas en mesure de retenir votre candidature. Nous vous souhaitons le meilleur pour la suite.';
+                    stageDesc = 'AprÃ¨s examen attentif de votre dossier, nous ne sommes malheureusement pas en mesure de retenir votre candidature. Nous vous souhaitons le meilleur pour la suite.';
                     stageColor = '#ef4444';
                 }
 
                 if (String.isNotBlank(stageDesc)) {
                     Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                     mail.setToAddresses(new String[]{ candidatEmail });
-                    mail.setSubject('Talan Tunisie — Mise à jour de votre candidature');
+                    mail.setSubject('Talan Tunisie â€” Mise Ã  jour de votre candidature');
                     mail.setHtmlBody(
                         '<div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;">'
                         + '<div style="background:linear-gradient(135deg,' + stageColor + ',#1a4d2e);padding:30px 40px;border-radius:16px 16px 0 0;">'
-                        + '<h1 style="color:#fff;margin:0;font-size:22px;">Mise à jour de votre candidature</h1>'
+                        + '<h1 style="color:#fff;margin:0;font-size:22px;">Mise Ã  jour de votre candidature</h1>'
                         + '</div>'
                         + '<div style="background:#fff;padding:30px 40px;border:1px solid #e5e7eb;border-top:none;">'
                         + '<p style="font-size:15px;color:#374151;">Bonjour ' + prenom + ',</p>'
                         + '<div style="background:' + stageColor + '15;border-left:4px solid ' + stageColor + ';padding:16px 20px;border-radius:0 8px 8px 0;margin:20px 0;">'
-                        + '<p style="margin:0;font-size:14px;font-weight:700;color:' + stageColor + ';">Nouvelle étape : ' + stageLabel + '</p>'
+                        + '<p style="margin:0;font-size:14px;font-weight:700;color:' + stageColor + ';">Nouvelle Ã©tape : ' + stageLabel + '</p>'
                         + '</div>'
                         + '<p style="font-size:14px;color:#4b5563;line-height:1.7;">' + stageDesc + '</p>'
-                        + '<p style="font-size:13px;color:#9ca3af;margin-top:20px;">Cordialement,<br/>L\'équipe Talan Talent Intelligence</p>'
+                        + '<p style="font-size:13px;color:#9ca3af;margin-top:20px;">Cordialement,<br/>L\'Ã©quipe Talan Talent Intelligence</p>'
                         + '</div>'
                         + '<div style="background:#f9fafb;padding:16px;text-align:center;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:none;">'
-                        + '<p style="margin:0;font-size:11px;color:#9ca3af;">Talan Tunisie · HR Talent Portal</p>'
+                        + '<p style="margin:0;font-size:11px;color:#9ca3af;">Talan Tunisie Â· HR Talent Portal</p>'
                         + '</div></div>'
                     );
                     Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
                 }
             }
         } catch (Exception e) {
-            throw new AuraHandledException('Erreur mise à jour : ' + e.getMessage());
+            throw new AuraHandledException('Erreur mise Ã  jour : ' + e.getMessage());
         }
     }
 
-    // ══════════════════════════════════════════
-    // OFFRES D'EMPLOI — CRUD
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // OFFRES D'EMPLOI â€” CRUD
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getJobPostings() {
@@ -905,7 +915,7 @@ public with sharing class InternalDashboardController {
             row.put('Department',  job.Departement__c);
             row.put('IsClosed',    job.IsClosed);
 
-            // Nombre de candidatures liées
+            // Nombre de candidatures liÃ©es
             row.put('AppCount', appCountMap.containsKey(job.Id) ? appCountMap.get(job.Id) : 0);
             result.add(row);
         }
@@ -932,7 +942,7 @@ public with sharing class InternalDashboardController {
             insert job;
             return job.Id;
         } catch (Exception e) {
-            throw new AuraHandledException('Erreur création offre : ' + e.getMessage());
+            throw new AuraHandledException('Erreur crÃ©ation offre : ' + e.getMessage());
         }
     }
 
@@ -947,9 +957,9 @@ public with sharing class InternalDashboardController {
         }
     }
 
-    // ══════════════════════════════════════════
-    // IA — Relancer le scoring NLP
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // IA â€” Relancer le scoring NLP
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static Map<String, Object> rescoreCandidat(Id oppId) {
@@ -960,14 +970,14 @@ public with sharing class InternalDashboardController {
                 FROM Lead WHERE ConvertedOpportunityId = :oppId LIMIT 1
             ];
             if (leads.isEmpty()) {
-                throw new AuraHandledException('Lead non trouvé pour cette candidature.');
+                throw new AuraHandledException('Lead non trouvÃ© pour cette candidature.');
             }
             Lead l = leads[0];
 
             // Relancer le scoring
             CVScoringService.scoreCVForLeadNow(l.Id);
 
-            // Recharger les données mises à jour
+            // Recharger les donnÃ©es mises Ã  jour
             Lead updated = [
                 SELECT Id, Score_Matching__c, AI_Recommendation__c,
                        AI_Points_Forts__c, AI_Points_Faibles__c
@@ -986,9 +996,9 @@ public with sharing class InternalDashboardController {
         }
     }
 
-    // ══════════════════════════════════════════
-    // IA — Générer description d'offre d'emploi
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // IA â€” GÃ©nÃ©rer description d'offre d'emploi
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static String generateJobDescription(String title, String department, String location,
@@ -996,29 +1006,29 @@ public with sharing class InternalDashboardController {
         try {
             List<AI_Configuration__c> configs = [SELECT Groq_API_Key__c FROM AI_Configuration__c LIMIT 1];
             if (configs.isEmpty() || String.isBlank(configs[0].Groq_API_Key__c)) {
-                throw new AuraHandledException('Clé API Groq non configurée.');
+                throw new AuraHandledException('ClÃ© API Groq non configurÃ©e.');
             }
             String apiKey = configs[0].Groq_API_Key__c;
 
             String contextInfo = 'Titre du poste : ' + (title != null ? title : '') + '\n'
-                + 'Département : ' + (department != null ? department : '') + '\n'
+                + 'DÃ©partement : ' + (department != null ? department : '') + '\n'
                 + 'Localisation : ' + (location != null ? location : '') + '\n'
                 + 'Type de contrat : ' + (contractType != null ? contractType : '') + '\n'
                 + (salary != null ? 'Salaire : ' + salary + ' TND\n' : '')
                 + 'Description brute du recruteur :\n' + (rawDescription != null ? rawDescription : '');
 
             String systemPrompt =
-                'Tu es un expert en rédaction RH pour Talan Tunisie, une ESN leader en IT et consulting. '
-                + 'À partir des informations fournies par le recruteur (qui peuvent contenir des fautes, être incomplètes ou en style brouillon), '
-                + 'génère une description d\'offre d\'emploi professionnelle, attractive et structurée en français. '
+                'Tu es un expert en rÃ©daction RH pour Talan Tunisie, une ESN leader en IT et consulting. '
+                + 'Ã€ partir des informations fournies par le recruteur (qui peuvent contenir des fautes, Ãªtre incomplÃ¨tes ou en style brouillon), '
+                + 'gÃ©nÃ¨re une description d\'offre d\'emploi professionnelle, attractive et structurÃ©e en franÃ§ais. '
                 + 'La description doit inclure :\n'
                 + '1. Un paragraphe d\'introduction sur le poste et Talan\n'
-                + '2. Les missions principales (liste à puces avec •)\n'
-                + '3. Le profil recherché (compétences, expérience)\n'
+                + '2. Les missions principales (liste Ã  puces avec â€¢)\n'
+                + '3. Le profil recherchÃ© (compÃ©tences, expÃ©rience)\n'
                 + '4. Les avantages (environnement Talan)\n'
                 + 'Corrige toutes les fautes d\'orthographe et de grammaire. '
                 + 'Garde un ton professionnel mais dynamique. '
-                + 'Réponds UNIQUEMENT avec le texte de la description, sans balises HTML ni markdown.';
+                + 'RÃ©ponds UNIQUEMENT avec le texte de la description, sans balises HTML ni markdown.';
 
             Map<String, Object> body = new Map<String, Object>{
                 'model'       => 'llama-3.3-70b-versatile',
@@ -1052,13 +1062,13 @@ public with sharing class InternalDashboardController {
         } catch (AuraHandledException ae) {
             throw ae;
         } catch (Exception e) {
-            throw new AuraHandledException('Erreur génération IA : ' + e.getMessage());
+            throw new AuraHandledException('Erreur gÃ©nÃ©ration IA : ' + e.getMessage());
         }
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Planifier l'entretien technique
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Planifier l'entretien technique
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static void scheduleTechnicalInterview(
@@ -1143,55 +1153,55 @@ public with sharing class InternalDashboardController {
                 }
             }
 
-            String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+            String dateLabel = parsedDt.format('dd/MM/yyyy \'Ã \' HH:mm');
             String dureeLabel = duration == '30'  ? '30 minutes'
                               : duration == '45'  ? '45 minutes'
                               : duration == '60'  ? '1 heure'
                               : duration == '90'  ? '1h30'
                               : duration + ' min';
 
-            // ── Build Meet section (only if video link provided)
+            // â”€â”€ Build Meet section (only if video link provided)
             String meetSection = '';
             if (videoLink != null) {
                 meetSection = '<div style="text-align:center;margin:0 0 20px;">'
                     + '<a href="' + videoLink + '" '
                     + 'style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;'
                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
-                    + '🎥 Rejoindre la visioconférence'
+                    + 'ðŸŽ¥ Rejoindre la visioconfÃ©rence'
                     + '</a>'
                     + '<p style="font-size:12px;color:#718096;margin:8px 0 0;">Un recruteur vous attend en visio pendant l\'entretien.</p>'
                     + '</div>';
             }
 
-            // ── Email to candidate ──
+            // â”€â”€ Email to candidate â”€â”€
             if (String.isNotBlank(candidatEmail)) {
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new List<String>{ candidatEmail });
-                mail.setSubject('💻 Invitation — Entretien Technique HR Talent Portal · Talan Tunisie');
+                mail.setSubject('ðŸ’» Invitation â€” Entretien Technique HR Talent Portal Â· Talan Tunisie');
                 mail.setHtmlBody(
                     '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                     + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                     + '<div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);padding:40px 40px 32px;">'
-                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">💻 Entretien Technique Planifié</h1>'
-                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">ðŸ’» Entretien Technique PlanifiÃ©</h1>'
+                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                     + '</div>'
                     + '<div style="padding:36px 40px;">'
                     + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
                     + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
                     + 'Nous vous confirmons la planification de votre <strong>entretien technique</strong> '
                     + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>. '
-                    + 'Vous devrez résoudre des exercices de programmation et d\'architecture évalués par l\'IA.'
-                    + (videoLink != null ? ' Un recruteur vous accompagnera en <strong>visioconférence</strong>.' : '')
+                    + 'Vous devrez rÃ©soudre des exercices de programmation et d\'architecture Ã©valuÃ©s par l\'IA.'
+                    + (videoLink != null ? ' Un recruteur vous accompagnera en <strong>visioconfÃ©rence</strong>.' : '')
                     + '</p>'
                     + '<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                     + '<table style="width:100%;border-collapse:collapse;">'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ“… Date &amp; Heure</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">â± DurÃ©e</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ–¥ Format</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">5 exercices techniques (code, architecture, debug)</td></tr>'
-                    + (videoLink != null ? '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🎥 Visio</td>'
+                    + (videoLink != null ? '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸŽ¥ Visio</td>'
                         + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Avec recruteur en direct</td></tr>' : '')
                     + '</table>'
                     + '</div>'
@@ -1200,23 +1210,23 @@ public with sharing class InternalDashboardController {
                     + '<a href="' + exerciseLink + '" '
                     + 'style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#ffffff;'
                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
-                    + '💻 Accéder aux exercices techniques'
+                    + 'ðŸ’» AccÃ©der aux exercices techniques'
                     + '</a>'
                     + '</div>'
                     + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
-                    + '<strong>Instructions :</strong> 5 exercices de programmation adaptés au poste, '
-                    + 'évaluation IA en temps réel, bonus de rapidité. Votre navigateur suffit.'
+                    + '<strong>Instructions :</strong> 5 exercices de programmation adaptÃ©s au poste, '
+                    + 'Ã©valuation IA en temps rÃ©el, bonus de rapiditÃ©. Votre navigateur suffit.'
                     + '</p>'
                     + '</div>'
                     + '<div style="background:#eff6ff;border-top:1px solid #dbeafe;padding:20px 40px;text-align:center;">'
-                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal Â· Talan Tunisie Â· Ne pas rÃ©pondre Ã  cet email</p>'
                     + '</div>'
                     + '</div></div>'
                 );
 
                 List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>{ mail };
 
-                // ── Email to manager (copy) ──
+                // â”€â”€ Email to manager (copy) â”€â”€
                 // Find the Job Posting owner (manager/tech lead) via Lead.Description JOB_ID
                 Id jobPostingId = null;
                 if (!leads.isEmpty() && leads[0].Description != null) {
@@ -1241,29 +1251,29 @@ public with sharing class InternalDashboardController {
                         if (mgrEmail != UserInfo.getUserEmail()) {
                             Messaging.SingleEmailMessage mgrMail = new Messaging.SingleEmailMessage();
                             mgrMail.setToAddresses(new List<String>{ mgrEmail });
-                            mgrMail.setSubject('📋 Entretien technique planifié — ' + prenom + ' ' + nom + ' · ' + job.Name);
+                            mgrMail.setSubject('ðŸ“‹ Entretien technique planifiÃ© â€” ' + prenom + ' ' + nom + ' Â· ' + job.Name);
                             mgrMail.setHtmlBody(
                                 '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                                 + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                                 + '<div style="background:linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%);padding:40px 40px 32px;">'
-                                + '<h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">📋 Entretien Technique — Notification Manager</h1>'
-                                + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                                + '<h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">ðŸ“‹ Entretien Technique â€” Notification Manager</h1>'
+                                + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                                 + '</div>'
                                 + '<div style="padding:36px 40px;">'
                                 + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>'
                                 + (job.Owner.FirstName != null ? job.Owner.FirstName : '') + '</strong>,</p>'
                                 + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
-                                + 'Un entretien technique a été planifié pour le candidat <strong>' + prenom + ' ' + nom + '</strong> '
+                                + 'Un entretien technique a Ã©tÃ© planifiÃ© pour le candidat <strong>' + prenom + ' ' + nom + '</strong> '
                                 + 'pour le poste <strong>' + job.Name + '</strong>. '
-                                + 'Vous pouvez rejoindre la visioconférence pour observer l\'entretien.'
+                                + 'Vous pouvez rejoindre la visioconfÃ©rence pour observer l\'entretien.'
                                 + '</p>'
                                 + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                                 + '<table style="width:100%;border-collapse:collapse;">'
-                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">👤 Candidat</td>'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ‘¤ Candidat</td>'
                                 + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + prenom + ' ' + nom + '</td></tr>'
-                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date</td>'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ“… Date</td>'
                                 + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
-                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                                + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">â± DurÃ©e</td>'
                                 + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
                                 + '</table>'
                                 + '</div>'
@@ -1272,14 +1282,14 @@ public with sharing class InternalDashboardController {
                                     + '<a href="' + videoLink + '" '
                                     + 'style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;'
                                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
-                                    + '🎥 Rejoindre la visioconférence'
+                                    + 'ðŸŽ¥ Rejoindre la visioconfÃ©rence'
                                     + '</a></div>' : '')
                                 + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
-                                + 'Les résultats seront disponibles dans votre dashboard après l\'entretien.'
+                                + 'Les rÃ©sultats seront disponibles dans votre dashboard aprÃ¨s l\'entretien.'
                                 + '</p>'
                                 + '</div>'
                                 + '<div style="background:#f5f3ff;border-top:1px solid #ddd6fe;padding:20px 40px;text-align:center;">'
-                                + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie</p>'
+                                + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal Â· Talan Tunisie</p>'
                                 + '</div>'
                                 + '</div></div>'
                             );
@@ -1295,10 +1305,10 @@ public with sharing class InternalDashboardController {
         }
     }
 
-    // ══════════════════════════════════════════
-    // ACTION — Planifier l'entretien Architecture
-    //          avec Jitsi room auto-générée (UUID)
-    // ══════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ACTION â€” Planifier l'entretien Architecture
+    //          avec Jitsi room auto-gÃ©nÃ©rÃ©e (UUID)
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     @AuraEnabled
     public static Map<String, Object> scheduleArchitectureInterview(
@@ -1376,7 +1386,7 @@ public with sharing class InternalDashboardController {
                 }
             }
 
-            String dateLabel = parsedDt.format('dd/MM/yyyy \'à\' HH:mm');
+            String dateLabel = parsedDt.format('dd/MM/yyyy \'Ã \' HH:mm');
             String dureeLabel = duration == '30'  ? '30 minutes'
                               : duration == '45'  ? '45 minutes'
                               : duration == '60'  ? '1 heure'
@@ -1386,49 +1396,49 @@ public with sharing class InternalDashboardController {
             if (String.isNotBlank(candidatEmail)) {
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new List<String>{ candidatEmail });
-                mail.setSubject('🏗️ Invitation — Entretien Architecture HR Talent Portal · Talan Tunisie');
+                mail.setSubject('ðŸ—ï¸ Invitation â€” Entretien Architecture HR Talent Portal Â· Talan Tunisie');
                 mail.setHtmlBody(
                     '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                     + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                     + '<div style="background:linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%);padding:40px 40px 32px;">'
-                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">🏗️ Entretien Architecture Planifié</h1>'
-                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                    + '<h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">ðŸ—ï¸ Entretien Architecture PlanifiÃ©</h1>'
+                    + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                     + '</div>'
                     + '<div style="padding:36px 40px;">'
                     + '<p style="font-size:16px;color:#2d3748;margin:0 0 24px;">Bonjour <strong>' + prenom + ' ' + nom + '</strong>,</p>'
                     + '<p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 28px;">'
                     + 'Nous vous confirmons la planification de votre <strong>entretien architecture</strong> '
                     + 'dans le cadre de votre candidature chez <strong>Talan Tunisie</strong>. '
-                    + 'Un recruteur vous posera des questions sur la conception logicielle et l\'architecture technique en visioconférence.'
+                    + 'Un recruteur vous posera des questions sur la conception logicielle et l\'architecture technique en visioconfÃ©rence.'
                     + '</p>'
                     + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:20px 24px;margin:0 0 28px;">'
                     + '<table style="width:100%;border-collapse:collapse;">'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">📅 Date &amp; Heure</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ“… Date &amp; Heure</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dateLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">⏱ Durée</td>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">â± DurÃ©e</td>'
                     + '<td style="color:#1a202c;font-size:15px;font-weight:600;">' + dureeLabel + '</td></tr>'
-                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">🖥 Format</td>'
-                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">Visioconférence Jitsi + Enregistrement IA</td></tr>'
+                    + '<tr><td style="color:#718096;font-size:13px;padding:6px 0;">ðŸ–¥ Format</td>'
+                    + '<td style="color:#1a202c;font-size:15px;font-weight:600;">VisioconfÃ©rence Jitsi + Enregistrement IA</td></tr>'
                     + '</table>'
                     + '</div>'
                     + '<div style="text-align:center;margin:0 0 20px;">'
                     + '<a href="' + portalLink + '" '
                     + 'style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#ffffff;'
                     + 'font-size:16px;font-weight:700;padding:14px 36px;border-radius:50px;text-decoration:none;">'
-                    + '🏗️ Accéder à l\'entretien architecture'
+                    + 'ðŸ—ï¸ AccÃ©der Ã  l\'entretien architecture'
                     + '</a>'
                     + '</div>'
                     + '<div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:12px 16px;margin:0 0 20px;">'
-                    + '<p style="margin:0;font-size:13px;color:#92400e;">⚠️ <strong>Important :</strong> Cet entretien sera enregistré et analysé par l\'intelligence artificielle. '
-                    + 'Vous devrez donner votre consentement avant le début.</p>'
+                    + '<p style="margin:0;font-size:13px;color:#92400e;">âš ï¸ <strong>Important :</strong> Cet entretien sera enregistrÃ© et analysÃ© par l\'intelligence artificielle. '
+                    + 'Vous devrez donner votre consentement avant le dÃ©but.</p>'
                     + '</div>'
                     + '<p style="font-size:13px;color:#718096;line-height:1.6;margin:0;">'
-                    + '<strong>Conseil :</strong> Préparez-vous à discuter de patterns de conception, '
-                    + 'd\'architecture microservices, de choix techniques et de scalabilité. Votre navigateur suffit.'
+                    + '<strong>Conseil :</strong> PrÃ©parez-vous Ã  discuter de patterns de conception, '
+                    + 'd\'architecture microservices, de choix techniques et de scalabilitÃ©. Votre navigateur suffit.'
                     + '</p>'
                     + '</div>'
                     + '<div style="background:#f5f3ff;border-top:1px solid #ddd6fe;padding:20px 40px;text-align:center;">'
-                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal · Talan Tunisie · Ne pas répondre à cet email</p>'
+                    + '<p style="margin:0;font-size:12px;color:#94a3b8;">HR Talent Portal Â· Talan Tunisie Â· Ne pas rÃ©pondre Ã  cet email</p>'
                     + '</div>'
                     + '</div></div>'
                 );
@@ -1455,30 +1465,30 @@ public with sharing class InternalDashboardController {
                         && jobList[0].Owner.Email != UserInfo.getUserEmail()) {
                         Messaging.SingleEmailMessage mgrMail = new Messaging.SingleEmailMessage();
                         mgrMail.setToAddresses(new List<String>{ jobList[0].Owner.Email });
-                        mgrMail.setSubject('🏗️ Entretien Architecture planifié — ' + prenom + ' ' + nom + ' · ' + jobList[0].Name);
+                        mgrMail.setSubject('ðŸ—ï¸ Entretien Architecture planifiÃ© â€” ' + prenom + ' ' + nom + ' Â· ' + jobList[0].Name);
                         mgrMail.setHtmlBody(
                             '<div style="font-family:Inter,Arial,sans-serif;background:#f4f6f9;padding:40px 0;">'
                             + '<div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">'
                             + '<div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);padding:40px 40px 32px;">'
-                            + '<h1 style="margin:0;color:#fff;font-size:22px;">🏗️ Entretien Architecture — Notification</h1>'
-                            + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal · Talan Tunisie</p>'
+                            + '<h1 style="margin:0;color:#fff;font-size:22px;">ðŸ—ï¸ Entretien Architecture â€” Notification</h1>'
+                            + '<p style="margin:8px 0 0;color:rgba(255,255,255,0.7);font-size:15px;">HR Talent Portal Â· Talan Tunisie</p>'
                             + '</div>'
                             + '<div style="padding:36px 40px;">'
                             + '<p style="font-size:15px;color:#4a5568;line-height:1.7;">'
-                            + 'Un entretien architecture a été planifié pour <strong>' + prenom + ' ' + nom + '</strong> '
+                            + 'Un entretien architecture a Ã©tÃ© planifiÃ© pour <strong>' + prenom + ' ' + nom + '</strong> '
                             + 'pour le poste <strong>' + jobList[0].Name + '</strong>.</p>'
                             + '<div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:8px;padding:16px 20px;margin:20px 0;">'
-                            + '<p style="margin:0 0 4px;font-size:13px;color:#4a5568;">📅 ' + dateLabel + '</p>'
-                            + '<p style="margin:0;font-size:13px;color:#4a5568;">⏱ ' + dureeLabel + '</p>'
+                            + '<p style="margin:0 0 4px;font-size:13px;color:#4a5568;">ðŸ“… ' + dateLabel + '</p>'
+                            + '<p style="margin:0;font-size:13px;color:#4a5568;">â± ' + dureeLabel + '</p>'
                             + '</div>'
                             + '<div style="text-align:center;margin:20px 0;">'
                             + '<a href="' + jitsiUrl + '" '
                             + 'style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">'
-                            + '🎥 Rejoindre la visio Jitsi</a>'
+                            + 'ðŸŽ¥ Rejoindre la visio Jitsi</a>'
                             + '</div>'
-                            + '<p style="font-size:13px;color:#718096;">Les résultats IA seront disponibles dans votre dashboard après l\'entretien.</p>'
+                            + '<p style="font-size:13px;color:#718096;">Les rÃ©sultats IA seront disponibles dans votre dashboard aprÃ¨s l\'entretien.</p>'
                             + '</div>'
-                            + '<div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8;">HR Talent Portal · Talan Tunisie</div>'
+                            + '<div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8;">HR Talent Portal Â· Talan Tunisie</div>'
                             + '</div></div>'
                         );
                         emails.add(mgrMail);
@@ -1584,12 +1594,13 @@ public with sharing class InternalDashboardController {
                     '<div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:12px 14px;margin-bottom:16px;">' +
                     '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Date:</strong> ' + dateLabel + '</p>' +
                     '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
-                    '<p style="margin:0;font-size:13px;color:#0f766e;"><strong>Format:</strong> Entretien RH Fit via votre espace candidat</p>' +
+                    '<p style="margin:0 0 6px;font-size:13px;color:#0f766e;"><strong>Format:</strong> Entretien RH Fit via votre espace candidat</p>' +
+                    '<p style="margin:0;font-size:13px;color:#0f766e;"><strong>Salle:</strong> ' + jitsiRoom + '</p>' +
                     '</div>' +
                     '<div style="text-align:center;margin:18px 0;">' +
                     '<a href="' + portalLink + '" style="display:inline-block;padding:11px 28px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Acceder a l entretien RH Fit</a>' +
                     '</div>' +
-                    '<p style="margin:0;font-size:12px;color:#94a3b8;">Depuis cette page, vous pourrez rejoindre Meet puis suivre les etapes de l entretien.</p>' +
+                    '<p style="margin:0;font-size:12px;color:#94a3b8;">Depuis cette page, vous rejoindrez la meme salle Meet que le recruteur.</p>' +
                     '</div>' +
                     '</div>'
                 );
@@ -1618,12 +1629,13 @@ public with sharing class InternalDashboardController {
                     '<div style="background:#fff;padding:22px 26px;border:1px solid #e5e7eb;border-top:none;">' +
                     '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Candidat:</strong> ' + candidateDisplayName + '</p>' +
                     '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Date:</strong> ' + dateLabel + '</p>' +
-                    '<p style="margin:0 0 16px;font-size:14px;color:#334155;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
+                    '<p style="margin:0 0 10px;font-size:14px;color:#334155;"><strong>Duree:</strong> ' + dureeLabel + '</p>' +
+                    '<p style="margin:0 0 16px;font-size:14px;color:#334155;"><strong>Salle:</strong> ' + jitsiRoom + '</p>' +
                     '<div style="text-align:center;margin:0 0 14px;">' +
                     '<a href="' + jitsiUrl + '" style="display:inline-block;padding:10px 20px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;margin-right:8px;">Rejoindre Meet</a>' +
                     '<a href="' + recruiterConsoleLink + '" style="display:inline-block;padding:10px 20px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;">Ouvrir Dashboard Recruteur</a>' +
                     '</div>' +
-                    '<p style="margin:0;font-size:12px;color:#64748b;">Apres l entretien, importez l audio dans le dashboard puis lancez transcription + analyse IA.</p>' +
+                    '<p style="margin:0;font-size:12px;color:#64748b;">Rejoignez Meet 5 minutes avant le candidat. Apres l entretien, importez l audio puis lancez transcription + analyse IA.</p>' +
                     '</div>' +
                     '</div>'
                 );
@@ -1645,7 +1657,7 @@ public with sharing class InternalDashboardController {
                     uid,
                     opp.Id,
                     'Entretien RH Fit planifie',
-                    'Candidat: ' + candidateDisplayName + ' - ' + dateLabel + '. Cliquez pour rejoindre la salle Meet.',
+                    'Candidat: ' + candidateDisplayName + ' - ' + dateLabel + '. Salle: ' + jitsiRoom + '. Rejoignez Meet avant le candidat.',
                     jitsiUrl
                 );
             }

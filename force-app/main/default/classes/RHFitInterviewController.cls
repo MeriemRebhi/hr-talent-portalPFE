@@ -57,12 +57,32 @@ public without sharing class RHFitInterviewController {
         if (String.isBlank(audioBase64)) {
             throw new AuraHandledException('Aucun fichier audio fourni.');
         }
+        // Legacy base64 upload path (Apex payload/heap constraints).
+        // For larger files, use lightning-file-upload + registerUploadedAudioFile (Salesforce Files direct).
+        Integer maxBytes = 4 * 1024 * 1024;
+        Integer estimatedBytes = (audioBase64.length() * 3) / 4;
+        if (estimatedBytes > maxBytes) {
+            throw new AuraHandledException('Mode legacy base64 limite a 4 MB. Utilisez Salesforce Files direct pour des fichiers plus grands.');
+        }
 
         RH_Fit_Interview__c rec = getOrCreateInterviewRecord(oppId);
+        Blob audioBlob;
+        try {
+            audioBlob = EncodingUtil.base64Decode(audioBase64);
+        } catch (Exception ex) {
+            throw new AuraHandledException('Fichier audio invalide. Veuillez reessayer.');
+        }
+        if (audioBlob == null || audioBlob.size() <= 0) {
+            throw new AuraHandledException('Fichier audio vide. Veuillez reessayer.');
+        }
+        if (audioBlob.size() > maxBytes) {
+            throw new AuraHandledException('Mode legacy base64 limite a 4 MB. Utilisez Salesforce Files direct pour des fichiers plus grands.');
+        }
+
         ContentVersion cv = new ContentVersion();
         cv.Title = String.isNotBlank(fileName) ? fileName : ('rhfit-interview-' + oppId + '.webm');
         cv.PathOnClient = cv.Title;
-        cv.VersionData = EncodingUtil.base64Decode(audioBase64);
+        cv.VersionData = audioBlob;
         cv.FirstPublishLocationId = rec.Id;
         insert cv;
 
@@ -77,25 +97,99 @@ public without sharing class RHFitInterviewController {
     }
 
     @AuraEnabled
+    public static Map<String, Object> registerUploadedAudioFile(Id oppId, Id contentDocumentId) {
+        if (UserInfo.getUserType() == 'Guest') {
+            throw new AuraHandledException('Action reservee au recruteur.');
+        }
+        if (oppId == null || contentDocumentId == null) {
+            throw new AuraHandledException('Fichier audio invalide.');
+        }
+
+        List<ContentVersion> versions = [
+            SELECT Id, Title, FileExtension, ContentSize, ContentDocumentId
+            FROM ContentVersion
+            WHERE ContentDocumentId = :contentDocumentId
+            ORDER BY VersionNumber DESC
+            LIMIT 1
+        ];
+        if (versions.isEmpty()) {
+            throw new AuraHandledException('Fichier audio introuvable apres upload.');
+        }
+        ContentVersion cv = versions[0];
+        if (cv.ContentSize == null || cv.ContentSize <= 0) {
+            throw new AuraHandledException('Fichier audio vide.');
+        }
+        if (cv.ContentSize > 25 * 1024 * 1024) {
+            throw new AuraHandledException('Audio trop volumineux. Taille max: 25 MB.');
+        }
+
+        RH_Fit_Interview__c rec = getOrCreateInterviewRecord(oppId);
+        rec.Audio_ContentVersion_Id__c = cv.Id;
+        rec.Status__c = 'Audio Uploaded';
+        update rec;
+
+        // Ensure the uploaded file is also linked to the RH Fit interview record.
+        List<ContentDocumentLink> links = [
+            SELECT Id
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId = :cv.ContentDocumentId
+              AND LinkedEntityId = :rec.Id
+            LIMIT 1
+        ];
+        if (links.isEmpty()) {
+            ContentDocumentLink l = new ContentDocumentLink();
+            l.ContentDocumentId = cv.ContentDocumentId;
+            l.LinkedEntityId = rec.Id;
+            l.ShareType = 'V';
+            l.Visibility = 'AllUsers';
+            insert l;
+        }
+
+        String displayName = cv.Title;
+        if (String.isNotBlank(cv.FileExtension) && !displayName.toLowerCase().endsWith('.' + cv.FileExtension.toLowerCase())) {
+            displayName += '.' + cv.FileExtension;
+        }
+        return new Map<String, Object>{
+            'success' => true,
+            'contentVersionId' => cv.Id,
+            'fileName' => displayName,
+            'contentSize' => cv.ContentSize
+        };
+    }
+
+    @AuraEnabled
     public static void processAudio(Id oppId) {
         if (UserInfo.getUserType() == 'Guest') {
             throw new AuraHandledException('Action reservee au recruteur.');
         }
+        if (oppId == null) {
+            throw new AuraHandledException('Candidature RH Fit introuvable.');
+        }
         List<RH_Fit_Interview__c> listRec = [
-            SELECT Id, Audio_ContentVersion_Id__c
+            SELECT Id, Audio_ContentVersion_Id__c, Status__c
             FROM RH_Fit_Interview__c
             WHERE Opportunity__c = :oppId
             LIMIT 1
         ];
-        if (listRec.isEmpty() || String.isBlank(listRec[0].Audio_ContentVersion_Id__c)) {
-            throw new AuraHandledException('Aucun audio trouve. Veuillez d abord uploader l enregistrement.');
+        RH_Fit_Interview__c rec = listRec.isEmpty()
+            ? getOrCreateInterviewRecord(oppId)
+            : listRec[0];
+
+        Id audioVersionId = rec.Audio_ContentVersion_Id__c;
+        if (audioVersionId == null) {
+            audioVersionId = resolveLatestAudioVersionId(oppId, rec.Id);
+        }
+        if (audioVersionId == null) {
+            throw new AuraHandledException(
+                'Aucun audio trouve. Uploadez un fichier (Salesforce Files), puis relancez transcription + IA.'
+            );
         }
 
-        RH_Fit_Interview__c rec = listRec[0];
+        rec.Audio_ContentVersion_Id__c = audioVersionId;
         rec.Status__c = 'Processing';
         update rec;
 
-        System.enqueueJob(new RHFitAudioProcessor(oppId, rec.Id, rec.Audio_ContentVersion_Id__c));
+        System.enqueueJob(new RHFitAudioProcessor(oppId, rec.Id, audioVersionId));
     }
 
     @AuraEnabled
@@ -343,6 +437,52 @@ public without sharing class RHFitInterviewController {
         }
 
         return String.isNotBlank(result) ? result : 'Aucun historique d entretien disponible.';
+    }
+
+    private static Id resolveLatestAudioVersionId(Id oppId, Id interviewId) {
+        Set<Id> linkedEntityIds = new Set<Id>();
+        if (oppId != null) linkedEntityIds.add(oppId);
+        if (interviewId != null) linkedEntityIds.add(interviewId);
+        if (linkedEntityIds.isEmpty()) return null;
+
+        List<ContentDocumentLink> links = [
+            SELECT ContentDocumentId
+            FROM ContentDocumentLink
+            WHERE LinkedEntityId IN :linkedEntityIds
+            ORDER BY SystemModstamp DESC
+            LIMIT 200
+        ];
+        if (links.isEmpty()) return null;
+
+        Set<Id> contentDocumentIds = new Set<Id>();
+        for (ContentDocumentLink link : links) {
+            if (link.ContentDocumentId != null) {
+                contentDocumentIds.add(link.ContentDocumentId);
+            }
+        }
+        if (contentDocumentIds.isEmpty()) return null;
+
+        List<ContentVersion> versions = [
+            SELECT Id, FileExtension, ContentSize, CreatedDate
+            FROM ContentVersion
+            WHERE ContentDocumentId IN :contentDocumentIds
+            AND IsLatest = true
+            ORDER BY CreatedDate DESC
+            LIMIT 200
+        ];
+        for (ContentVersion cv : versions) {
+            if (cv.ContentSize != null && cv.ContentSize > 0 && isSupportedAudioExtension(cv.FileExtension)) {
+                return cv.Id;
+            }
+        }
+        return null;
+    }
+
+    private static Boolean isSupportedAudioExtension(String ext) {
+        if (String.isBlank(ext)) return false;
+        String normalized = ext.trim().toLowerCase();
+        Set<String> allowed = new Set<String>{ 'webm', 'mp3', 'wav', 'm4a', 'ogg', 'flac', 'mp4', 'aac' };
+        return allowed.contains(normalized);
     }
 
     private static void notifyRecruiterReschedule(Id oppId, String reason, Datetime plannedDate, String interviewType) {

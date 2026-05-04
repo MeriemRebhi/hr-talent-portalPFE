@@ -1,0 +1,176 @@
+<apex:page standardController="Opportunity"
+    renderAs="pdf"
+    applyBodyTag="false"
+    applyHtmlTag="false"
+    showHeader="false"
+    sidebar="false"
+    docType="html-5.0">
+<html>
+<head>
+<style type="text/css">
+    @page {
+        size: A4;
+        margin: 42px 46px;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #1f2937;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .header {
+        border-bottom: 2px solid #0f766e;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .company {
+        font-size: 23px;
+        color: #0f766e;
+        font-weight: bold;
+        letter-spacing: 0.3px;
+    }
+
+    .subtitle {
+        font-size: 11px;
+        color: #4b5563;
+    }
+
+    .title {
+        text-align: center;
+        margin: 24px 0 8px 0;
+        font-size: 19px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        color: #111827;
+    }
+
+    .section {
+        margin-top: 14px;
+    }
+
+    .section-title {
+        background: #f0fdfa;
+        border-left: 4px solid #0f766e;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #115e59;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .section-body {
+        border: 1px solid #d1d5db;
+        border-top: none;
+        padding: 10px 12px;
+    }
+
+    .line {
+        margin-bottom: 6px;
+    }
+
+    .label {
+        color: #374151;
+        font-weight: bold;
+    }
+
+    .value {
+        color: #111827;
+    }
+
+    .description {
+        margin-top: 8px;
+        border: 1px dashed #9ca3af;
+        padding: 10px;
+        min-height: 70px;
+        white-space: pre-wrap;
+    }
+
+    .signature-grid {
+        width: 100%;
+        margin-top: 26px;
+    }
+
+    .signature-cell {
+        width: 50%;
+        vertical-align: top;
+        padding-right: 12px;
+    }
+
+    .signature-line {
+        margin-top: 42px;
+        border-top: 1px solid #6b7280;
+        padding-top: 6px;
+        font-size: 11px;
+        color: #374151;
+    }
+
+    .footer {
+        margin-top: 18px;
+        font-size: 10px;
+        color: #6b7280;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <div class="header">
+        <div class="company">Nexus Talent Portal</div>
+        <div class="subtitle">Contrat genere depuis Salesforce Visualforce</div>
+    </div>
+
+    <div class="title">CONTRAT DE TRAVAIL</div>
+
+    <div class="section">
+        <div class="section-title">Parties</div>
+        <div class="section-body">
+            <div class="line"><span class="label">Employeur:</span> <span class="value">Nexus Talent Portal</span></div>
+            <div class="line"><span class="label">Candidat:</span> <span class="value"><apex:outputText value="{!$CurrentPage.parameters.candidateName}" /></span></div>
+            <div class="line"><span class="label">Email Candidat:</span> <span class="value"><apex:outputText value="{!$CurrentPage.parameters.candidateEmail}" /></span></div>
+            <div class="line"><span class="label">Date generation:</span> <span class="value"><apex:outputText value="{!$CurrentPage.parameters.generatedOn}" /></span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Informations du Poste</div>
+        <div class="section-body">
+            <div class="line"><span class="label">Reference Candidature:</span> <span class="value"><apex:outputText value="{!Opportunity.Name}" /></span></div>
+            <div class="line"><span class="label">Type de contrat:</span> <span class="value"><apex:outputText value="{!Opportunity.Type_de_Contrat__c}" /></span></div>
+            <div class="line"><span class="label">Departement:</span> <span class="value"><apex:outputText value="{!Opportunity.Departement__c}" /></span></div>
+            <div class="line"><span class="label">Localisation:</span> <span class="value"><apex:outputText value="{!Opportunity.Localisation__c}" /></span></div>
+            <div class="line"><span class="label">Salaire propose:</span> <span class="value"><apex:outputText value="{!Opportunity.Salaire_Propos__c}" /></span></div>
+            <div class="line"><span class="label">Date de prise d'effet:</span> <span class="value"><apex:outputText value="{!TEXT(TODAY())}" /></span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Description de Poste</div>
+        <div class="section-body">
+            <div class="description">
+                <apex:outputText value="{!Opportunity.Description_Poste__c}" />
+            </div>
+        </div>
+    </div>
+
+    <table class="signature-grid">
+        <tr>
+            <td class="signature-cell">
+                <div class="label">Pour l'employeur</div>
+                <div class="signature-line">Nom et Signature</div>
+            </td>
+            <td class="signature-cell">
+                <div class="label">Pour le candidat</div>
+                <div class="signature-line">Signature electronique DocuSign: /candidate_sign/</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Document contractuel genere automatiquement depuis Salesforce - DocuSign Integration
+    </div>
+</body>
+</html>
+</apex:page>
