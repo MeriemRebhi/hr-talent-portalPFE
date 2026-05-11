@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <!-- Loading -->
     <template if:true={isLoading}>
         <div class="loading-container">
@@ -7,42 +7,42 @@
         </div>
     </template>
 
-    <!-- Guest / Non connecté -->
+    <!-- Guest / Non connecte -->
     <template if:true={isGuest}>
         <div class="guest-preview">
             <!-- Hero -->
             <div class="guest-hero">
                 <div class="guest-hero-badge">Portail RH Talan</div>
                 <h1 class="guest-hero-title">Votre Espace Candidat</h1>
-                <p class="guest-hero-sub">Suivez vos candidatures, consultez vos scores IA et gérez votre profil en un seul endroit.</p>
+                <p class="guest-hero-sub">Suivez vos candidatures, consultez vos scores IA et gerez votre profil en un seul endroit.</p>
                 <button class="guest-login-btn" onclick={goToLogin}>
                     <span>Se connecter</span>
-                    <span class="btn-arrow">→</span>
+                    <span class="btn-arrow">-></span>
                 </button>
-                <p class="guest-hero-hint">Vous n'avez pas encore de compte ? Postulez à une offre pour en créer un automatiquement.</p>
+                <p class="guest-hero-hint">Vous n'avez pas encore de compte ? Postulez a une offre pour en creer un automatiquement.</p>
             </div>
 
             <!-- Feature cards -->
             <div class="guest-features">
                 <div class="guest-feat-card">
-                    <div class="feat-icon">📊</div>
+                    <div class="feat-icon">DB</div>
                     <h3>Tableau de bord</h3>
-                    <p>Visualisez l'état de toutes vos candidatures en temps réel avec des indicateurs clairs.</p>
+                    <p>Visualisez l'etat de toutes vos candidatures en temps reel avec des indicateurs clairs.</p>
                 </div>
                 <div class="guest-feat-card">
-                    <div class="feat-icon">🤖</div>
+                    <div class="feat-icon">AI</div>
                     <h3>Score IA</h3>
-                    <p>Consultez votre score de matching généré par notre IA Groq LLaMA pour chaque poste.</p>
+                    <p>Consultez votre score de matching genere par notre IA pour chaque poste.</p>
                 </div>
                 <div class="guest-feat-card">
-                    <div class="feat-icon">📄</div>
+                    <div class="feat-icon">CV</div>
                     <h3>Gestion CV</h3>
-                    <p>Retrouvez votre CV déposé et suivez son analyse automatique.</p>
+                    <p>Retrouvez votre CV depose et suivez son analyse automatique.</p>
                 </div>
                 <div class="guest-feat-card">
-                    <div class="feat-icon">👤</div>
+                    <div class="feat-icon">PR</div>
                     <h3>Mon Profil</h3>
-                    <p>Mettez à jour vos informations personnelles et suivez votre parcours candidat.</p>
+                    <p>Mettez a jour vos informations personnelles et suivez votre parcours candidat.</p>
                 </div>
             </div>
 
@@ -50,17 +50,17 @@
             <div class="guest-blur-section">
                 <div class="blur-overlay">
                     <div class="blur-cta">
-                        <span class="blur-lock">🔐</span>
-                        <p>Connectez-vous pour accéder à votre espace</p>
+                        <span class="blur-lock"></span>
+                        <p>Connectez-vous pour acceder a votre espace</p>
                         <button class="guest-login-btn-sm" onclick={goToLogin}>Se connecter</button>
                     </div>
                 </div>
                 <div class="blur-content">
                     <div class="fake-stats">
-                        <div class="fake-stat-card"><div class="fake-icon">📋</div><div class="fake-val">—</div><div class="fake-lbl">Candidatures</div></div>
-                        <div class="fake-stat-card"><div class="fake-icon">✅</div><div class="fake-val">—</div><div class="fake-lbl">En cours</div></div>
-                        <div class="fake-stat-card"><div class="fake-icon">🤖</div><div class="fake-val">—%</div><div class="fake-lbl">Meilleur score IA</div></div>
-                        <div class="fake-stat-card"><div class="fake-icon">📄</div><div class="fake-val">—</div><div class="fake-lbl">CV déposé</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">CA</div><div class="fake-val">--</div><div class="fake-lbl">Candidatures</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">OK</div><div class="fake-val">--</div><div class="fake-lbl">En cours</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">IA</div><div class="fake-val">--%</div><div class="fake-lbl">Meilleur score IA</div></div>
+                        <div class="fake-stat-card"><div class="fake-icon">CV</div><div class="fake-val">--</div><div class="fake-lbl">CV depose</div></div>
                     </div>
                 </div>
             </div>
@@ -82,10 +82,14 @@
                         </div>
                     </div>
                     <div class="nav-links">
-                        <button class="nav-link-btn" onclick={goToHome}>🏠 Accueil</button>
-                        <button class="nav-link-btn" onclick={goToOffers}>🏢 Offres</button>
-                        <button class="nav-link-btn active-nav" onclick={goToProfileTab}>📋 Mon espace</button>
+                        <button class={navHomeClass} onclick={goToHome}>Accueil</button>
+                        <button class={navOffersClass} onclick={goToOffers}>Offres</button>
+                        <button class={navSpaceClass} onclick={goToCandidateSpace}>Mon espace</button>
                     </div>
+                    <button class={navSavedClass} onclick={goToSavedOffers}>
+                        <span class="nav-saved-icon">SV</span>
+                        <span>Saved ({savedJobsCount})</span>
+                    </button>
                     <div class="nav-right">
                         <button class="btn-primary nav-cta" onclick={goToOffers}>+ Postuler</button>
                         <div class="profile-menu-wrapper">
@@ -111,18 +115,18 @@
                                     </div>
                                     <div class="pd-actions">
                                         <button class="pd-action-btn" onclick={goToProfileTab}>
-                                            <span class="pd-action-icon">👤</span>
+                                            <span class="pd-action-icon">PR</span>
                                             <span>Mon profil</span>
                                         </button>
                                         <button class="pd-action-btn" onclick={goToOffers}>
-                                            <span class="pd-action-icon">🔍</span>
+                                            <span class="pd-action-icon">OF</span>
                                             <span>Voir les offres</span>
                                         </button>
                                     </div>
                                     <div class="pd-separator"></div>
                                     <button class="pd-logout-btn" onclick={handleLogout}>
-                                        <span class="pd-action-icon">↪</span>
-                                        <span>Se déconnecter</span>
+                                        <span class="pd-action-icon">-></span>
+                                        <span>Se deconnecter</span>
                                     </button>
                                 </div>
                             </template>
@@ -144,14 +148,14 @@
                         </div>
 
                         <div class="sb-section">
-                            <div class="sb-section-label">📋 Mes candidatures</div>
+                            <div class="sb-section-label">Mes candidatures</div>
                             <template if:true={hasCandidatures}>
                                 <div class="sb-cand-list">
                                     <template for:each={candidatures} for:item="c">
                                         <button key={c.id} class="sb-cand-item" data-id={c.id} onclick={viewCandidatureFromSidebar}>
                                             <div class="sb-cand-name">{c.jobTitle}</div>
                                             <div class="sb-cand-meta">
-                                                <span class="sb-cand-date">⏰ {c.closeDateFormatted}</span>
+                                                <span class="sb-cand-date">{c.closeDateFormatted}</span>
                                                 <span class={c.badgeClass}>{c.stageLabel}</span>
                                             </div>
                                         </button>
@@ -163,83 +167,208 @@
                             </template>
                         </div>
 
+                        <template if:true={showSidebarDetailNav}>
+                            <div class="sb-detail-nav">
+                                <div class="sb-section-label">Parcours</div>
+                                <div class="sb-detail-list">
+                                    <button class={sectionGamingClass} data-section="gaming" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="8" width="18" height="10" rx="3"></rect>
+                                                <line x1="8" y1="11" x2="8" y2="15"></line>
+                                                <line x1="6" y1="13" x2="10" y2="13"></line>
+                                                <circle cx="15.5" cy="12.5" r="1"></circle>
+                                                <circle cx="18" cy="14.5" r="1"></circle>
+                                            </svg>
+                                        </span>
+                                        <span>Coding Game</span>
+                                    </button>
+                                    <button class={sectionTechnicalClass} data-section="technical" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="4" width="18" height="12" rx="2"></rect>
+                                                <line x1="8" y1="20" x2="16" y2="20"></line>
+                                                <line x1="12" y1="16" x2="12" y2="20"></line>
+                                                <polyline points="10 9 8 11 10 13"></polyline>
+                                                <polyline points="14 9 16 11 14 13"></polyline>
+                                            </svg>
+                                        </span>
+                                        <span>Technical Interview</span>
+                                    </button>
+                                    <button class={sectionArchitectureClass} data-section="architecture" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 4 4 8l8 4 8-4-8-4z"></path>
+                                                <path d="m4 12 8 4 8-4"></path>
+                                                <path d="m4 16 8 4 8-4"></path>
+                                            </svg>
+                                        </span>
+                                        <span>Architecture Interview</span>
+                                    </button>
+                                    <button class={sectionRhfitClass} data-section="rhfit" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="3"></circle>
+                                                <path d="M22 20v-2a4 4 0 0 0-3-3.87"></path>
+                                                <path d="M16 3.13a3 3 0 0 1 0 5.74"></path>
+                                            </svg>
+                                        </span>
+                                        <span>RH Fit Interview</span>
+                                    </button>
+                                    <button class={sectionHiredClass} data-section="hired" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <polyline points="8 12 11 15 16 9"></polyline>
+                                            </svg>
+                                        </span>
+                                        <span>Hired</span>
+                                    </button>
+                                    <button class={sectionContractClass} data-section="contract" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                                                <polyline points="14 2 14 7 19 7"></polyline>
+                                                <line x1="9" y1="12" x2="15" y2="12"></line>
+                                                <line x1="9" y1="16" x2="15" y2="16"></line>
+                                            </svg>
+                                        </span>
+                                        <span>Contract</span>
+                                    </button>
+                                </div>
+
+                                <div class="sb-section-label sb-section-label-help">Aide</div>
+                                <div class="sb-detail-list">
+                                    <button class={sectionGuideClass} data-section="guide" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M13 2 3 14h7l-1 8 10-12h-7z"></path>
+                                            </svg>
+                                        </span>
+                                        <span>Start guide</span>
+                                    </button>
+                                    <button class={sectionDocumentationClass} data-section="documentation" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                            </svg>
+                                        </span>
+                                        <span>Documentation</span>
+                                    </button>
+                                    <button class={sectionMeetingsClass} data-section="meetings" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="6" width="14" height="12" rx="2"></rect>
+                                                <polygon points="17 10 22 7 22 17 17 14"></polygon>
+                                            </svg>
+                                        </span>
+                                        <span>How meetings work</span>
+                                    </button>
+                                    <button class={sectionFaqClass} data-section="faq" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <path d="M9.1 9a3 3 0 1 1 4.8 2.4c-.9.6-1.4 1.1-1.4 2.1"></path>
+                                                <line x1="12" y1="17.5" x2="12.01" y2="17.5"></line>
+                                            </svg>
+                                        </span>
+                                        <span>FAQ</span>
+                                    </button>
+                                    <button class={sectionSupportClass} data-section="support" onclick={handleDetailSectionSelect}>
+                                        <span class="sb-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+                                            </svg>
+                                        </span>
+                                        <span>Contact support</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
                         <div class="sb-footer">
                             <button class="sb-logout-btn" onclick={handleLogout}>
-                                <span>↪</span>
-                                <span>Se déconnecter</span>
+                                <span>-></span>
+                                <span>Se deconnecter</span>
                             </button>
                         </div>
                     </aside>
 
                     <!-- CONTENU PRINCIPAL -->
                     <main class="main-content">
-                        <div class="main-welcome">
-                            <h1 class="welcome-title">Bonjour, {capitalizedFirstName} 👋</h1>
-                            <p class="welcome-sub">Bienvenue sur votre espace candidat</p>
-                        </div>
+                        <template if:false={isOffers}>
+                            <div class="main-welcome">
+                                <div class="welcome-copy">
+                                    <span class="welcome-kicker">Candidate dashboard</span>
+                                    <h1 class="welcome-title">Bonjour, {capitalizedFirstName}</h1>
+                                    <p class="welcome-sub">Suivez vos candidatures, vos scores et votre progression depuis une seule interface.</p>
+                                </div>
+                                <div class="welcome-highlight">
+                                    <span class="welcome-highlight-value">{totalCandidatures}</span>
+                                    <span class="welcome-highlight-label">Candidatures</span>
+                                </div>
+                            </div>
 
-                        <!-- PROGRESSION GLOBALE -->
-                        <template if:true={hasCandidatures}>
-                            <div class="global-pipeline">
-                                <span class="gp-label">PROGRESSION</span>
-                                <div class="pipeline-track">
-                                    <div class={globalStep1Class}><div class="step-dot">1</div><span>Gaming</span></div>
-                                    <div class="pipeline-line-h"></div>
-                                    <div class={globalStep2Class}><div class="step-dot">2</div><span>Technique</span></div>
-                                    <div class="pipeline-line-h"></div>
-                                    <div class={globalStep3Class}><div class="step-dot">3</div><span>Architecture</span></div>
-                                    <div class="pipeline-line-h"></div>
-                                    <div class={globalStep4Class}><div class="step-dot">4</div><span>RH Fit</span></div>
-                                    <div class="pipeline-line-h"></div>
-                                    <div class={globalStep5Class}><div class="step-dot">5</div><span>Closed</span></div>
+                            <!-- PROGRESSION GLOBALE -->
+                            <template if:true={hasCandidatures}>
+                                <div class="global-pipeline">
+                                    <span class="gp-label">PROGRESSION</span>
+                                    <div class="pipeline-track">
+                                        <div class={globalStep1Class}><div class="step-dot">1</div><span>Gaming</span></div>
+                                        <div class="pipeline-line-h"></div>
+                                        <div class={globalStep2Class}><div class="step-dot">2</div><span>Technique</span></div>
+                                        <div class="pipeline-line-h"></div>
+                                        <div class={globalStep3Class}><div class="step-dot">3</div><span>Architecture</span></div>
+                                        <div class="pipeline-line-h"></div>
+                                        <div class={globalStep4Class}><div class="step-dot">4</div><span>RH Fit</span></div>
+                                        <div class="pipeline-line-h"></div>
+                                        <div class={globalStep5Class}><div class="step-dot">5</div><span>Hired</span></div>
+                                        <div class="pipeline-line-h"></div>
+                                        <div class={globalStep6Class}><div class="step-dot">6</div><span>Contrat</span></div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- STATS -->
+                            <div class="stats-row">
+                                <div class="stat-card stat-card-blue">
+                                    <div class="stat-icon-wrap stat-bg-blue">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                    </div>
+                                    <div class="stat-value">{totalCandidatures}</div>
+                                    <div class="stat-label">Candidatures</div>
+                                </div>
+                                <div class="stat-card stat-card-green">
+                                    <div class="stat-icon-wrap stat-bg-green">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </div>
+                                    <div class="stat-value">{activeCount}</div>
+                                    <div class="stat-label">En cours</div>
+                                </div>
+                                <div class="stat-card stat-card-purple">
+                                    <div class="stat-icon-wrap stat-bg-purple">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                    </div>
+                                    <div class="stat-value">
+                                        <template if:true={bestScore}>{bestScore}%</template>
+                                        <template if:false={bestScore}>-</template>
+                                    </div>
+                                    <div class="stat-label">Meilleur score IA</div>
+                                </div>
+                                <div class="stat-card stat-card-orange">
+                                    <div class="stat-icon-wrap stat-bg-orange">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                    </div>
+                                    <div class="stat-value">
+                                        <template if:true={cv}>1</template>
+                                        <template if:false={cv}>0</template>
+                                    </div>
+                                    <div class="stat-label">CV depose</div>
                                 </div>
                             </div>
                         </template>
-
-                        <!-- STATS -->
-                        <div class="stats-row">
-                            <div class="stat-card stat-card-blue">
-                                <div class="stat-icon-wrap stat-bg-blue">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                </div>
-                                <div class="stat-value">{totalCandidatures}</div>
-                                <div class="stat-label">Candidatures</div>
-                            </div>
-                            <div class="stat-card stat-card-green">
-                                <div class="stat-icon-wrap stat-bg-green">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                </div>
-                                <div class="stat-value">{activeCount}</div>
-                                <div class="stat-label">En cours</div>
-                            </div>
-                            <div class="stat-card stat-card-purple">
-                                <div class="stat-icon-wrap stat-bg-purple">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                                </div>
-                                <div class="stat-value">
-                                    <template if:true={bestScore}>{bestScore}%</template>
-                                    <template if:false={bestScore}>—</template>
-                                </div>
-                                <div class="stat-label">Meilleur score IA</div>
-                            </div>
-                            <div class="stat-card stat-card-orange">
-                                <div class="stat-icon-wrap stat-bg-orange">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                                </div>
-                                <div class="stat-value">
-                                    <template if:true={cv}>1</template>
-                                    <template if:false={cv}>0</template>
-                                </div>
-                                <div class="stat-label">CV déposé</div>
-                            </div>
-                        </div>
-
-                        <!-- TABS -->
-                        <div class="tabs">
-                            <button class={overviewTabClass} data-tab="overview" onclick={handleTab}>Vue d'ensemble</button>
-                            <button class={candidaturesTabClass} data-tab="candidatures" onclick={handleTab}>Mes candidatures</button>
-                            <button class={profileTabClass} data-tab="profile" onclick={handleTab}>Mon profil</button>
-                        </div>
 
                         <!-- TAB: VUE D'ENSEMBLE -->
                         <template if:true={isOverview}>
@@ -247,7 +376,7 @@
                                 <div class="overview-grid">
                                     <div class="panel">
                                         <div class="panel-header">
-                                            <h3>📋 Dernières candidatures</h3>
+                                            <h3>Dernieres candidatures</h3>
                                         </div>
                                         <template if:true={hasCandidatures}>
                                             <div class="candidature-list">
@@ -259,18 +388,18 @@
                                                                 <span class="cand-name">{c.jobTitle}</span>
                                                             </div>
                                                             <div class="cand-chips">
-                                                                <template if:true={c.department}><span class="chip chip-dept">🏢 {c.department}</span></template>
-                                                                <template if:true={c.location}><span class="chip chip-loc">📍 {c.location}</span></template>
-                                                                <template if:true={c.contractType}><span class="chip chip-ct">📝 {c.contractType}</span></template>
-                                                                <span class="chip chip-date">📅 {c.formattedDate}</span>
-                                                                <span class="chip chip-close">⏰ Clôture: {c.closeDateFormatted}</span>
+                                                                <template if:true={c.department}><span class="chip chip-dept">Dept {c.department}</span></template>
+                                                                <template if:true={c.location}><span class="chip chip-loc">Lieu {c.location}</span></template>
+                                                                <template if:true={c.contractType}><span class="chip chip-ct">Type {c.contractType}</span></template>
+                                                                <span class="chip chip-date">Date {c.formattedDate}</span>
+                                                                <span class="chip chip-close">Cloture {c.closeDateFormatted}</span>
                                                             </div>
                                                         </div>
                                                         <div class="cand-right">
                                                             <template if:true={c.gamingScheduled}>
                                                                 <span class="gaming-glow-badge">
                                                                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1" fill="currentColor"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/></svg>
-                                                                    Test planifié
+                                                                    Test planifie
                                                                 </span>
                                                             </template>
                                                             <template if:true={c.hasScore}>
@@ -293,10 +422,10 @@
                                     <div class="side-panels">
                                         <div class="panel panel-sm">
                                             <div class="panel-header">
-                                                <h3>📄 Mon CV</h3>
+                                                <h3>Mon CV</h3>
                                                 <label class="btn-mini-upload">
-                                                    <template if:true={cv}>🔄 Remplacer</template>
-                                                    <template if:false={cv}>⬆ Uploader</template>
+                                                    <template if:true={cv}>Remplacer</template>
+                                                    <template if:false={cv}>Uploader</template>
                                                     <input type="file" accept=".pdf,.doc,.docx" onchange={handleCvFileChange} class="cv-hidden-input" />
                                                 </label>
                                             </div>
@@ -308,42 +437,56 @@
                                             </template>
                                             <template if:true={cv}>
                                                 <div class="cv-info">
-                                                    <div class="cv-icon">📎</div>
+                                                    <div class="cv-icon">CV</div>
                                                     <div class="cv-details">
                                                         <span class="cv-name">{cv.title}.{cv.extension}</span>
-                                                        <span class="cv-meta">{cvSizeFormatted} • Déposé le {cvDateFormatted}</span>
+                                                        <span class="cv-meta">{cvSizeFormatted} - Depose le {cvDateFormatted}</span>
                                                     </div>
-                                                    <button class="btn-view-cv-sm" onclick={viewCv} title="Voir le CV">👁</button>
+                                                    <button class="btn-view-cv-sm" onclick={viewCv} title="Voir le CV">Voir</button>
                                                 </div>
                                             </template>
                                             <template if:false={cv}>
                                                 <div class="empty-panel">
-                                                    <p>Aucun CV déposé.</p>
+                                                    <p>Aucun CV depose.</p>
                                                 </div>
                                             </template>
                                         </div>
                                         <div class="panel panel-sm">
                                             <div class="panel-header">
-                                                <h3>👤 Profil</h3>
+                                                <h3>Profil</h3>
                                             </div>
                                             <div class="profile-quick">
                                                 <div class="pq-row">
-                                                    <span class="pq-label">📧</span>
+                                                    <span class="pq-label">Email</span>
                                                     <span class="pq-value">{profile.email}</span>
                                                 </div>
                                                 <template if:true={profile.phone}>
                                                     <div class="pq-row">
-                                                        <span class="pq-label">📞</span>
+                                                        <span class="pq-label">Tel</span>
                                                         <span class="pq-value">{profile.phone}</span>
                                                     </div>
                                                 </template>
                                                 <div class="pq-row">
-                                                    <span class="pq-label">📅</span>
+                                                    <span class="pq-label">Depuis</span>
                                                     <span class="pq-value">Depuis {memberSinceFormatted}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- TAB: OFFRES -->
+                        <template if:true={isOffers}>
+                            <div class="tab-content offers-tab-content">
+                                <div class="offers-embedded-shell">
+                                    <template if:true={showSavedOffersList}>
+                                        <c-job-list embedded="true" display-mode="saved" onsavedchange={handleSavedJobsChange}></c-job-list>
+                                    </template>
+                                    <template if:false={showSavedOffersList}>
+                                        <c-job-list embedded="true" display-mode="all" onsavedchange={handleSavedJobsChange}></c-job-list>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -364,9 +507,9 @@
                                                 <h2>{selectedCandidature.name}</h2>
                                                 <div class="detail-hero-chips">
                                                     <span class={selectedCandidature.badgeClass}>{selectedCandidature.stageLabel}</span>
-                                                    <template if:true={selectedCandidature.department}><span class="chip chip-dept">🏢 {selectedCandidature.department}</span></template>
-                                                    <template if:true={selectedCandidature.location}><span class="chip chip-loc">📍 {selectedCandidature.location}</span></template>
-                                                    <template if:true={selectedCandidature.contractType}><span class="chip chip-ct">📝 {selectedCandidature.contractType}</span></template>
+                                                    <template if:true={selectedCandidature.department}><span class="chip chip-dept">Dept {selectedCandidature.department}</span></template>
+                                                    <template if:true={selectedCandidature.location}><span class="chip chip-loc">Lieu {selectedCandidature.location}</span></template>
+                                                    <template if:true={selectedCandidature.contractType}><span class="chip chip-ct">Type {selectedCandidature.contractType}</span></template>
                                                 </div>
                                             </div>
                                             <template if:true={selectedCandidature.hasScore}>
@@ -381,19 +524,32 @@
                                         <div class="pipeline-section">
                                             <h3>Progression</h3>
                                             <div class="pipeline-track">
-                                                <div class={pipelineStep1Class}><div class="step-dot">1</div><span>Gaming</span></div>
+                                                <div class={pipelineStep1Class} data-section="gaming" onclick={handleDetailSectionSelect}><div class="step-dot">1</div><span>Coding Game</span></div>
                                                 <div class="pipeline-line-h"></div>
-                                                <div class={pipelineStep2Class}><div class="step-dot">2</div><span>Technique</span></div>
+                                                <div class={pipelineStep2Class} data-section="technical" onclick={handleDetailSectionSelect}><div class="step-dot">2</div><span>Technical Interview</span></div>
                                                 <div class="pipeline-line-h"></div>
-                                                <div class={pipelineStep3Class}><div class="step-dot">3</div><span>Architecture</span></div>
+                                                <div class={pipelineStep3Class} data-section="architecture" onclick={handleDetailSectionSelect}><div class="step-dot">3</div><span>Architecture Interview</span></div>
                                                 <div class="pipeline-line-h"></div>
-                                                <div class={pipelineStep4bClass}><div class="step-dot">4</div><span>RH Fit</span></div>
+                                                <div class={pipelineStep4bClass} data-section="rhfit" onclick={handleDetailSectionSelect}><div class="step-dot">4</div><span>RH Fit Interview</span></div>
                                                 <div class="pipeline-line-h"></div>
-                                                <div class={pipelineStep5bClass}><div class="step-dot">5</div><span>Closed</span></div>
+                                                <div class={pipelineStep5bClass} data-section="hired" onclick={handleDetailSectionSelect}><div class="step-dot">5</div><span>Hired</span></div>
+                                                <div class="pipeline-line-h"></div>
+                                                <div class={pipelineStep6bClass} data-section="contract" onclick={handleDetailSectionSelect}><div class="step-dot">6</div><span>Contract</span></div>
                                             </div>
                                         </div>
 
-                                        <!-- Detail Grid -->
+                                        <!-- Notifications candidatures -->
+                                        <template if:true={selectedCandidature.hasCandidateNotifications}>
+                                            <div class="candidate-alerts">
+                                                <template for:each={selectedCandidature.candidateNotifications} for:item="n">
+                                                    <div key={n.id} class={n.typeClass}>
+                                                        <div class="cand-notif-title">{n.title}</div>
+                                                        <div class="cand-notif-msg">{n.message}</div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+
                                         <div class="detail-cards-row">
                                             <div class="detail-info-card">
                                                 <div class="dic-icon">
@@ -406,7 +562,7 @@
                                                 <div class="dic-icon dic-icon-red">
                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                                 </div>
-                                                <span class="dic-label">Date de clôture</span>
+                                                <span class="dic-label">Date de cloture</span>
                                                 <span class="dic-value">{selectedCandidature.closeDateFormatted}</span>
                                             </div>
                                             <template if:true={selectedCandidature.department}>
@@ -414,7 +570,7 @@
                                                     <div class="dic-icon dic-icon-blue">
                                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
                                                     </div>
-                                                    <span class="dic-label">Département</span>
+                                                    <span class="dic-label">Departement</span>
                                                     <span class="dic-value">{selectedCandidature.department}</span>
                                                 </div>
                                             </template>
@@ -442,212 +598,334 @@
                                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                                                     </div>
                                                     <span class="dic-label">Score IA</span>
-                                                    <span class={selectedCandidature.scoreClass}>{selectedCandidature.score}% — {selectedCandidature.scoreLabel}</span>
+                                                    <span class={selectedCandidature.scoreClass}>{selectedCandidature.score}% - {selectedCandidature.scoreLabel}</span>
                                                 </div>
                                             </template>
                                         </div>
 
-                                        <!-- Gaming Card (pas de Meet pour le gaming) -->
-                                        <template if:true={selectedCandidature.gamingScheduled}>
-                                            <div class="step-result-card gaming-card anim-slide-up">
-                                                <div class="gaming-card-header">
-                                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3" /><circle cx="8" cy="12" r="1" fill="currentColor" /><circle cx="16" cy="11" r="1" fill="currentColor" /><circle cx="18" cy="13" r="1" fill="currentColor" /><circle cx="14" cy="13" r="1" fill="currentColor" /><line x1="6" y1="10" x2="10" y2="10" /><line x1="8" y1="8" x2="8" y2="12" /></svg>
-                                                    <span class="gaming-card-title">🎮 Test Gaming</span>
-                                                </div>
-                                                <div class="gaming-card-body">
-                                                    <div class="gaming-card-row">
-                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                                                        <div>
-                                                            <span class="gaming-row-label">Date et heure</span>
-                                                            <span class="gaming-row-value">{selectedCandidature.gamingDateFmt}</span>
+                                        <div class="detail-sections-main">
+                                                <template if:true={isSectionGaming}>
+                                                    <template if:true={selectedCandidature.gamingScheduled}>
+                                                        <div class="step-result-card gaming-card anim-slide-up">
+                                                            <div class="gaming-card-header">
+                                                                <span class="gaming-card-title">Coding Game</span>
+                                                            </div>
+                                                            <div class="gaming-card-body">
+                                                                <div class="gaming-card-row">
+                                                                    <div>
+                                                                        <span class="gaming-row-label">Date et heure</span>
+                                                                        <span class="gaming-row-value">{selectedCandidature.gamingDateFmt}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="gaming-card-row">
+                                                                    <div>
+                                                                        <span class="gaming-row-label">Duree</span>
+                                                                        <span class="gaming-row-value">{selectedCandidature.gamingDurationLabel}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="gaming-card-row">
+                                                                    <div>
+                                                                        <span class="gaming-row-label">Format</span>
+                                                                        <span class="gaming-row-value">Test en ligne autonome</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="gaming-card-footer">
+                                                                <a href={selectedCandidature.gamingMeetLink} target="_blank" class="gaming-join-btn">Passer le test</a>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="gaming-card-row">
-                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                                        <div>
-                                                            <span class="gaming-row-label">Durée</span>
-                                                            <span class="gaming-row-value">{selectedCandidature.gamingDurationLabel}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gaming-card-row">
-                                                        <svg class="gaming-row-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                                                        <div>
-                                                            <span class="gaming-row-label">Format</span>
-                                                            <span class="gaming-row-value">Test en ligne autonome</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="gaming-card-footer">
-                                                    <a href={selectedCandidature.gamingMeetLink} target="_blank" class="gaming-join-btn">
-                                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                                        Passer le test
-                                                    </a>
-                                                    <p class="gaming-card-note">Le test se déroule directement en ligne — aucune visio requise</p>
-                                                </div>
-                                            </div>
-                                        </template>
+                                                    </template>
+                                                    <template if:false={selectedCandidature.gamingScheduled}>
+                                                        <div class="stage-empty-card">Le coding game n est pas encore planifie.</div>
+                                                    </template>
+                                                </template>
 
-                                        <!-- Technical Interview Card -->
-                                        <template if:true={selectedCandidature.hasTechInterview}>
-                                            <div class="step-result-card tech-card anim-slide-up">
-                                                <div class="tech-card-header">
-                                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                                                    <span class="tech-card-title">💻 Entretien Technique</span>
-                                                    <template if:true={selectedCandidature.techCompleted}>
-                                                        <span class="result-badge result-done">✓ Complété</span>
+                                                <template if:true={isSectionTechnical}>
+                                                    <template if:true={selectedCandidature.hasTechInterview}>
+                                                        <div class="step-result-card tech-card anim-slide-up">
+                                                            <div class="tech-card-header">
+                                                                <span class="tech-card-title">Technical Interview</span>
+                                                                <template if:true={selectedCandidature.techCompleted}>
+                                                                    <span class="result-badge result-done">Complete</span>
+                                                                </template>
+                                                                <template if:false={selectedCandidature.techCompleted}>
+                                                                    <span class="result-badge result-pending">En attente</span>
+                                                                </template>
+                                                            </div>
+                                                            <div class="tech-card-body">
+                                                                <template if:true={selectedCandidature.techDateFmt}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Date</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.techDateFmt}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.techDurationLabel}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Duree</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.techDurationLabel}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.techMeetLink}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Visioconference</span>
+                                                                            <a href={selectedCandidature.techMeetLink} target="_blank" class="tech-meet-link">Rejoindre le Meet</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.techCompleted}>
+                                                                    <div class="tech-score-display">
+                                                                        <div class="tech-score-ring">
+                                                                            <span class="tech-score-val">{selectedCandidature.techScore}</span>
+                                                                            <span class="tech-score-max">/100</span>
+                                                                        </div>
+                                                                        <span class="tech-score-label">Score IA</span>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.hasManagerScore}>
+                                                                    <div class="tech-validated-score">
+                                                                        <span class="validated-val">{selectedCandidature.managerValidatedScore}/100</span>
+                                                                        <span class="validated-label">Score valide RH</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                            <template if:true={selectedCandidature.techExerciseLink}>
+                                                                <div class="tech-card-footer">
+                                                                    <a href={selectedCandidature.techExerciseLink} target="_blank" class="tech-exercise-btn">Passer l entretien technique</a>
+                                                                </div>
+                                                            </template>
+                                                        </div>
                                                     </template>
-                                                    <template if:false={selectedCandidature.techCompleted}>
-                                                        <span class="result-badge result-pending">En attente</span>
+                                                    <template if:false={selectedCandidature.hasTechInterview}>
+                                                        <div class="stage-empty-card">Aucune session technique planifiee pour le moment.</div>
                                                     </template>
-                                                </div>
-                                                <div class="tech-card-body">
-                                                    <template if:true={selectedCandidature.techDateFmt}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">📅</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Date</span>
-                                                                <span class="tech-info-value">{selectedCandidature.techDateFmt}</span>
+                                                </template>
+
+                                                <template if:true={isSectionArchitecture}>
+                                                    <template if:true={selectedCandidature.hasArchInterview}>
+                                                        <div class="step-result-card tech-card arch-card anim-slide-up">
+                                                            <div class="tech-card-header">
+                                                                <span class="tech-card-title">Architecture Interview</span>
+                                                                <template if:true={selectedCandidature.archCompleted}>
+                                                                    <span class="result-badge result-done">Complete</span>
+                                                                </template>
+                                                                <template if:false={selectedCandidature.archCompleted}>
+                                                                    <span class="result-badge result-pending">En attente</span>
+                                                                </template>
+                                                            </div>
+                                                            <div class="tech-card-body">
+                                                                <template if:true={selectedCandidature.archDateFmt}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Date</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.archDateFmt}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.archDurationLabel}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Duree</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.archDurationLabel}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.archJitsiRoom}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Salle Jitsi</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.archJitsiRoom}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.archCompleted}>
+                                                                    <div class="tech-score-display">
+                                                                        <div class="tech-score-ring">
+                                                                            <span class="tech-score-val">{selectedCandidature.archScore}</span>
+                                                                            <span class="tech-score-max">/100</span>
+                                                                        </div>
+                                                                        <span class="tech-score-label">Score architecture IA</span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                            <template if:true={selectedCandidature.archInterviewLink}>
+                                                                <template if:false={selectedCandidature.archCompleted}>
+                                                                    <div class="tech-card-footer">
+                                                                        <a href={selectedCandidature.archInterviewLink} target="_blank" class="tech-exercise-btn">Passer l entretien architecture</a>
+                                                                    </div>
+                                                                </template>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template if:false={selectedCandidature.hasArchInterview}>
+                                                        <div class="stage-empty-card">Aucune session architecture planifiee pour le moment.</div>
+                                                    </template>
+                                                </template>
+
+                                                <template if:true={isSectionRhfit}>
+                                                    <template if:true={selectedCandidature.hasRHFitInterview}>
+                                                        <div class="step-result-card tech-card rhfit-card anim-slide-up">
+                                                            <div class="tech-card-header">
+                                                                <span class="tech-card-title">RH Fit Interview</span>
+                                                                <template if:true={selectedCandidature.rhfitCompleted}>
+                                                                    <span class="result-badge result-done">Valide</span>
+                                                                </template>
+                                                                <template if:false={selectedCandidature.rhfitCompleted}>
+                                                                    <span class="result-badge result-pending">En attente</span>
+                                                                </template>
+                                                            </div>
+                                                            <div class="tech-card-body">
+                                                                <template if:true={selectedCandidature.rhfitDateFmt}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Date</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.rhfitDateFmt}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.rhfitDurationLabel}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Duree</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.rhfitDurationLabel}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.rhfitMeetLink}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Visioconference</span>
+                                                                            <a href={selectedCandidature.rhfitMeetLink} target="_blank" class="tech-meet-link">Rejoindre le Meet</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.rhfitScore}>
+                                                                    <div class="tech-score-display">
+                                                                        <div class="tech-score-ring">
+                                                                            <span class="tech-score-val">{selectedCandidature.rhfitScore}</span>
+                                                                            <span class="tech-score-max">/100</span>
+                                                                        </div>
+                                                                        <span class="tech-score-label">Score RH Fit</span>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         </div>
                                                     </template>
-                                                    <template if:true={selectedCandidature.techDurationLabel}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">⏱</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Durée</span>
-                                                                <span class="tech-info-value">{selectedCandidature.techDurationLabel}</span>
+                                                    <template if:false={selectedCandidature.hasRHFitInterview}>
+                                                        <div class="stage-empty-card">Aucune session RH Fit planifiee pour le moment.</div>
+                                                    </template>
+                                                </template>
+
+                                                <template if:true={isSectionHired}>
+                                                    <template if:true={selectedCandidature.isHired}>
+                                                        <div class="help-section-card">
+                                                            <h4>Etape Hired validee</h4>
+                                                            <p>Votre candidature a ete validee par le recrutement. La derniere phase concerne la gestion et la signature du contrat.</p>
+                                                        </div>
+                                                    </template>
+                                                    <template if:false={selectedCandidature.isHired}>
+                                                        <div class="stage-empty-card">Cette candidature n est pas encore au statut Hired.</div>
+                                                    </template>
+                                                </template>
+
+                                                <template if:true={isSectionContract}>
+                                                    <template if:true={selectedCandidature.isHired}>
+                                                        <div class="step-result-card contract-card anim-slide-up">
+                                                            <div class="contract-card-header">
+                                                                <span class="contract-card-title">Contrat de travail</span>
+                                                                <span class={selectedCandidature.contractStatusClass}>{selectedCandidature.contractStatusLabel}</span>
+                                                            </div>
+                                                            <div class="contract-card-body">
+                                                                <template if:true={selectedCandidature.docusignEnvelopeId}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Envelope ID</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.docusignEnvelopeId}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.contractSentAtFmt}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Envoye le</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.contractSentAtFmt}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.contractSignedAtFmt}>
+                                                                    <div class="tech-info-row">
+                                                                        <div>
+                                                                            <span class="tech-info-label">Signe le</span>
+                                                                            <span class="tech-info-value">{selectedCandidature.contractSignedAtFmt}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template if:true={selectedCandidature.hasSignedContract}>
+                                                                    <div class="contract-actions">
+                                                                        <button type="button" class="tech-exercise-btn contract-btn" onclick={downloadSignedContract}>Telecharger le contrat signe</button>
+                                                                        <div class="contract-file-name">{selectedCandidature.signedContractFileName}</div>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         </div>
                                                     </template>
-                                                    <template if:true={selectedCandidature.techMeetLink}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">🎥</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Visioconférence</span>
-                                                                <a href={selectedCandidature.techMeetLink} target="_blank" class="tech-meet-link">Rejoindre le Meet →</a>
-                                                            </div>
-                                                        </div>
+                                                    <template if:false={selectedCandidature.isHired}>
+                                                        <div class="stage-empty-card">Le contrat sera disponible apres validation Hired.</div>
                                                     </template>
-                                                    <template if:true={selectedCandidature.techCompleted}>
-                                                        <div class="tech-score-display">
-                                                            <div class="tech-score-ring">
-                                                                <span class="tech-score-val">{selectedCandidature.techScore}</span>
-                                                                <span class="tech-score-max">/100</span>
-                                                            </div>
-                                                            <span class="tech-score-label">Score IA</span>
-                                                        </div>
-                                                        <template if:true={selectedCandidature.hasManagerScore}>
-                                                            <div class="tech-validated-score">
-                                                                <span class="validated-icon">⚖️</span>
-                                                                <span class="validated-val">{selectedCandidature.managerValidatedScore}/100</span>
-                                                                <span class="validated-label">Score validé</span>
-                                                            </div>
-                                                        </template>
-                                                    </template>
-                                                </div>
-                                                <template if:true={selectedCandidature.techExerciseLink}>
-                                                    <div class="tech-card-footer">
-                                                        <a href={selectedCandidature.techExerciseLink} target="_blank" class="tech-exercise-btn">
-                                                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                                                            Passer l'entretien technique
-                                                        </a>
+                                                </template>
+
+                                                <template if:true={isSectionGuide}>
+                                                    <div class="help-section-card">
+                                                        <h4>Start guide</h4>
+                                                        <p>Suivez le parcours dans l ordre: Coding Game, Technical Interview, Architecture Interview, RH Fit Interview, puis Contract.</p>
+                                                        <p>Depuis cette fiche, vous pouvez voir vos dates, rejoindre vos sessions et suivre vos scores valides.</p>
                                                     </div>
                                                 </template>
-                                                <!-- Reschedule section -->
-                                                <template if:false={selectedCandidature.techCompleted}>
-                                                    <template if:false={selectedCandidature.techRescheduleRequested}>
-                                                        <div class="tech-reschedule-section">
-                                                            <button class="btn-reschedule-dash" onclick={openRescheduleModal}>📅 Demander un report</button>
-                                                            <p class="reschedule-hint-dash">Vous pouvez demander un report une seule fois.</p>
-                                                        </div>
-                                                    </template>
-                                                    <template if:true={selectedCandidature.techRescheduleRequested}>
-                                                        <div class="tech-reschedule-pending">
-                                                            ⏳ Report demandé — en attente de réponse du recruteur
-                                                        </div>
-                                                    </template>
-                                                </template>
-                                            </div>
-                                        </template>
 
-                                        <!-- Architecture Interview Card -->
-                                        <template if:true={selectedCandidature.hasArchInterview}>
-                                            <div class="step-result-card tech-card arch-card anim-slide-up">
-                                                <div class="tech-card-header">
-                                                    <span>🏗️</span>
-                                                    <span class="tech-card-title">Entretien Architecture</span>
-                                                    <template if:true={selectedCandidature.archCompleted}>
-                                                        <span class="result-badge result-done">✓ Complété</span>
-                                                    </template>
-                                                    <template if:false={selectedCandidature.archCompleted}>
-                                                        <span class="result-badge result-pending">En attente</span>
-                                                    </template>
-                                                </div>
-                                                <div class="tech-card-body">
-                                                    <template if:true={selectedCandidature.archDateFmt}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">📅</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Date</span>
-                                                                <span class="tech-info-value">{selectedCandidature.archDateFmt}</span>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-                                                    <template if:true={selectedCandidature.archDurationLabel}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">⏱</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Durée</span>
-                                                                <span class="tech-info-value">{selectedCandidature.archDurationLabel}</span>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-                                                    <template if:true={selectedCandidature.archJitsiRoom}>
-                                                        <div class="tech-info-row">
-                                                            <span class="tech-info-icon">🎥</span>
-                                                            <div>
-                                                                <span class="tech-info-label">Visioconférence Jitsi</span>
-                                                                <span class="tech-info-value" style="font-family:monospace;font-size:12px">{selectedCandidature.archJitsiRoom}</span>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-                                                    <template if:true={selectedCandidature.archCompleted}>
-                                                        <div class="tech-score-display">
-                                                            <div class="tech-score-ring">
-                                                                <span class="tech-score-val">{selectedCandidature.archScore}</span>
-                                                                <span class="tech-score-max">/100</span>
-                                                            </div>
-                                                            <span class="tech-score-label">Score Architecture IA</span>
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                                <template if:true={selectedCandidature.archInterviewLink}>
-                                                    <template if:false={selectedCandidature.archCompleted}>
-                                                        <div class="tech-card-footer">
-                                                            <a href={selectedCandidature.archInterviewLink} target="_blank" class="tech-exercise-btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">
-                                                                🏗️ Passer l'entretien architecture
-                                                            </a>
-                                                        </div>
-                                                    </template>
+                                                <template if:true={isSectionDocumentation}>
+                                                    <div class="help-section-card">
+                                                        <h4>Documentation</h4>
+                                                        <p>Cette candidature est synchronisee entre les entretiens techniques, RH Fit et DocuSign.</p>
+                                                        <p>Quand le contrat est signe, il est conserve dans le dossier candidat et lie au suivi contrat.</p>
+                                                    </div>
                                                 </template>
-                                                <template if:false={selectedCandidature.archCompleted}>
-                                                    <template if:true={selectedCandidature.archRescheduleRequested}>
-                                                        <div class="tech-reschedule-pending">
-                                                            ⏳ Report demandé — en attente de réponse du recruteur
-                                                        </div>
-                                                    </template>
-                                                </template>
-                                            </div>
-                                        </template>
 
-                                        <!-- ═══ TRANSPARENCE : Résultats par étape ═══ -->
+                                                <template if:true={isSectionMeetings}>
+                                                    <div class="help-section-card">
+                                                        <h4>How meetings work</h4>
+                                                        <p>Chaque entretien planifie affiche un lien direct de visioconference dans sa section. Utilisez les boutons Rejoindre le Meet pour participer.</p>
+                                                        <p>Le coding game est autonome en ligne et ne demande pas de visio.</p>
+                                                    </div>
+                                                </template>
+
+                                                <template if:true={isSectionFaq}>
+                                                    <div class="help-section-card">
+                                                        <h4>FAQ</h4>
+                                                        <p>Pourquoi je ne vois pas le contrat ? Le contrat apparait uniquement apres validation Hired.</p>
+                                                        <p>Pourquoi un score est manquant ? Le score apparait apres finalisation et synchronisation de l etape.</p>
+                                                    </div>
+                                                </template>
+
+                                                <template if:true={isSectionSupport}>
+                                                    <div class="help-section-card">
+                                                        <h4>Contact support</h4>
+                                                        <p>Si vous avez un blocage (lien de meeting, score, contrat), contactez l equipe RH Talent directement.</p>
+                                                        <a href="/s/contact" class="tech-exercise-btn">Ouvrir le support</a>
+                                                    </div>
+                                                </template>
+                                        </div>
+
                                         <div class="results-timeline anim-slide-up">
                                             <h3 class="results-title">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                                Résultats des étapes
+                                                Resultats des etapes
                                             </h3>
                                             <div class="timeline-steps">
-                                                <!-- Étape 1: Score IA -->
+                                                <!-- Etape 1: Score IA -->
                                                 <div class={selectedCandidature.stepResultClass1}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">1</div></div>
                                                     <div class="tl-content">
@@ -663,7 +941,7 @@
                                                         </template>
                                                     </div>
                                                 </div>
-                                                <!-- Étape 2: Gaming -->
+                                                <!-- Etape 2: Gaming -->
                                                 <div class={selectedCandidature.stepResultClass2}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">2</div></div>
                                                     <div class="tl-content">
@@ -676,15 +954,15 @@
                                                         </template>
                                                         <template if:false={selectedCandidature.gamingCompleted}>
                                                             <template if:true={selectedCandidature.gamingScheduled}>
-                                                                <span class="tl-scheduled">📅 Planifié — {selectedCandidature.gamingDateFmt}</span>
+                                                                <span class="tl-scheduled">Planifie - {selectedCandidature.gamingDateFmt}</span>
                                                             </template>
                                                             <template if:false={selectedCandidature.gamingScheduled}>
-                                                                <span class="tl-pending">Non planifié</span>
+                                                                <span class="tl-pending">Non planifie</span>
                                                             </template>
                                                         </template>
                                                     </div>
                                                 </div>
-                                                <!-- Étape 3: Technique -->
+                                                <!-- Etape 3: Technique -->
                                                 <div class={selectedCandidature.stepResultClass3}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">3</div></div>
                                                     <div class="tl-content">
@@ -693,21 +971,21 @@
                                                             <div class="tl-result">
                                                                 <span class={selectedCandidature.techScoreClass}>{selectedCandidature.techScore}/100</span>
                                                                 <template if:true={selectedCandidature.hasManagerScore}>
-                                                                    <span class="tl-validated">⚖️ Validé: {selectedCandidature.managerValidatedScore}/100</span>
+                                                                    <span class="tl-validated">Valide: {selectedCandidature.managerValidatedScore}/100</span>
                                                                 </template>
                                                             </div>
                                                         </template>
                                                         <template if:false={selectedCandidature.techCompleted}>
                                                             <template if:true={selectedCandidature.techDateFmt}>
-                                                                <span class="tl-scheduled">📅 {selectedCandidature.techDateFmt}</span>
+                                                                <span class="tl-scheduled">{selectedCandidature.techDateFmt}</span>
                                                             </template>
                                                             <template if:false={selectedCandidature.techDateFmt}>
-                                                                <span class="tl-pending">—</span>
+                                                                <span class="tl-pending">-</span>
                                                             </template>
                                                         </template>
                                                     </div>
                                                 </div>
-                                                <!-- Étape 4: Architecture -->
+                                                <!-- Etape 4: Architecture -->
                                                 <div class={selectedCandidature.stepResultClass4}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">4</div></div>
                                                     <div class="tl-content">
@@ -719,20 +997,47 @@
                                                         </template>
                                                         <template if:false={selectedCandidature.archCompleted}>
                                                             <template if:true={selectedCandidature.archDateFmt}>
-                                                                <span class="tl-scheduled">📅 {selectedCandidature.archDateFmt}</span>
+                                                                <span class="tl-scheduled">{selectedCandidature.archDateFmt}</span>
                                                             </template>
                                                             <template if:false={selectedCandidature.archDateFmt}>
-                                                                <span class="tl-pending">—</span>
+                                                                <span class="tl-pending">-</span>
                                                             </template>
                                                         </template>
                                                     </div>
                                                 </div>
-                                                <!-- Étape 5: Closed -->
+                                                <!-- Etape 5: RH Fit -->
                                                 <div class={selectedCandidature.stepResultClass5}>
                                                     <div class="tl-dot-wrap"><div class="tl-dot">5</div></div>
                                                     <div class="tl-content">
-                                                        <span class="tl-step-name">Décision finale</span>
-                                                        <span class="tl-pending">—</span>
+                                                        <span class="tl-step-name">Entretien RH Fit</span>
+                                                        <template if:true={selectedCandidature.rhfitCompleted}>
+                                                            <div class="tl-result">
+                                                                <span class={selectedCandidature.rhfitScoreClass}>{selectedCandidature.rhfitScore}/100</span>
+                                                            </div>
+                                                        </template>
+                                                        <template if:false={selectedCandidature.rhfitCompleted}>
+                                                            <template if:true={selectedCandidature.rhfitDateFmt}>
+                                                                <span class="tl-scheduled">{selectedCandidature.rhfitDateFmt}</span>
+                                                            </template>
+                                                            <template if:false={selectedCandidature.rhfitDateFmt}>
+                                                                <span class="tl-pending">-</span>
+                                                            </template>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                                <!-- Etape 6: Hired + Contrat -->
+                                                <div class={selectedCandidature.stepResultClass6}>
+                                                    <div class="tl-dot-wrap"><div class="tl-dot">6</div></div>
+                                                    <div class="tl-content">
+                                                        <span class="tl-step-name">Embauche &amp; Contrat</span>
+                                                        <template if:true={selectedCandidature.isHired}>
+                                                            <div class="tl-result">
+                                                                <span class={selectedCandidature.contractStatusClass}>{selectedCandidature.contractStatusLabel}</span>
+                                                            </div>
+                                                        </template>
+                                                        <template if:false={selectedCandidature.isHired}>
+                                                            <span class="tl-pending">-</span>
+                                                        </template>
                                                     </div>
                                                 </div>
                                             </div>
@@ -749,38 +1054,40 @@
                                         </div>
                                         <div class="filter-group">
                                             <select class="filter-select" onchange={handleFilterStage}>
-                                                <option value="">Toutes les étapes</option>
+                                                <option value="">Toutes les etapes</option>
                                                 <option value="Gaming">Screening IA</option>
                                                 <option value="Technique">Entretien Technique</option>
                                                 <option value="Architecture">Entretien Architecture</option>
                                                 <option value="RH Fit">Entretien RH</option>
-                                                <option value="Closed">Finalisée</option>
+                                                <option value="ClosedWon">Embauche</option>
+                                                <option value="ClosedLost">Non retenu</option>
+                                                <option value="Closed">Finalisee</option>
                                             </select>
                                             <select class="filter-select" onchange={handleFilterScore}>
                                                 <option value="">Tous les scores</option>
-                                                <option value="high">≥ 60% — Bon/Excellent</option>
-                                                <option value="medium">40-59% — Moyen</option>
-                                                <option value="low">&lt; 40% — Insuffisant</option>
+                                                <option value="high">>= 60% - Bon/Excellent</option>
+                                                <option value="medium">40-59% - Moyen</option>
+                                                <option value="low">&lt; 40% - Insuffisant</option>
                                             </select>
                                             <select class="filter-select" onchange={handleFilterSort}>
-                                                <option value="recent">Plus récentes</option>
+                                                <option value="recent">Plus recentes</option>
                                                 <option value="oldest">Plus anciennes</option>
-                                                <option value="score-desc">Score ↓</option>
-                                                <option value="score-asc">Score ↑</option>
-                                                <option value="alpha">A → Z</option>
+                                                <option value="score-desc">Score desc</option>
+                                                <option value="score-asc">Score asc</option>
+                                                <option value="alpha">A -> Z</option>
                                             </select>
                                         </div>
                                         <template if:true={hasActiveFilters}>
                                             <button class="filter-clear-btn" onclick={clearFilters}>
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                Réinitialiser
+                                                Reinitialiser
                                             </button>
                                         </template>
                                     </div>
 
                                     <!-- Results count -->
                                     <div class="filter-results-count">
-                                        <span>{filteredCount} candidature(s) affichée(s)</span>
+                                        <span>{filteredCount} candidature(s) affichee(s)</span>
                                     </div>
 
                                     <template if:true={hasFilteredCandidatures}>
@@ -793,18 +1100,18 @@
                                                             <template if:true={c.gamingScheduled}>
                                                                 <span class="gaming-glow-badge gaming-glow-sm">
                                                                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1" fill="currentColor"/><line x1="6" y1="10" x2="10" y2="10"/><line x1="8" y1="8" x2="8" y2="12"/></svg>
-                                                                    Test planifié
+                                                                    Test planifie
                                                                 </span>
                                                             </template>
                                                         </div>
                                                         <span class={c.badgeClass}>{c.stageLabel}</span>
                                                     </div>
                                                     <div class="cc-meta">
-                                                        <template if:true={c.department}><span>🏢 {c.department}</span></template>
-                                                        <template if:true={c.location}><span>📍 {c.location}</span></template>
-                                                        <template if:true={c.contractType}><span>📝 {c.contractType}</span></template>
-                                                        <span>📅 {c.formattedDate}</span>
-                                                        <span>⏰ Clôture : {c.closeDateFormatted}</span>
+                                                        <template if:true={c.department}><span>Dept {c.department}</span></template>
+                                                        <template if:true={c.location}><span>Lieu {c.location}</span></template>
+                                                        <template if:true={c.contractType}><span>Type {c.contractType}</span></template>
+                                                        <span>Date {c.formattedDate}</span>
+                                                        <span>Cloture: {c.closeDateFormatted}</span>
                                                     </div>
                                                     <template if:true={c.hasScore}>
                                                         <div class="cc-score">
@@ -819,15 +1126,15 @@
                                     <template if:false={hasFilteredCandidatures}>
                                         <template if:true={hasCandidatures}>
                                             <div class="empty-state">
-                                                <div class="empty-icon">🔍</div>
-                                                <h3>Aucun résultat</h3>
-                                                <p>Aucune candidature ne correspond à vos filtres.</p>
-                                                <button class="btn-secondary" onclick={clearFilters}>Réinitialiser les filtres</button>
+                                                <div class="empty-icon">N/A</div>
+                                                <h3>Aucun resultat</h3>
+                                                <p>Aucune candidature ne correspond a vos filtres.</p>
+                                                <button class="btn-secondary" onclick={clearFilters}>Reinitialiser les filtres</button>
                                             </div>
                                         </template>
                                         <template if:false={hasCandidatures}>
                                             <div class="empty-state">
-                                                <div class="empty-icon">📋</div>
+                                                <div class="empty-icon">CV</div>
                                                 <h3>Aucune candidature</h3>
                                                 <p>Explorez les offres disponibles et postulez !</p>
                                                 <button class="btn-primary" onclick={goToOffers}>Voir les offres</button>
@@ -839,34 +1146,57 @@
                         </template>
 
                         <!-- TAB: PROFIL -->
+                        <!-- TAB: PROFIL -->
                         <template if:true={isProfile}>
                             <div class="tab-content">
                                 <div class="profile-panel">
                                     <div class="profile-card">
                                         <div class="pc-header">
                                             <div class="avatar avatar-lg">{initials}</div>
-                                            <div>
+                                            <div class="pc-head-copy">
+                                                <div class="profile-status-row">
+                                                    <span class="profile-status-pill">Profil candidat</span>
+                                                    <span class="profile-status-pill profile-status-pill-soft">{profileCompletionLabel}</span>
+                                                </div>
                                                 <h2>{fullName}</h2>
-                                                <p class="pc-sub">Candidat • Membre depuis {memberSinceFormatted}</p>
+                                                <p class="pc-sub">Candidat | Membre depuis {memberSinceFormatted}</p>
                                             </div>
                                             <template if:false={isEditingProfile}>
-                                                <button class="btn-edit" onclick={startEditProfile}>✏ Modifier</button>
+                                                <button class="btn-edit" onclick={startEditProfile}>Modifier</button>
                                             </template>
                                         </div>
                                         <template if:false={isEditingProfile}>
+                                            <div class="profile-summary-grid">
+                                                <div class="profile-summary-card">
+                                                    <span class="psc-label">Adresse email</span>
+                                                    <span class="psc-value">{profile.email}</span>
+                                                </div>
+                                                <div class="profile-summary-card">
+                                                    <span class="psc-label">Telephone</span>
+                                                    <span class="psc-value">{profilePhoneDisplay}</span>
+                                                </div>
+                                                <div class="profile-summary-card">
+                                                    <span class="psc-label">Adresse</span>
+                                                    <span class="psc-value">{profileAddressDisplay}</span>
+                                                </div>
+                                            </div>
                                             <div class="profile-details">
-                                                <div class="pd-row"><span class="pd-icon">📧</span><div><span class="pd-label">Email</span><span class="pd-value">{profile.email}</span></div></div>
-                                                <div class="pd-row"><span class="pd-icon">📞</span><div><span class="pd-label">Téléphone</span><span class="pd-value">{profile.phone}</span></div></div>
-                                                <div class="pd-row"><span class="pd-icon">📍</span><div><span class="pd-label">Adresse</span><span class="pd-value">{profile.address} {profile.city} {profile.postalCode}</span></div></div>
+                                                <div class="pd-row"><span class="pd-icon">EM</span><div><span class="pd-label">Adresse email</span><span class="pd-value">{profile.email}</span></div></div>
+                                                <div class="pd-row"><span class="pd-icon">TL</span><div><span class="pd-label">Telephone</span><span class="pd-value">{profilePhoneDisplay}</span></div></div>
+                                                <div class="pd-row"><span class="pd-icon">AD</span><div><span class="pd-label">Adresse</span><span class="pd-value">{profileAddressDisplay}</span></div></div>
                                             </div>
                                         </template>
                                         <template if:true={isEditingProfile}>
                                             <div class="edit-form">
-                                                <div class="form-row"><label>Téléphone</label><input type="tel" value={editPhone} onchange={handleEditPhone} /></div>
-                                                <div class="form-row"><label>Adresse</label><input type="text" value={editAddress} onchange={handleEditAddress} /></div>
+                                                <div class="edit-form-head">
+                                                    <h3>Mettre a jour mes informations</h3>
+                                                    <p>Verifiez vos coordonnees pour faciliter le suivi de votre candidature.</p>
+                                                </div>
+                                                <div class="form-row"><label>Telephone</label><input type="tel" value={editPhone} onchange={handleEditPhone} placeholder="+216 00 000 000" /></div>
+                                                <div class="form-row"><label>Adresse</label><input type="text" value={editAddress} onchange={handleEditAddress} placeholder="Rue, immeuble, quartier" /></div>
                                                 <div class="form-row-2">
-                                                    <div class="form-row"><label>Ville</label><input type="text" value={editCity} onchange={handleEditCity} /></div>
-                                                    <div class="form-row"><label>Code postal</label><input type="text" value={editPostalCode} onchange={handleEditPostalCode} /></div>
+                                                    <div class="form-row"><label>Ville</label><input type="text" value={editCity} onchange={handleEditCity} placeholder="Tunis" /></div>
+                                                    <div class="form-row"><label>Code postal</label><input type="text" value={editPostalCode} onchange={handleEditPostalCode} placeholder="1053" /></div>
                                                 </div>
                                                 <div class="form-actions">
                                                     <button class="btn-secondary" onclick={cancelEditProfile}>Annuler</button>
@@ -876,22 +1206,24 @@
                                         </template>
                                     </div>
 
-                                    <!-- CV Section -->
                                     <div class="profile-card cv-upload-card">
                                         <div class="cv-card-header">
-                                            <h3 class="pc-title">📄 Mon CV</h3>
+                                            <div class="cv-head-copy">
+                                                <h3 class="pc-title">Mon CV</h3>
+                                                <p class="cv-head-sub">Conservez un CV a jour pour accelerer l evaluation de votre profil.</p>
+                                            </div>
                                             <label class="btn-upload-cv">
-                                                <span class="upload-btn-icon">☁</span>
-                                                <template if:true={cv}>Remplacer le CV</template>
-                                                <template if:false={cv}>Uploader mon CV</template>
+                                                <span class="upload-btn-icon">UP</span>
+                                                <template if:true={cv}>Remplacer le document</template>
+                                                <template if:false={cv}>Ajouter un document</template>
                                                 <input type="file" accept=".pdf,.doc,.docx" onchange={handleCvFileChange} class="cv-hidden-input" />
                                             </label>
                                         </div>
                                         <template if:true={isUploadingCv}>
-                                            <div class="cv-uploading-banner"><div class="cv-spinner-sm"></div><span>Upload en cours...</span></div>
+                                            <div class="cv-uploading-banner"><div class="cv-spinner-sm"></div><span>Televersement en cours...</span></div>
                                         </template>
                                         <template if:true={cvUploadSuccess}>
-                                            <div class="cv-success-banner"><span>CV mis à jour avec succès !</span></div>
+                                            <div class="cv-success-banner"><span>Votre CV a ete mis a jour avec succes.</span></div>
                                         </template>
                                         <template if:true={cvUploadError}>
                                             <div class="cv-error-banner">{cvUploadError}</div>
@@ -901,34 +1233,34 @@
                                                 <div class="cv-file-thumb"><span class="cv-ext-badge">{cv.extension}</span></div>
                                                 <div class="cv-file-info">
                                                     <span class="cv-file-name">{cv.title}.{cv.extension}</span>
-                                                    <span class="cv-file-meta">{cvSizeFormatted} • Déposé le {cvDateFormatted}</span>
+                                                    <span class="cv-file-meta">{cvSizeFormatted} | Depose le {cvDateFormatted}</span>
                                                 </div>
                                                 <div class="cv-file-actions">
-                                                    <button class="btn-view-cv" onclick={viewCv}><span>👁</span> Voir</button>
-                                                    <button class="btn-dl-cv" onclick={downloadCv}><span>⬇</span> Télécharger</button>
+                                                    <button class="btn-view-cv" onclick={viewCv}><span>VR</span> Voir</button>
+                                                    <button class="btn-dl-cv" onclick={downloadCv}><span>DL</span> Telecharger</button>
                                                 </div>
                                             </div>
                                         </template>
                                         <template if:false={cv}>
                                             <div class="cv-empty-zone">
-                                                <div class="cv-empty-icon">⬆</div>
-                                                <p class="cv-empty-title">Aucun CV déposé</p>
-                                                <p class="cv-empty-hint">Formats acceptés : PDF, Word (.doc, .docx) — Max 5 MB</p>
+                                                <div class="cv-empty-icon">CV</div>
+                                                <p class="cv-empty-title">Aucun document disponible</p>
+                                                <p class="cv-empty-hint">Formats acceptes : PDF, Word (.doc, .docx) | Taille maximale : 5 MB</p>
                                             </div>
                                         </template>
                                     </div>
                                 </div>
                             </div>
                         </template>
-
-                        <!-- CARTE MONDIALE — section fixe en bas -->
+                        <template if:false={isOffers}>
+                        <!-- CARTE MONDIALE - section fixe en bas -->
                         <div class="map-bottom-section">
                             <div class="map-bottom-header">
                                 <div class="map-title-row">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                                    <h3>Opportunités dans le monde</h3>
+                                    <h3>Opportunites dans le monde</h3>
                                 </div>
-                                <p class="map-subtitle">Découvrez les postes Talan à travers le globe</p>
+                                <p class="map-subtitle">Decouvrez les postes Talan a travers le globe</p>
                             </div>
                             <div class="map-bottom-wrap">
                                 <iframe
@@ -940,6 +1272,7 @@
                                 </iframe>
                             </div>
                         </div>
+                        </template>
 
                         <!-- Error -->
                         <template if:true={errorMessage}>
@@ -951,35 +1284,31 @@
         </template>
     </template>
 
-    <!-- ═══════════════════════════════════════════
-         AGENTFORCE CHATBOT — Bulle flottante bas droite
-         S'affiche uniquement pour les candidats connectés
-    ═══════════════════════════════════════════ -->
+    <!-- AGENTFORCE CHATBOT - bulle flottante bas droite -->
     <template if:false={isGuest}>
-        <c-agentforce-chat email={profile.email}></c-agentforce-chat>
     </template>
 
-    <!-- ═══ RESCHEDULE MODAL ═══ -->
+    <!-- RESCHEDULE MODAL -->
     <template if:true={showRescheduleModal}>
         <div class="reschedule-overlay" onclick={closeRescheduleModal}>
             <div class="reschedule-modal-card" onclick={stopReschedulePropagation}>
                 <div class="reschedule-modal-header">
-                    <h3>📅 Demander un report d'entretien</h3>
-                    <button class="reschedule-modal-close" onclick={closeRescheduleModal}>✕</button>
+                    <h3>Demander un report d entretien</h3>
+                    <button class="reschedule-modal-close" onclick={closeRescheduleModal}>X</button>
                 </div>
                 <div class="reschedule-modal-body">
                     <template if:true={rescheduleSuccess}>
                         <div class="reschedule-success-msg">
-                            <span class="reschedule-success-icon">✓</span>
+                            <span class="reschedule-success-icon">OK</span>
                             <div>
-                                <strong>Demande envoyée !</strong>
-                                <p>Le recruteur a été notifié. Vous serez recontacté(e) pour une nouvelle date.</p>
+                                <strong>Demande envoyee !</strong>
+                                <p>Le recruteur a ete notifie. Vous serez recontacte(e) pour une nouvelle date.</p>
                             </div>
                         </div>
                     </template>
                     <template if:false={rescheduleSuccess}>
                         <p class="reschedule-modal-info">
-                            Cette action est <strong>irréversible</strong> et ne peut être effectuée qu'<strong>une seule fois</strong>.
+                            Cette action est <strong>irreversible</strong> et ne peut etre effectuee qu une seule fois.
                             Le recruteur recevra votre demande par email.
                         </p>
                         <label class="reschedule-modal-label" for="reschedReason">Raison du report (optionnel)</label>
@@ -1000,3 +1329,4 @@
     </template>
 
 </template>
+
